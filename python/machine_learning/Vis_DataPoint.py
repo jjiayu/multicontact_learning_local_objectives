@@ -8,10 +8,10 @@ mpl.rcParams['agg.path.chunksize'] = 1000000
 
 #Load Datta set 
 #Dataset filename 
-datasetfile_original = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_Angle_17_26/DataSet/Training_InitSet/data.p"
-datasetfile_aug = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_Angle_17_26/DataSet/Training_InitSet/data.p"
-datasetfile_failed_state = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_Angle_17_26/DataSet/Training_InitSet/data.p"
-datasetfile_new = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_Angle_17_26/DataSet/Training_InitSet/data.p"
+datasetfile_original = "/home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/DataSet/Training_InitSet/data.p"
+datasetfile_aug = "/home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/DataSet/Training_InitSet/data.p"
+datasetfile_failed_state = "/home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/DataSet/Training_InitSet/data.p"
+datasetfile_new = "/home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/DataSet/Training_InitSet/data.p"
 
 
 dataset_original = pickle.load(open(datasetfile_original,"rb"))

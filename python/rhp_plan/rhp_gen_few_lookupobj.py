@@ -39,6 +39,7 @@ ExternalParameters = {"WorkingDirectory": None,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
                       "VisualizationFlag": "Yes",
+                      "NumSteps_Use_LookUpObj": 0, #2
                       }
 
 #   Update External Parameters
@@ -482,27 +483,34 @@ for roundNum in range(Nrounds):
         LocalObj = getLocalobj(Mode = None)
     #       Yes, we need to track local obj
     elif LocalObjSettings["local_obj_tracking_type"] != None:
-        #   Get local obj from file (for sanity check/compare)
-        if LocalObjSettings["local_obj_source"] == "fromFile":
-            LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], refTrajFile = LocalObjSettings["GroundTruthTraj"], 
-                                  shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"],  roundNum = roundNum, 
-                                  ContactParameterizationType = LocalObjSettings["contact_representation_type"],
-                                  ScaleFactor = LocalObjSettings["ScalingFactor"])
-        #   Get Local obj from Neural Network
-        elif LocalObjSettings["local_obj_source"] == "NeuralNetwork":
-            #Get Local Obj Predictions (Unshifted to World Frame, but Scale to normal Unit)
-            LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], MLModelPath = LocalObjSettings["MLModelPath"],
-                                   shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"], ContactParameterizationType = LocalObjSettings["contact_representation_type"],
-                                   ScaleFactor = LocalObjSettings["ScalingFactor"], 
-                                   InitConfig = InitConfig)
-        #   Get Local obj from kNN
-        elif LocalObjSettings["local_obj_source"] == "kNN":
-            LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], 
-                                    shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"], 
+        if roundNum + 1 <= int(ExternalParameters["NumSteps_Use_LookUpObj"]):
+            print(str(roundNum) + " th Step Using LookUp Table Approach")
+            LocalObj = getLocalobj(Mode = "fromFile", refTrajFile = LocalObjSettings["GroundTruthTraj"], 
+                                shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"],  roundNum = roundNum, 
+                                ContactParameterizationType = LocalObjSettings["contact_representation_type"],
+                                ScaleFactor = LocalObjSettings["ScalingFactor"])
+        else:
+            #   Get local obj from file (for sanity check/compare)
+            if LocalObjSettings["local_obj_source"] == "fromFile":
+                LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], refTrajFile = LocalObjSettings["GroundTruthTraj"], 
+                                    shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"],  roundNum = roundNum, 
                                     ContactParameterizationType = LocalObjSettings["contact_representation_type"],
+                                    ScaleFactor = LocalObjSettings["ScalingFactor"])
+            #   Get Local obj from Neural Network
+            elif LocalObjSettings["local_obj_source"] == "NeuralNetwork":
+                #Get Local Obj Predictions (Unshifted to World Frame, but Scale to normal Unit)
+                LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], MLModelPath = LocalObjSettings["MLModelPath"],
+                                    shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"], ContactParameterizationType = LocalObjSettings["contact_representation_type"],
                                     ScaleFactor = LocalObjSettings["ScalingFactor"], 
-                                    InitConfig = InitConfig,
-                                    DataSetPath = ExternalParameters["DataSetPath"])
+                                    InitConfig = InitConfig)
+            #   Get Local obj from kNN
+            elif LocalObjSettings["local_obj_source"] == "kNN":
+                LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], 
+                                        shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"], 
+                                        ContactParameterizationType = LocalObjSettings["contact_representation_type"],
+                                        ScaleFactor = LocalObjSettings["ScalingFactor"], 
+                                        InitConfig = InitConfig,
+                                        DataSetPath = ExternalParameters["DataSetPath"])
 
         #After Getting LocalObj, Shifting of Variables NOTE: x,y need to shift all together for Init CoM case but not implemented yet
         LocalObj = shiftLocalObj_to_WorldFrame(InitConfig = InitConfig, LocalObj = LocalObj, Local_Frame_Selection = LocalObjSettings["local_obj_world_frame_shift_mode"])
