@@ -10,7 +10,7 @@
 
 #Command Example (On server):
 
-#GroupName=Group1 && bash Desktop_NN_trackExp_LargeSlope_StartwithLookUp_TrainingSet_SameGroupPrefix.sh TimeTrack_LargeSlopeOnly_Angle_17_26 NN_TrackTrainingAll_LargeSlope_Start12_13_Large_5_InitialSet Clean_TrainingAll_RollOuts_LargeSlope_20Steps_Start12_13_Large5_4Steps $GroupName $GroupName /home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/ML_Models/NN_Model_AllSet 8 2
+#GroupName=Group1 && bash Desktop_NN_trackExp_LargeSlope_StartwithLookUp_TrainingSet_SameGroupPrefix.sh TimeTrack_LargeSlopeOnly_Angle_17_26 NN_TrackTrainingAll_LargeSlope_Start12_13_Large_5_AllSet Clean_TrainingAll_RollOuts_LargeSlope_20Steps_Start12_13_Large5_4Steps $GroupName $GroupName /home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/ML_Models/NN_Model_AllSet 8 2
 
 #---------------------
 #Get the path of the Working Directory

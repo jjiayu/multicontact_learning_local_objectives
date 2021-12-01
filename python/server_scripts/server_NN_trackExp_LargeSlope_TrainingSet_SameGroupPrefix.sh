@@ -9,7 +9,7 @@
 
 #Command Example (On server):
 
-#GroupName=Group1 && longjob -28day -c "nice bash server_NN_trackExp_LargeSlope_TrainingSet_SameGroupPrefix.sh TimeObj_Slack015_LargeSlope_Angle_17_26 NN_TrackTrainingAll_LargeSlope_Start12_13_Large_5_InitialSet Clean_TrainingAll_RollOuts_LargeSlope_20Steps_Start12_13_Large5_4Steps $GroupName $GroupName /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/TimeObj_Slack015_LargeSlope_Angle_17_26/ML_Models/NN_Model_InitialSet 12"
+#GroupName=Group20 && longjob -28day -c "nice bash server_NN_trackExp_LargeSlope_TrainingSet_SameGroupPrefix.sh TimeObj_Slack015_LargeSlope_Angle_17_26 NN_TrackTrainingAll_LargeSlope_Start12_13_Large_5_InitialSet Clean_TrainingAll_RollOuts_LargeSlope_20Steps_Start12_13_Large5_4Steps $GroupName $GroupName /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/TimeObj_Slack015_LargeSlope_Angle_17_26/ML_Models/NN_Model_InitialSet 12"
 
 #---------------------
 #Get the path of the Working Directory

@@ -31,7 +31,7 @@ from sl1m.planner_scenarios.talos.constraints_shift import *
 #     return None
 
 #Function to build the first level
-def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList = None, PhaseDuration_Limits = None, miu = 0.3):
+def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList = None, PhaseDuration_Limits = None, miu = 0.3, LocalObjMode = False):
     #-----------------------------------------------------------------------------------------------------------------------
     #Define Constant Parameters
     #Parameters 
@@ -721,31 +721,35 @@ def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList 
     g, glb, gub = Stay_on_Surf(P = p_land, P_TangentX = p_land_TangentX, P_TangentY = p_land_TangentY, 
                                ineq_K = FirstSurfK, ineq_k = FirstSurfk, eq_E = FirstSurfE, eq_e = FirstSurfe, g = g, glb = glb, gub = gub)
 
-    # #Switching Time Constraint
-    # for phase_cnt in range(Nphase):
-    #     if GaitPattern[phase_cnt] == 'InitialDouble':
-    #         g.append(Ts[phase_cnt])
-    #         glb.append(np.array([PhaseDuration_Limits["DoubleSupport_Min"]])) #old:0.1 - 0.3
-    #         gub.append(np.array([PhaseDuration_Limits["DoubleSupport_Max"]]))
-    #     elif GaitPattern[phase_cnt] == 'Swing':
-    #         g.append(Ts[phase_cnt]-Ts[phase_cnt-1]) #0.6-1
-    #         glb.append(np.array([PhaseDuration_Limits["SingleSupport_Min"]])) #old - 0.8-1.2
-    #         gub.append(np.array([PhaseDuration_Limits["SingleSupport_Max"]])) 
-    #     elif GaitPattern[phase_cnt] == 'DoubleSupport':
-    #         g.append(Ts[phase_cnt]-Ts[phase_cnt-1])#0.05-0.3
-    #         glb.append(np.array([PhaseDuration_Limits["DoubleSupport_Min"]]))
-    #         gub.append(np.array([PhaseDuration_Limits["DoubleSupport_Max"]])) #0.1 - 0.3
-    #     else:
-    #         raise Exception("Unknown Phase Name")
+    if LocalObjMode == False:
+        print("Normal Switching TIme limit")
+        #Switching Time Constraint
+        for phase_cnt in range(Nphase):
+            if GaitPattern[phase_cnt] == 'InitialDouble':
+                g.append(Ts[phase_cnt])
+                glb.append(np.array([PhaseDuration_Limits["DoubleSupport_Min"]])) #old:0.1 - 0.3
+                gub.append(np.array([PhaseDuration_Limits["DoubleSupport_Max"]]))
+            elif GaitPattern[phase_cnt] == 'Swing':
+                g.append(Ts[phase_cnt]-Ts[phase_cnt-1]) #0.6-1
+                glb.append(np.array([PhaseDuration_Limits["SingleSupport_Min"]])) #old - 0.8-1.2
+                gub.append(np.array([PhaseDuration_Limits["SingleSupport_Max"]])) 
+            elif GaitPattern[phase_cnt] == 'DoubleSupport':
+                g.append(Ts[phase_cnt]-Ts[phase_cnt-1])#0.05-0.3
+                glb.append(np.array([PhaseDuration_Limits["DoubleSupport_Min"]]))
+                gub.append(np.array([PhaseDuration_Limits["DoubleSupport_Max"]])) #0.1 - 0.3
+            else:
+                raise Exception("Unknown Phase Name")
+    elif LocalObjMode == True:
+        print("Local Obj Switching Time Limit")
+        #Timing Constraints (Slack Constrained)
+        g, glb, gub = slackConstrained_SingleVar(a = Ts[0], b = InitDS_Ts_obj, slackratio = 0.15, g = g, glb = glb, gub = gub)
+        g, glb, gub = slackConstrained_SingleVar(a = Ts[1]-Ts[0], b = SS_Ts_obj-InitDS_Ts_obj, slackratio = 0.15, g = g, glb = glb, gub = gub)
+        g, glb, gub = slackConstrained_SingleVar(a = Ts[2]-Ts[1], b = DS_Ts_obj-SS_Ts_obj, slackratio = 0.15, g = g, glb = glb, gub = gub)
 
     # #Timing Constraints (Fixed)
     # g, glb, gub = std_eq_constraint(a = ca.vertcat(Ts[0],   Ts[1],   Ts[2]), 
     #                                 b = ca.vertcat(InitDS_Ts_obj, SS_Ts_obj, DS_Ts_obj), g = g, glb= glb, gub = gub)
 
-    #Timing Constraints (Slack Constrained)
-    g, glb, gub = slackConstrained_SingleVar(a = Ts[0], b = InitDS_Ts_obj, slackratio = 0.15, g = g, glb = glb, gub = gub)
-    g, glb, gub = slackConstrained_SingleVar(a = Ts[1]-Ts[0], b = SS_Ts_obj-InitDS_Ts_obj, slackratio = 0.15, g = g, glb = glb, gub = gub)
-    g, glb, gub = slackConstrained_SingleVar(a = Ts[2]-Ts[1], b = DS_Ts_obj-SS_Ts_obj, slackratio = 0.15, g = g, glb = glb, gub = gub)
     #-----------------------------------------------------------------------------------------------------------------------
     #Get Variable Index - !!!
     #This is the pure Index, when try to get the array using other routines, we need to add "+1" at the last index due to Python indexing conventions
@@ -5263,8 +5267,11 @@ def ocp_solver_build(FirstLevel = None, SecondLevel = None, TotalNumSteps = None
     #-------------
     #Make the first step NLP
     if FirstLevel == "NLP_SingleStep":
-        #make the first level
-        var_lv1, var_lb_lv1, var_ub_lv1, J_lv1, g_lv1, glb_lv1, gub_lv1, var_idx_lv1 = NLP_SingleStep(ParameterList = ParaList, Nk_Local = N_knots_local, m = robot_mass, PhaseDuration_Limits = PhaseDurationLimits, miu = miu)
+        if TotalNumSteps == 1: #Local obj mode
+            #make the first level
+            var_lv1, var_lb_lv1, var_ub_lv1, J_lv1, g_lv1, glb_lv1, gub_lv1, var_idx_lv1 = NLP_SingleStep(ParameterList = ParaList, Nk_Local = N_knots_local, m = robot_mass, PhaseDuration_Limits = PhaseDurationLimits, miu = miu, LocalObjMode=True)
+        else:
+            var_lv1, var_lb_lv1, var_ub_lv1, J_lv1, g_lv1, glb_lv1, gub_lv1, var_idx_lv1 = NLP_SingleStep(ParameterList = ParaList, Nk_Local = N_knots_local, m = robot_mass, PhaseDuration_Limits = PhaseDurationLimits, miu = miu, LocalObjMode=False)
     else:
         raise Exception("Unknown First Level Name")
     #----------
@@ -5336,7 +5343,7 @@ def ocp_solver_build(FirstLevel = None, SecondLevel = None, TotalNumSteps = None
         #              weight*(Ts_lv1_vector[1] - SS_Ts_obj)**2 + \
         #              weight*(Ts_lv1_vector[2] - DS_Ts_obj)**2
 
-        # #For Timing fixed oor slack constrained
+        # #For no timing local obj or Timing fixed or slack constrained
         J_localobj = weight*(x_T    - x_obj)**2    + weight*(y_T    - y_obj)**2    + weight*(z_T    - z_obj)**2    + \
                      weight*(xdot_T - xdot_obj)**2 + weight*(ydot_T - ydot_obj)**2 + weight*(zdot_T - zdot_obj)**2 + \
                      weight*(Lx_T   - Lx_obj)**2   + weight*(Ly_T   - Ly_obj)**2   + weight*(Lz_T   - Lz_obj)**2 + \

@@ -99,8 +99,11 @@ RobotMass= 95.0
 #i.e. DS upper limit 1.0, SS upper limit 1.5
 #phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 1.0, #1.5
 #                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.0}
+#The one we use
 phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 0.5, #0.05 - 0.5
                          "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.2}  #0.7 - 1.2
+# phase_duration_limits = {"DoubleSupport_Min": 0.1, "DoubleSupport_Max": 0.1, #0.05 - 0.5
+#                          "SingleSupport_Min": 0.8,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
 #   Local Obj Tracking Type (for Single Step) can be None, cost, constraints
 LocalObjSettings = {}
 if NumLookAhead == 1: #Single-Step NLP, there is a point to set up local obj tracking parameters
