@@ -12,7 +12,7 @@
 
 #GroupName=Group20 && longjob -28day -c "nice bash server_rollout_for_large_slope.sh LargeSlope_Angle_22_X_negative RollOuts_LargeSlope_20Steps_Start12_Large5_Angle22_X_negative_4Steps LargeSlopeSetup_Start12_Large5_X_negative_Angle22 $GroupName $GroupName 20 4"
 
-#GroupName=Group1 && longjob -28day -c "nice bash server_rollout_for_large_slope.sh LargeSlope_TimeTrack_Angle_17_26 RollOuts_LargeSlope_8Steps_Start12_Large5_X_negative_4Steps LargeSlopeTerrain_StartIdx12_Largeat5_X_negative $GroupName $GroupName 8 4"
+#GroupName=Group20 && longjob -28day -c "nice bash server_rollout_for_large_slope.sh LargeSlope_TimeTrack_Angle_17_26 RollOuts_LargeSlope_8Steps_Start13_Large5_Y_positive_4Steps LargeSlopeTerrain_StartIdx13_Largeat5_Y_positive $GroupName $GroupName 8 4"
 
 #cd /afs/inf.ed.ac.uk/group/project/mlp_localobj/
 
