@@ -18,6 +18,8 @@
 
 #python3 Create_LargeSlopeTerrain_from_Rollouts.py /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/LargeSlope_Angle_22_X_negative Rubbles_CleanTrainingSetRollOuts_All LargeSlopeSetup_Start12_Large5_X_negative_Angle22 12 5 22 22 X_negative
 
+#python3 Create_LargeSlopeTerrain_from_Rollouts.py /home/jiayu/Desktop/MLP_DataSet/LargeSlope_for_Visualization Rubbles_CleanTrainingSetRollOuts_All LargeSlopeSetup_Start0_Large17_X_positive_Angle25 0 17 25 25 X_positive
+
 import numpy as np
 from multicontact_learning_local_objectives.python.rhp_plan.rhp_utils import * #Need get Init Config from global frame Function 
 import os

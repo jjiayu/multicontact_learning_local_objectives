@@ -721,6 +721,30 @@ def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList 
     g, glb, gub = Stay_on_Surf(P = p_land, P_TangentX = p_land_TangentX, P_TangentY = p_land_TangentY, 
                                ineq_K = FirstSurfK, ineq_k = FirstSurfk, eq_E = FirstSurfE, eq_e = FirstSurfe, g = g, glb = glb, gub = gub)
 
+    #---------
+    #For Local Obj Tracking of Rubbles (no time guide)
+    #---------
+    # print("Normal Switching TIme limit")
+    # #Switching Time Constraint
+    # for phase_cnt in range(Nphase):
+    #     if GaitPattern[phase_cnt] == 'InitialDouble':
+    #         g.append(Ts[phase_cnt])
+    #         glb.append(np.array([PhaseDuration_Limits["DoubleSupport_Min"]])) #old:0.1 - 0.3
+    #         gub.append(np.array([PhaseDuration_Limits["DoubleSupport_Max"]]))
+    #     elif GaitPattern[phase_cnt] == 'Swing':
+    #         g.append(Ts[phase_cnt]-Ts[phase_cnt-1]) #0.6-1
+    #         glb.append(np.array([PhaseDuration_Limits["SingleSupport_Min"]])) #old - 0.8-1.2
+    #         gub.append(np.array([PhaseDuration_Limits["SingleSupport_Max"]])) 
+    #     elif GaitPattern[phase_cnt] == 'DoubleSupport':
+    #         g.append(Ts[phase_cnt]-Ts[phase_cnt-1])#0.05-0.3
+    #         glb.append(np.array([PhaseDuration_Limits["DoubleSupport_Min"]]))
+    #         gub.append(np.array([PhaseDuration_Limits["DoubleSupport_Max"]])) #0.1 - 0.3
+    #     else:
+    #         raise Exception("Unknown Phase Name")
+
+    #---------
+    #For Local Obj Tracking of Large Slope (need time guide)
+    #---------
     if LocalObjMode == False:
         print("Normal Switching TIme limit")
         #Switching Time Constraint

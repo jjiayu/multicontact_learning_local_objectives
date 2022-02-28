@@ -218,6 +218,26 @@ if TerrainModelPath == None:
                           "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
                         }
 
+        # #--------------------------------------
+        # #For Generating Data Point On Uni Server
+        # #NOTE: To close large slope, make lists to become [], currently the large slope flat is not functioning
+        # TerrainSettings = {"terrain_type": "random",#"antfarm_left",
+        #                   "fixed_inclination": None, #0.0/180*np.pi, #radius, None means random inclination
+        #                   "random_init_surf_size": False,
+        #                   "random_surfsize_flag": False,
+        #                   "random_Horizontal_Move": False,
+        #                   "MisMatch_Alignment_of_FirstTwoPatches": False,#bool(np.random.choice([True,False],1)), 
+        #                   "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
+        #                   "Projected_Length": 0.575, "Projected_Width": 1.0,  #length 0.6 with misalignment maybe betters
+        #                   "large_slope_flag":False,
+        #                   "large_slope_index": [8], #[np.random.choice([8,9])],#select a patch from number 16 or 17
+        #                   "large_slope_directions": ['Y_positive'], #[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
+        #                   "large_slope_inclinations": [25.0/180*np.pi], #[np.round(np.random.uniform(21.0/180*np.pi,30.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
+        #                   "large_slope_X_shifts": [0.0], 
+        #                   "large_slope_Y_shifts": [0.0], 
+        #                   "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
+        #                 }
+
         #Generate Terrain
         TerrainInfo = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],          fixed_inclination = TerrainSettings["fixed_inclination"], 
                                         randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,

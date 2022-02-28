@@ -9,6 +9,10 @@
 #8: Unseen State Folder Name
 #9: Dist Threshold
 
+#python3 LocalObj_DataPointCollection_VarLength.py /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/LargeSlope_TimeTrack_Angle_17_26 RollOuts_8Steps_from_3StepbeforeFail_TrackTrainingInit_Aug_3Time_EarlyStopping TrainingAug4Time_3StepBeforeFail_TrackTrainingInit_Aug_3Time_EarlyStopping OriginalForm 1.0 KeepOutlier CleanTrainingRollOuts_Init Unseen_3StepbeforeFail_TrackingTrainingInit_Aug_3Time_EarlyStopping 0.06
+
+#python3 LocalObj_DataPointCollection_VarLength.py /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/Rubbles_TimeTrack RollOuts_10Steps_from_1StepbeforeFail_TrackTrainingAll_InitSet TrainingAug1Time_1StepBeforeFail_TrackTrainingInit OriginalForm 1.0 RemovebyClip CleanTrainingSetRollOuts_All Unseen_1StepbeforeFail_TrackingTrainingAll_InitSet 0.06
+
 #Import Packages
 import numpy as np
 import os

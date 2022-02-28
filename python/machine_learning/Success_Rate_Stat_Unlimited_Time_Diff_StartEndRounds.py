@@ -51,6 +51,10 @@ rotationtype_list_x_neg = []
 rotationtype_list_y_pos = []
 rotationtype_list_y_neg = []
 
+computation_time_margin = []
+motionduration_list = []
+total_proc_time_list = []
+
 for filename in filenames:
     if ".p" in filename:#a data file     
         total_file_num = total_file_num + 1
@@ -83,6 +87,9 @@ for filename in filenames:
 
                 if total_proc_time <= time_limit: #Smaller than threshold
                     total_steps_made = total_steps_made + 1
+                    computation_time_margin.append(np.absolute(total_proc_time-time_limit))
+                    motionduration_list.append(time_limit)
+                    total_proc_time_list.append(total_proc_time)
                 else: #Larger than threshold
                     total_steps_failed = total_steps_failed + 1
                     total_steps_failed_dueto_time = total_steps_failed_dueto_time + 1
@@ -117,3 +124,15 @@ print("Num of Slow Computation due to Large X Negative: ", len(rotationtype_list
 print("Num of Slow Computation due to Large X Positive: ", len(rotationtype_list_x_pos), "; ratio: ",np.round(len(rotationtype_list_x_pos)/total_steps_failed_dueto_time*100,3))
 print("Num of Slow Computation due to Large Y Negative: ", len(rotationtype_list_y_neg), "; ratio: ",np.round(len(rotationtype_list_y_neg)/total_steps_failed_dueto_time*100,3))
 print("Num of Slow Computation due to Large Y Positive: ", len(rotationtype_list_y_pos), "; ratio: ",np.round(len(rotationtype_list_y_pos)/total_steps_failed_dueto_time*100,3))
+
+
+print("Computatin Time margin (Mean): ", np.average(computation_time_margin))
+print("Computatin Time margin (Std): ", np.std(computation_time_margin))
+print("Computatin TIme margin (max): ", np.max(computation_time_margin))
+print("Computatin TIme margin (min): ", np.min(computation_time_margin))
+
+print("Motion Duration (Mean): ", np.average(motionduration_list))
+print("Motion Duration (Std): ", np.std(motionduration_list))
+
+print("Total Proc Time (Mean): ", np.average(total_proc_time_list))
+print("Total Proc Time (Std): ", np.std(total_proc_time_list))

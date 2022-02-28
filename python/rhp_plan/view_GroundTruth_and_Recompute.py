@@ -21,7 +21,7 @@ from multicontact_learning_local_objectives.python.utils import *
 
 fig=plt.figure();   ax = Axes3D(fig)  
 
-recompute_traj = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_Angle_17_26/ReRollOuts_LargeSlope_20Steps_Start12_Large5_2Steps/Group1_temp1636807427.7535546.p"
+recompute_traj = "/home/jiayu/Desktop/MLP_DataSet/Testing_Largeslope_TimeTrack_Angle_17_26/NN_TrackTestAll_LargeSlope/Group1_temp1642014142.3924603.p"
 TrackingExp_Path = recompute_traj
 
 datatemp = pickle.load((open(recompute_traj,"rb")))
@@ -43,7 +43,7 @@ datatemp = pickle.load((open(recompute_traj,"rb")))
 # idxTemp = NLP_traj_Path.find("CleanTrainingSetRollOuts_All_Backup")
 # GroundTruthPath = "/media/jiayu/Seagate/"+NLP_traj_Path[idxTemp:]
 
-GroundTruthPath = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_Angle_17_26/ReRollOuts_LargeSlope_20Steps_Start12_Large5_2Steps/Group1_temp1636807427.7535546.p"
+GroundTruthPath = "/home/jiayu/Desktop/MLP_DataSet/Testing_Largeslope_TimeTrack_Angle_17_26/CleanValidationRollOut/Group1_temp1639666706.7087774_Y_positive_angle_24.7.p"
 
 #Result_file_1_path = "/home/jiayu/Desktop/MLP_DataSet/Rubbles/CleanTrainingSetRollOuts_InitialSet/Group1_temp1632242201.9463773.p"
 TrackingExp_data = pickle.load(open(TrackingExp_Path,"rb"))

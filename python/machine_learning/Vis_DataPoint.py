@@ -8,10 +8,18 @@ mpl.rcParams['agg.path.chunksize'] = 1000000
 
 #Load Datta set 
 #Dataset filename 
+# datasetfile_original = "/home/jiayu/Desktop/MLP_DataSet/Rubbles_TimeTrack/DataSet/TrainingInit/data.p"
+# datasetfile_aug = "/home/jiayu/Desktop/MLP_DataSet/Rubbles_TimeTrack/DataSet/TrainingInit/data.p"
+# datasetfile_failed_state = "/home/jiayu/Desktop/MLP_DataSet/Rubbles_TimeTrack/DataSet/TrainingInit/data.p"
+# datasetfile_new = "/home/jiayu/Desktop/MLP_DataSet/Rubbles_TimeTrack/DataSet/TrainingInit/data.p"
+
+
+#Dataset filename 
 datasetfile_original = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_TimeTrack_Angle_17_26/DataSet/TrainingInit/data.p"
 datasetfile_aug = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_TimeTrack_Angle_17_26/DataSet/TrainingInit/data.p"
 datasetfile_failed_state = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_TimeTrack_Angle_17_26/DataSet/TrainingInit/data.p"
 datasetfile_new = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_TimeTrack_Angle_17_26/DataSet/TrainingInit/data.p"
+
 
 
 dataset_original = pickle.load(open(datasetfile_original,"rb"))
@@ -124,3 +132,16 @@ ax.set_xlabel("x")
 ax.set_ylabel("y")
 ax.set_zlabel("z")
 plt.show()
+
+fig=plt.figure();   ax = Axes3D(fig)
+ax.scatter(y_original[:,11], y_original[:,12], y_original[:,13], c='g', marker='o', linewidth = 0.1, alpha=0.05) 
+ax.scatter(y_aug[:,11], y_aug[:,12], y_aug[:,13], c='b', marker='o', linewidth = 0.1, alpha=0.05) 
+ax.scatter(y_failed[:,11], y_failed[:,12], y_failed[:,13], c='r', marker='o', linewidth = 0.1, alpha=0.) 
+ax.scatter(y_new[:,11], y_new[:,12], y_new[:,13], c='k', marker='o', linewidth = 0.1, alpha=0.) 
+ax.set_title("Contact Timing Vector")
+ax.set_xlabel("1")
+ax.set_ylabel("2")
+ax.set_zlabel("3")
+plt.show()
+
+
