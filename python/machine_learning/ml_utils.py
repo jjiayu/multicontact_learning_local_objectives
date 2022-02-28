@@ -99,22 +99,6 @@ def getDataPoints(SingleOptRes = None, Shift_World_Frame = None, ContactRepresen
                             TerminalConfig["xdot_end"],    TerminalConfig["ydot_end"],    TerminalConfig["zdot_end"],\
                             TerminalConfig["Lx_end"],      TerminalConfig["Ly_end"],      TerminalConfig["Lz_end"],\
                             coefs), axis = None)
-
-    #-------------------------------
-    #Add Contact Timing
-    #Get Phase Duration
-    var_Idx_lv1 = SingleOptRes["var_idx"]["Level1_Var_Index"]
-    opt_res = SingleOptRes["opt_res"]
-
-    Ts_vec = opt_res[var_Idx_lv1["Ts"][0]:var_Idx_lv1["Ts"][1]+1]
-
-    InitDS_Dur = Ts_vec[-3]
-    SS_Dur = Ts_vec[-2] - Ts_vec[-3]
-    DS_Dur = Ts_vec[-1] - Ts_vec[-2]
-
-    #Add to y vector
-    y = np.concatenate((y, InitDS_Dur, SS_Dur, DS_Dur), axis = None)
-
     #--------------------------
     #Scale Vectors
     x = x*VectorScaleFactor;     y = y*VectorScaleFactor

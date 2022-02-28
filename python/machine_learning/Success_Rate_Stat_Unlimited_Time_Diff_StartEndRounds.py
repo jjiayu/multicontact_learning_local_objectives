@@ -2,14 +2,12 @@
 # $2: Computation time threshold: 1) MotionDuration 2) Numbers (0.8)
 # $3: Start Round Num
 # $4: End Round Num
-# $5: Large Slope Idx
 
 #Import Packages
 import numpy as np
 import os
 import pickle
 from multicontact_learning_local_objectives.python.machine_learning.ml_utils import *
-from multicontact_learning_local_objectives.python.terrain_create import *
 import matplotlib.pyplot as plt #Matplotlib
 import time
 import shutil
@@ -29,8 +27,6 @@ time_threshold = sys.argv[2]
 
 startRoundNUm = int(sys.argv[3])
 endRoundNum = int(sys.argv[4])
-
-large_slope_idx = int(sys.argv[5])
 #Define Rollout Path
 #rolloutPath = workingDirectory+"RollOuts/"
 
@@ -46,15 +42,6 @@ total_steps_failed = 0
 total_steps_failed_dueto_time = 0
 total_steps_failed_dueto_convergence = 0
 
-rotationtype_list_x_pos = []
-rotationtype_list_x_neg = []
-rotationtype_list_y_pos = []
-rotationtype_list_y_neg = []
-
-computation_time_margin = []
-motionduration_list = []
-total_proc_time_list = []
-
 for filename in filenames:
     if ".p" in filename:#a data file     
         total_file_num = total_file_num + 1
@@ -62,11 +49,6 @@ for filename in filenames:
         #Load data
         with open(rolloutPath+"/"+filename, 'rb') as f:
             data= pickle.load(f)
-
-        #Get Terrain Model
-        terrain_model = data["TerrainModel"]
-
-        rotationtype = getSurfaceType(terrain_model[large_slope_idx+2])
 
         if (len(data["SingleOptResultSavings"]) >= 2): #Overcome the first two steps
             #Check to get stats
@@ -87,23 +69,11 @@ for filename in filenames:
 
                 if total_proc_time <= time_limit: #Smaller than threshold
                     total_steps_made = total_steps_made + 1
-                    computation_time_margin.append(np.absolute(total_proc_time-time_limit))
-                    motionduration_list.append(time_limit)
-                    total_proc_time_list.append(total_proc_time)
                 else: #Larger than threshold
                     total_steps_failed = total_steps_failed + 1
                     total_steps_failed_dueto_time = total_steps_failed_dueto_time + 1
-                    #Count how many times we die due to what slope
-                    if rotationtype =="X_negative":
-                        rotationtype_list_x_neg.append(rotationtype)
-                    elif rotationtype =="X_positive":
-                        rotationtype_list_x_pos.append(rotationtype)
-                    elif rotationtype =="Y_negative":
-                        rotationtype_list_y_neg.append(rotationtype)
-                    elif rotationtype =="Y_positive":
-                        rotationtype_list_y_pos.append(rotationtype)
             
-        if (len(data["SingleOptResultSavings"]) >= startRoundNUm + 1 - 1) and (len(data["SingleOptResultSavings"]) < endRoundNum+1): #The last step failed due to some convergence reason
+        if (len(data["SingleOptResultSavings"]) > startRoundNUm+1) and (len(data["SingleOptResultSavings"]) < endRoundNum+1): #The last step failed due to some convergence reason
             total_steps_attempted = total_steps_attempted + 1
             total_steps_failed = total_steps_failed + 1
             total_steps_failed_dueto_convergence = total_steps_failed_dueto_convergence + 1
@@ -118,21 +88,3 @@ print("(Break Down) Total Number of Steps failed to compute due to Running out o
 print("    - Percentage: ", str(np.round(total_steps_failed_dueto_time/total_steps_attempted*100,3)) + "%")
 print("(Break Down) Total Number of Steps failed to compute due to Convergence: ", total_steps_failed_dueto_convergence)
 print("    - Percentage: ", str(np.round(total_steps_failed_dueto_convergence/total_steps_attempted*100,3)) + "%")
-
-print(" ")
-print("Num of Slow Computation due to Large X Negative: ", len(rotationtype_list_x_neg), "; ratio: ",np.round(len(rotationtype_list_x_neg)/total_steps_failed_dueto_time*100,3))
-print("Num of Slow Computation due to Large X Positive: ", len(rotationtype_list_x_pos), "; ratio: ",np.round(len(rotationtype_list_x_pos)/total_steps_failed_dueto_time*100,3))
-print("Num of Slow Computation due to Large Y Negative: ", len(rotationtype_list_y_neg), "; ratio: ",np.round(len(rotationtype_list_y_neg)/total_steps_failed_dueto_time*100,3))
-print("Num of Slow Computation due to Large Y Positive: ", len(rotationtype_list_y_pos), "; ratio: ",np.round(len(rotationtype_list_y_pos)/total_steps_failed_dueto_time*100,3))
-
-
-print("Computatin Time margin (Mean): ", np.average(computation_time_margin))
-print("Computatin Time margin (Std): ", np.std(computation_time_margin))
-print("Computatin TIme margin (max): ", np.max(computation_time_margin))
-print("Computatin TIme margin (min): ", np.min(computation_time_margin))
-
-print("Motion Duration (Mean): ", np.average(motionduration_list))
-print("Motion Duration (Std): ", np.std(motionduration_list))
-
-print("Total Proc Time (Mean): ", np.average(total_proc_time_list))
-print("Total Proc Time (Std): ", np.std(total_proc_time_list))

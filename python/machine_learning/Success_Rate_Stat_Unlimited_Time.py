@@ -69,7 +69,7 @@ for filename in filenames:
                     total_steps_failed = total_steps_failed + 1
                     total_steps_failed_dueto_time = total_steps_failed_dueto_time + 1
             
-        if len(data["SingleOptResultSavings"]) >= 2 and (not (len(data["SingleOptResultSavings"]) == data["Num_of_Rounds"])): #The last step failed due to some convergence reason
+        if not (len(data["SingleOptResultSavings"]) == data["Num_of_Rounds"]): #The last step failed due to some convergence reason
             total_steps_attempted = total_steps_attempted + 1
             total_steps_failed = total_steps_failed + 1
             total_steps_failed_dueto_convergence = total_steps_failed_dueto_convergence + 1

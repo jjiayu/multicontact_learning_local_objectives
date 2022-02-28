@@ -8,14 +8,10 @@
 
 
 #Command Example (On server):
+#longjob -28day -c "nice bash server_LookUp_trackExp_TrainingSet_SameGroupPrefix.sh Rubbles LookUp_TrackingExp_LargeTrainingSet CleanTrainingSetRollOuts_Large Group1 Group1 0.0"
 
-#GroupName=Group1 && bash Desktop_LookUp_TimingObj_trackExp_TrainingSet_SameGroupPrefix.sh LookUp_LargeSlope_Angle_21_26 LookUp_Tracking_NoFixing CleanRollOuts_LargeSlope_20Steps_Start12_Large5_Angle21_26_2Steps $GroupName $GroupName 0.0 
+#bash Desktop_LookUp_trackExp_TrainingSet_SameGroupPrefix.sh LargeSlope_Angle_17_21 LookUp_LargeSlope RollOuts_LargeSlope_20Steps_Start12_Large5_Angle17_21_2Steps Group1 Group1 0.0
 
-#GroupName=Group1 && bash Desktop_LookUp_TimingObj_trackExp_TrainingSet_SameGroupPrefix.sh LargeSlope_Angle_23_X_negative LookUp_Tracking_2Steps_NoFixing Clean_RollOuts_LargeSlope_Start12_Large5_X_negative_Angle23_2Steps $GroupName $GroupName 0.0 
-
-#GroupName=Group1 && bash Desktop_LookUp_TimingObj_trackExp_TrainingSet_SameGroupPrefix.sh LookUp_LargeSlope_Angle_17_21 LookUp_Tracking_NoFixing Clean_RollOuts_LargeSlope_20Steps_Start12_Large5_Angle_17_21_2Steps $GroupName $GroupName 0.0 
-
-#GroupName=Group1 && bash Desktop_LookUp_TimingObj_trackExp_TrainingSet_SameGroupPrefix.sh LookUp_LargeSlope_Angle_21_26 LookUp_TimingObj_Tracking_NoFixing CleanRollOuts_LargeSlope_20Steps_Start12_Large5_Angle21_26_2Steps $GroupName $GroupName 0.0 
 
 #---------------------
 #Get the path of the Working Directory
@@ -57,7 +53,7 @@ for i in $4_*.p; do #Random loop control, just loop over all the files
 
     #python3 -W ignore /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/multicontact_learning_local_objectives/python/rhp_plan/rhp_gen.py \
 
-    python3 /home/jiayu/Desktop/multicontact_learning_local_objectives/python/rhp_plan/rhp_gen_time_localobj.py \
+    python3 /home/jiayu/Desktop/multicontact_learning_local_objectives/python/rhp_plan/rhp_gen.py \
     -WorkingDirectory $filedir \
     -RollOutFolderName $2 \
     -Exp_Prefix $5 \
@@ -68,8 +64,8 @@ for i in $4_*.p; do #Random loop control, just loop over all the files
     -InitConditionType fromFirstRoundTraj \
     -InitConditionFilePath $envfile \
     -EnvModelPath $envfile \
-    -NumofRounds 10 \
-    -VisualizationFlag No \
+    -NumofRounds 20 \
+    -VisualizationFlag No
 
     let compute_rounds=compute_rounds+1
 

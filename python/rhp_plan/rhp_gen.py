@@ -38,7 +38,7 @@ ExternalParameters = {"WorkingDirectory": None,
                       "LargeSlopeAngle": 0,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
-                      "VisualizationFlag": "Yes",
+                      "VisualizationFlag": "Yes"
                       }
 
 #   Update External Parameters
@@ -99,11 +99,8 @@ RobotMass= 95.0
 #i.e. DS upper limit 1.0, SS upper limit 1.5
 #phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 1.0, #1.5
 #                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.0}
-#The one we use
 phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 0.5, #0.05 - 0.5
                          "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.2}  #0.7 - 1.2
-# phase_duration_limits = {"DoubleSupport_Min": 0.1, "DoubleSupport_Max": 0.1, #0.05 - 0.5
-#                          "SingleSupport_Min": 0.8,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
 #   Local Obj Tracking Type (for Single Step) can be None, cost, constraints
 LocalObjSettings = {}
 if NumLookAhead == 1: #Single-Step NLP, there is a point to set up local obj tracking parameters
@@ -217,26 +214,6 @@ if TerrainModelPath == None:
                           "large_slope_Y_shifts": [0.0], 
                           "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
                         }
-
-        # #--------------------------------------
-        # #For Generating Data Point On Uni Server
-        # #NOTE: To close large slope, make lists to become [], currently the large slope flat is not functioning
-        # TerrainSettings = {"terrain_type": "random",#"antfarm_left",
-        #                   "fixed_inclination": None, #0.0/180*np.pi, #radius, None means random inclination
-        #                   "random_init_surf_size": False,
-        #                   "random_surfsize_flag": False,
-        #                   "random_Horizontal_Move": False,
-        #                   "MisMatch_Alignment_of_FirstTwoPatches": False,#bool(np.random.choice([True,False],1)), 
-        #                   "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-        #                   "Projected_Length": 0.575, "Projected_Width": 1.0,  #length 0.6 with misalignment maybe betters
-        #                   "large_slope_flag":False,
-        #                   "large_slope_index": [8], #[np.random.choice([8,9])],#select a patch from number 16 or 17
-        #                   "large_slope_directions": ['Y_positive'], #[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
-        #                   "large_slope_inclinations": [25.0/180*np.pi], #[np.round(np.random.uniform(21.0/180*np.pi,30.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
-        #                   "large_slope_X_shifts": [0.0], 
-        #                   "large_slope_Y_shifts": [0.0], 
-        #                   "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
-        #                 }
 
         #Generate Terrain
         TerrainInfo = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],          fixed_inclination = TerrainSettings["fixed_inclination"], 
@@ -656,8 +633,7 @@ for roundNum in range(Nrounds):
                                InitConfig["PL_init_TangentX"],   InitConfig["PL_init_TangentY"],   InitConfig["PL_init_Norm"],  InitConfig["LeftInitSurfOrientation"],
                                InitConfig["PR_init_TangentX"],   InitConfig["PR_init_TangentY"],   InitConfig["PR_init_Norm"],  InitConfig["RightInitSurfOrientation"],
                                LocalObj["x_obj"],  LocalObj["y_obj"],  LocalObj["z_obj"],  LocalObj["xdot_obj"], LocalObj["ydot_obj"], LocalObj["zdot_obj"],
-                               LocalObj["Lx_obj"], LocalObj["Ly_obj"], LocalObj["Lz_obj"], LocalObj["Px_obj"],   LocalObj["Py_obj"],   LocalObj["Pz_obj"],
-                               LocalObj["InitDS_Ts_obj"], LocalObj["SS_Ts_obj"], LocalObj["DS_Ts_obj"]), axis = None)
+                               LocalObj["Lx_obj"], LocalObj["Ly_obj"], LocalObj["Lz_obj"], LocalObj["Px_obj"],   LocalObj["Py_obj"],   LocalObj["Pz_obj"]), axis = None)
     
     #----------
     #Call solver

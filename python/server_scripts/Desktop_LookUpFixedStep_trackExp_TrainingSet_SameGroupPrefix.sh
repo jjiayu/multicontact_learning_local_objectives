@@ -5,17 +5,11 @@
 #$4 --- Prefix of the Target Experiment File name (That will be loaded for Envrionments)
 #$5 --- Prefix of the Exp File name (For saved files)
 #$6 --- Noise Level
-#$7 --- Fix Var Mode
-#$8 --- Num of LookAhead Steps
 
 
 #Command Example (On server):
 
-#GroupName=Group1 && bash Desktop_NLP_FixedVar.sh LargeSlope_Angle_23_X_negative Baseline_Tracking_2Steps_FixStep Clean_RollOuts_LargeSlope_Start12_Large5_X_negative_Angle23_2Steps $GroupName $GroupName 0.0 Step 2
-
-#GroupName=Group1 && bash Desktop_NLP_FixedVar.sh LookUp_LargeSlope_Angle_21_26 Baseline_Tracking_FixStep CleanRollOuts_LargeSlope_20Steps_Start12_Large5_Angle21_26_2Steps $GroupName $GroupName 0.0 Step 2
-
-#GroupName=Group1 && bash Desktop_NLP_FixedVar.sh LookUp_LargeSlope_Angle_17_21 Lookup_Tracking_NoFixing Clean_RollOuts_LargeSlope_20Steps_Start12_Large5_Angle_17_21_2Steps $GroupName $GroupName 0.0 None 2
+#bash Desktop_LookUpFixedStep_trackExp_TrainingSet_SameGroupPrefix.sh LookUp_LargeSlope_Angle_21_26 LookUpFixedStep_LargeSlope_Angle_21_26_2Steps CleanRollOuts_LargeSlope_20Steps_Start12_Large5_Angle21_26_2Steps Group1 Group1 0.0
 
 
 #---------------------
@@ -58,20 +52,19 @@ for i in $4_*.p; do #Random loop control, just loop over all the files
 
     #python3 -W ignore /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/multicontact_learning_local_objectives/python/rhp_plan/rhp_gen.py \
 
-    python3 /home/jiayu/Desktop/multicontact_learning_local_objectives/python/rhp_plan/rhp_gen_fixed_Vars.py \
+    python3 /home/jiayu/Desktop/multicontact_learning_local_objectives/python/rhp_plan/rhp_gen_fixed_step.py \
     -WorkingDirectory $filedir \
     -RollOutFolderName $2 \
     -Exp_Prefix $5 \
+    -LocalObj_from fromFile \
+    -LocalObjTrackingFlag Yes \
     -NoisyLocalObj Yes \
     -NoiseLevel $6 \
     -InitConditionType fromFirstRoundTraj \
     -InitConditionFilePath $envfile \
     -EnvModelPath $envfile \
-    -NumofRounds 10 \
-    -VisualizationFlag No \
-    -Fixing_Vars $7 \
-    -NumLookAhead $8
-
+    -NumofRounds 20 \
+    -VisualizationFlag No
 
     let compute_rounds=compute_rounds+1
 

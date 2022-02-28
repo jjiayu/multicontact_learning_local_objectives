@@ -12,9 +12,6 @@
 
 #GroupName=Group20 && longjob -28day -c "nice bash server_re_rollout_from_every_predicted_state.sh Rubbles_RegretOneStep ReRollOut_TrainingInitialSet_All_InitialSet NN_TrackTraining_InitialAll $GroupName $GroupName"
 
-
-#GroupName=Group20 && longjob -28day -c "nice bash server_re_rollout_from_every_predicted_state.sh LargeSlope_Angle_17_26 ReRollOut_LargeSlope_TrainingInitialSet_All_InitialSet NN_TrackTrainingAll_LargeSlope_Start12_13_Large_5_InitialSet $GroupName $GroupName"
-
 #---------------------
 #Get the path of the Working Directory
 cd /afs/inf.ed.ac.uk/group/project/mlp_localobj/
@@ -23,7 +20,7 @@ cd /afs/inf.ed.ac.uk/group/project/mlp_localobj/
 cd $1
 pwd
 filedir=$PWD
-
+n
 echo $filedir
 
 compute_rounds=1

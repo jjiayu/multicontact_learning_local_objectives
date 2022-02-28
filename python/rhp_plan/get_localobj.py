@@ -24,7 +24,7 @@ def getLocalobj(Mode = None, refTrajFile = None, roundNum = None, \
     if Mode == "fromFile":
         
         print(" ")
-        print("Get Local Obj from File, with Timing Info")
+        print("Get Local Obj from File")
         print(" ")
 
         with open(refTrajFile, 'rb') as f:
@@ -45,21 +45,6 @@ def getLocalobj(Mode = None, refTrajFile = None, roundNum = None, \
 
         localobj["Lx_obj"]   = TerminalConfig["Lx_end"];       localobj["Ly_obj"]   = TerminalConfig["Ly_end"]        
         localobj["Lz_obj"]   = TerminalConfig["Lz_end"]
-
-        #Get Phase Duration
-        var_Idx_lv1 = optResult["var_idx"]["Level1_Var_Index"]
-        opt_res = optResult["opt_res"]
-
-        Ts_vec = opt_res[var_Idx_lv1["Ts"][0]:var_Idx_lv1["Ts"][1]+1]
-        print("Timing Vec", Ts_vec)
-
-        InitDS_Dur = Ts_vec[-3]
-        SS_Dur = Ts_vec[-2] - Ts_vec[-3]
-        DS_Dur = Ts_vec[-1] - Ts_vec[-2]
-
-        localobj["InitDS_Ts_obj"] = 0 + InitDS_Dur
-        localobj["SS_Ts_obj"] = InitDS_Dur + SS_Dur
-        localobj["DS_Ts_obj"] = InitDS_Dur + SS_Dur + DS_Dur
         
         #Naive Option: 3D point representation
         if ContactParameterizationType == "3DPoints":
@@ -201,11 +186,10 @@ def getLocalobj(Mode = None, refTrajFile = None, roundNum = None, \
         localobj["xdot_obj"] = PredictVector[0][3];      localobj["ydot_obj"] = PredictVector[0][4];       localobj["zdot_obj"] = PredictVector[0][5]
         localobj["Lx_obj"]   = PredictVector[0][6];      localobj["Ly_obj"]   = PredictVector[0][7];       localobj["Lz_obj"]   = PredictVector[0][8]
 
-        #   Make Contact location
         if ContactParameterizationType == "3DPoints":
             localobj["Px_obj"]   = PredictVector[0][9];      localobj["Py_obj"]   = PredictVector[0][10];      localobj["Pz_obj"]   = PredictVector[0][11]
         elif ContactParameterizationType == "ConvexCombination":
-            coefs = np.reshape(PredictVector[0][9:13],(4,1))
+            coefs = np.reshape(PredictVector[0][9:],(4,1))
             #Get the first Patch, NOTE: Use the ShiftedInitConfig, Further: v1...v4 are horizontally stacked, will be transposed in the transformation function
             FirstPatch = shiftedInitConfig["ContactSurfs"][0]
             #Recover to Local Obj
@@ -213,7 +197,7 @@ def getLocalobj(Mode = None, refTrajFile = None, roundNum = None, \
             #Convert to Local Obj
             localobj["Px_obj"] = P_localobj[0];    localobj["Py_obj"] = P_localobj[1];    localobj["Pz_obj"] = P_localobj[2]
         elif ContactParameterizationType == "FollowRectangelBorder":
-            coefs = np.reshape(PredictVector[0][9:11],(2,1))
+            coefs = np.reshape(PredictVector[0][9:],(2,1))
             #Get the first patch, NOTE: Use the ShiftedInitConfig, Further: v1...v4 are horizontally stacked, will be transposed in the transformation function
             FirstPatch = shiftedInitConfig["ContactSurfs"][0]
             #   x and y vector for the terrain in world frame (i.e. original world frame, shifted world frame)
@@ -224,21 +208,6 @@ def getLocalobj(Mode = None, refTrajFile = None, roundNum = None, \
             localobj["Px_obj"] = P_localobj[0];    localobj["Py_obj"] = P_localobj[1];    localobj["Pz_obj"] = P_localobj[2]
         else:
             raise Exception("Undefined Contact Location Parameterization Type (ContactParameterizationType)") 
-        
-        #Make Contacty Timing
-        #Timing is always from the back of the index
-
-        InitDS_Dur = PredictVector[0][-3]
-        SS_Dur = PredictVector[0][-2]
-        DS_Dur = PredictVector[0][-1]
-
-        localobj["InitDS_Ts_obj"] = 0 + InitDS_Dur
-        localobj["SS_Ts_obj"] = InitDS_Dur + SS_Dur
-        localobj["DS_Ts_obj"] = InitDS_Dur + SS_Dur + DS_Dur
-
-        # localobj["InitDS_Ts_obj"] = PredictVector[0][-3]
-        # localobj["SS_Ts_obj"] = PredictVector[0][-2]
-        # localobj["DS_Ts_obj"] = PredictVector[0][-1]
 
     elif Mode == "kNN": #NOTE: Everything in Local Frame
         
@@ -320,17 +289,16 @@ def getLocalobj(Mode = None, refTrajFile = None, roundNum = None, \
             print("Data Represented in Original Form, No need to transform")
         else:
             print("Unknown Pre Processing Model")
-        
+
         #Make Local Obj Dict (NOTE: the PredictVector is a 2D array)
         localobj["x_obj"]    = PredictVector[0][0];      localobj["y_obj"]    = PredictVector[0][1];       localobj["z_obj"]    = PredictVector[0][2]
         localobj["xdot_obj"] = PredictVector[0][3];      localobj["ydot_obj"] = PredictVector[0][4];       localobj["zdot_obj"] = PredictVector[0][5]
         localobj["Lx_obj"]   = PredictVector[0][6];      localobj["Ly_obj"]   = PredictVector[0][7];       localobj["Lz_obj"]   = PredictVector[0][8]
 
-        #   Make Contact location
         if ContactParameterizationType == "3DPoints":
             localobj["Px_obj"]   = PredictVector[0][9];      localobj["Py_obj"]   = PredictVector[0][10];      localobj["Pz_obj"]   = PredictVector[0][11]
         elif ContactParameterizationType == "ConvexCombination":
-            coefs = np.reshape(PredictVector[0][9:13],(4,1))
+            coefs = np.reshape(PredictVector[0][9:],(4,1))
             #Get the first Patch, NOTE: Use the ShiftedInitConfig, Further: v1...v4 are horizontally stacked, will be transposed in the transformation function
             FirstPatch = shiftedInitConfig["ContactSurfs"][0]
             #Recover to Local Obj
@@ -338,7 +306,7 @@ def getLocalobj(Mode = None, refTrajFile = None, roundNum = None, \
             #Convert to Local Obj
             localobj["Px_obj"] = P_localobj[0];    localobj["Py_obj"] = P_localobj[1];    localobj["Pz_obj"] = P_localobj[2]
         elif ContactParameterizationType == "FollowRectangelBorder":
-            coefs = np.reshape(PredictVector[0][9:11],(2,1))
+            coefs = np.reshape(PredictVector[0][9:],(2,1))
             #Get the first patch, NOTE: Use the ShiftedInitConfig, Further: v1...v4 are horizontally stacked, will be transposed in the transformation function
             FirstPatch = shiftedInitConfig["ContactSurfs"][0]
             #   x and y vector for the terrain in world frame (i.e. original world frame, shifted world frame)
@@ -350,29 +318,11 @@ def getLocalobj(Mode = None, refTrajFile = None, roundNum = None, \
         else:
             raise Exception("Undefined Contact Location Parameterization Type (ContactParameterizationType)") 
 
-        #Make Contacty Timing
-        #Timing is always from the back of the index
-
-        InitDS_Dur = PredictVector[0][-3]
-        SS_Dur = PredictVector[0][-2]
-        DS_Dur = PredictVector[0][-1]
-
-        localobj["InitDS_Ts_obj"] = 0 + InitDS_Dur
-        localobj["SS_Ts_obj"] = InitDS_Dur + SS_Dur
-        localobj["DS_Ts_obj"] = InitDS_Dur + SS_Dur + DS_Dur
-
-        # localobj["InitDS_Ts_obj"] = PredictVector[0][-3]
-        # localobj["SS_Ts_obj"] = PredictVector[0][-2]
-        # localobj["DS_Ts_obj"] = PredictVector[0][-1]
-
     elif Mode == None: #Give null/random local obj
         localobj["x_obj"]    = 0.0;      localobj["y_obj"]    = 0.0;       localobj["z_obj"]    = 0.0
         localobj["xdot_obj"] = 0.0;      localobj["ydot_obj"] = 0.0;       localobj["zdot_obj"] = 0.0
         localobj["Lx_obj"]   = 0.0;      localobj["Ly_obj"]   = 0.0;       localobj["Lz_obj"]   = 0.0
         localobj["Px_obj"]   = 0.0;      localobj["Py_obj"]   = 0.0;       localobj["Pz_obj"]   = 0.0
-        localobj["InitDS_Ts_obj"] = 0.0
-        localobj["SS_Ts_obj"] = 0.0
-        localobj["DS_Ts_obj"] = 0.0
     
     else:
         raise Exception("Unknown Mode for Getting Local Objective")

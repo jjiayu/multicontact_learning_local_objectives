@@ -22,11 +22,6 @@
 
 #GroupName=Group1 && longjob -28day -c "nice bash server_NN_trackExp_TrainingSet_SameGroupPrefix.sh LargeSlope_Angle_23_X_negative NN_TrackTrainingAll_LargeSlope_InitialSet Clean_Training_RollOuts_LargeSlope_20Steps_Start12_Large5_Angle23_X_negative_4Steps $GroupName $GroupName /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/LargeSlope_Angle_23_X_negative/ML_Models/NN_Model_InitialSet"
 
-#GroupName=Group1 && longjob -28day -c "nice bash server_NN_trackExp_TrainingSet_SameGroupPrefix.sh Rubbles_TimeTrack NN_TrackTrainingAll_AddVarSteps_1StepbeforeFail_1Time_RemovebyClip_SmallThre CleanTrainingSetRollOuts_All $GroupName $GroupName /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/Rubbles_AddVarSteps_1StepbeforeFail_RemovebyClip/ML_Models/NN_Model_AugVarStep_1StepbeforeFail_1Time_RemovebyClip_SmallThre"
-
-#GroupName=Group8 && longjob -28day -c "nice bash server_NN_trackExp_TrainingSet_SameGroupPrefix.sh Rubbles_TimeTrack NN_TrackTrainingAll_InitSet CleanTrainingSetRollOuts_All $GroupName $GroupName /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/Rubbles_TimeTrack/ML_Models/NN_Model_Init"
-
-#GroupName=Group20 && longjob -28day -c "nice bash server_NN_trackExp_TrainingSet_SameGroupPrefix.sh Rubbles_TimeTrack NN_TrackTrainingAll_Aug1Time CleanTrainingSetRollOuts_All $GroupName $GroupName /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/Rubbles_TimeTrack/ML_Models/NN_Model_Aug_1Time"
 
 #---------------------
 #Get the path of the Working Directory

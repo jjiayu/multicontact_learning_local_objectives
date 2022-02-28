@@ -7,7 +7,7 @@
 #$7 --- the seventh argument--- Defines number of lookahead
 #$8 ----the eighth arugment ----VisualizationFlag
 
-#GroupName=Group1 && bash desktop_rollout_compute_from_existing_terrain.sh Testing_Largeslope_TimeTrack_Angle_17_26 RollOut3StepNLP_AllTestScenarios CleanValidationRollOut $GroupName $GroupName 8 3 No
+#GroupName=Group1 && bash desktop_rollout_compute_from_existing_terrain.sh Rubbles_2StepNLP RollOut2StepNLP_All CleanTrainingSetRollOuts_All $GroupName $GroupName 30 2 No
 
 #cd /afs/inf.ed.ac.uk/group/project/mlp_localobj/
 

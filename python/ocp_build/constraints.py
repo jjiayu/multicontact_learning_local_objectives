@@ -15,16 +15,6 @@ def std_eq_constraint(SwingLegIndicator = None, a = None, b = None, g = None, gl
         gub.append(np.zeros(a.shape[0]*a.shape[1]))
     return g, glb, gub
 
-def slackConstrained_SingleVar(a = None, b = None, slackratio = 0.0, g = None, glb = None, gub = None):
-    g.append(a-(1.0-slackratio)*b)
-    glb.append([0])
-    gub.append([np.inf])
-
-    g.append(a-(1.0+slackratio)*b)
-    glb.append([-np.inf])
-    gub.append([0])
-
-    return g, glb, gub
 
 #CoM Kinematics Constraints, Currently un-rotated polytope
 #In the form of K(CoM - P) <= k

@@ -1,7 +1,3 @@
-#Input 1: RollOut Folder Name
-#Input 2: Idx Number of tge large slope
-#Input 3: Remove Type: X_negative, X_positive
-
 #Import Packages
 import numpy as np
 import os
@@ -21,11 +17,6 @@ import sys
 #Get Roll Out path from input
 rolloutPath = sys.argv[1]
 print("RollOut Path: \n", rolloutPath)
-
-large_slope_idx = int(sys.argv[2])
-print("Large Slope at: ", large_slope_idx)
-
-removeType = sys.argv[3]
 
 #Define Rollout Path
 #rolloutPath = workingDirectory+"RollOuts/"
@@ -62,8 +53,8 @@ for filename in filenames:
 
         terrain_model = data["TerrainModel"]
 
-        rotationtype = getSurfaceType(terrain_model[large_slope_idx+2])
-        rotationangle=np.absolute(getTerrainRotationAngle(terrain_model[large_slope_idx+2]))
+        rotationtype = getSurfaceType(terrain_model[5+2])
+        rotationangle=np.absolute(getTerrainRotationAngle(terrain_model[5+2]))
 
         angle_list.append(rotationangle)
 
@@ -76,15 +67,9 @@ for filename in filenames:
         elif rotationtype =="Y_positive":
             angle_list_y_pos.append(rotationangle)
 
-        if rotationtype == removeType:
-            print("Failed File --- Delete, bnecasue type, ", rotationtype, "and we want to remove ", removeType)
-            os.remove(rolloutPath+"/"+filename)#remove data file
-            os.remove(rolloutPath+"/"+filename[:-2]+".txt") #remove log file
-
 fig=plt.figure();   ax = fig.gca()
 plt.hist(angle_list, bins=10, density = False)
 ax.set_xlim([17,26])
-plt.title("All")
 plt.show()
 
 fig=plt.figure();   ax = fig.gca()
@@ -108,8 +93,3 @@ fig=plt.figure();   ax = fig.gca()
 plt.hist(angle_list_y_pos, bins=10, density = False)
 ax.set_xlim([17,26])
 plt.show()
-
-print("Rotation Around X Positive: ", len(angle_list_x_pos))
-print("Rotation Around X Negative: ", len(angle_list_x_neg))
-print("Rotation Around Y Positive: ", len(angle_list_y_pos))
-print("Rotation Around Y Negative: ", len(angle_list_y_neg))
