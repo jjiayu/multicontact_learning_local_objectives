@@ -31,7 +31,7 @@ from sl1m.planner_scenarios.talos.constraints_shift import *
 #     return None
 
 #Function to build the first level
-def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList = None, PhaseDuration_Limits = None, miu = 0.3, LocalObjMode = False):
+def NLP_SingleStep(m = 100.0, Nk_Local= 7, AngularDynamics = True, ParameterList = None, PhaseDuration_Limits = None, miu = 0.3, LocalObjMode = False):
     #-----------------------------------------------------------------------------------------------------------------------
     #Define Constant Parameters
     #Parameters 
@@ -746,7 +746,7 @@ def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList 
     #For Local Obj Tracking of Large Slope (need time guide)
     #---------
     if LocalObjMode == False:
-        print("Normal Switching TIme limit")
+        print("Normal Switching Time limit")
         #Switching Time Constraint
         for phase_cnt in range(Nphase):
             if GaitPattern[phase_cnt] == 'InitialDouble':
@@ -814,7 +814,7 @@ def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList 
 #Second Level, remember to make the max Ts duration to 3s
 #Function to build the second level
 #Nsteps: Number of steps in the second level, = Total Number of Steps of the Entire Lookahead Horizon - 1
-def NLP_SecondLevel(m = 95.0, Nk_Local = 7, Nsteps = 1, AngularDynamics=True, ParameterList = None, PhaseDuration_Limits = None, miu = 0.3):
+def NLP_SecondLevel(m = 100.0, Nk_Local = 7, Nsteps = 1, AngularDynamics=True, ParameterList = None, PhaseDuration_Limits = None, miu = 0.3):
     #-----------------------------------------------------------------------------------------------------------------------
     #Define Constant Parameters
     G = 9.80665 #kg/m^2
@@ -2136,7 +2136,7 @@ def NLP_SecondLevel(m = 95.0, Nk_Local = 7, Nsteps = 1, AngularDynamics=True, Pa
 
 
 #NOTE: Ponton Methods do not have rotated kinematics polytopes
-def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, PontonTerm_bounds = 0.55):
+def Ponton_FourPoints(m = 100.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, PontonTerm_bounds = 0.55):
     #-------------------------------------------
     #Define Constant Parameters
     #   Gravitational Acceleration
@@ -4058,7 +4058,7 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
     return DecisionVars, DecisionVars_lb, DecisionVars_ub, J, g, glb, gub, var_index
 
 #NOTE: Ponton Methods do not have rotated kinematics polytopes
-def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, PontonTerm_bounds = 0.55):
+def Ponton_SinglePoint(m = 100.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, PontonTerm_bounds = 0.55):
 
     #-------------------------------------------
     #Define Constant Parameters
@@ -5167,7 +5167,7 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
 #      "cost":         tracking the local objective via cost 
 #      "constraints":   reach a pre-defined state (CoM + FootStep Location)
 #      None:           means we reach the far goal, which is will fail for sure
-def ocp_solver_build(FirstLevel = None, SecondLevel = None, TotalNumSteps = None, LocalObjTrackingType = None, N_knots_local = 7, robot_mass = 95.0, PhaseDurationLimits = None, miu = 0.3, max_compute_time = 1000.0):
+def ocp_solver_build(FirstLevel = None, SecondLevel = None, TotalNumSteps = None, LocalObjTrackingType = None, N_knots_local = 7, robot_mass = 100.0, PhaseDurationLimits = None, miu = 0.3, max_compute_time = 1000.0):
     #Check if the First Level is selected properly
     assert FirstLevel != None, "First Level is Not Selected."
     assert TotalNumSteps != None, "Total Number of Steps Un-defined."
