@@ -14,6 +14,10 @@ import time
 import copy
 import os
 
+import rospy
+from std_msgs.msg import Float64MultiArray
+from centroidal_planning_msgs.msg import MotionPlanData, CoMStateFeedback, FootStateFeedback
+
 #-------------------------------
 #Reseed the random generator
 np.random.seed()
@@ -34,7 +38,7 @@ ExternalParameters = {"WorkingDirectory": None,
                       "ML_ModelPath": None, #"/home/jiayu/Desktop/MLP_DataSet/2stepsVsOthers/ML_Models/NN_Model_Valid",
                       "DataSetPath": None, #"/home/jiayu/Desktop/MLP_DataSet/Rubbles/DataSet", #None,
                       "NumLookAhead": 4,
-                      "NumofRounds":5,
+                      "NumofRounds":6,
                       "LargeSlopeAngle": 0,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
@@ -52,6 +56,7 @@ for i in range(len(externalParasList)//2):
 #-------------------------------
 #Log File and Save Data
 saveData = True
+LogCMDLine = True
 #Decide save path and name
 #   No external parameters
 if ExternalParameters["WorkingDirectory"] == None: 
@@ -67,7 +72,7 @@ else:
 if not (os.path.isdir(rolloutDirectory)):
     os.mkdir(rolloutDirectory)
 #Logging command line output
-stdoutOrigin=sys.stdout; sys.stdout = open(rolloutDirectory + '/' + Filename + ".txt", "w") if saveData == True else None
+stdoutOrigin=sys.stdout; sys.stdout = open(rolloutDirectory + '/' + Filename + ".txt", "w") if LogCMDLine == True else None
 
 #---------------------
 #   Some Global Settings
@@ -100,8 +105,8 @@ RobotMass= 100.0
 #phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 1.0, #1.5
 #                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.0}
 #The one we use
-phase_duration_limits = {"DoubleSupport_Min": 0.3, "DoubleSupport_Max": 0.5, #0.05 - 0.5
-                         "SingleSupport_Min": 0.8,  "SingleSupport_Max": 1.0}  #0.7 - 1.2
+phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5
+                         "SingleSupport_Min": 0.6,  "SingleSupport_Max": 0.8}  #0.7 - 1.2 #1.0 - 1.5
 # phase_duration_limits = {"DoubleSupport_Min": 0.1, "DoubleSupport_Max": 0.1, #0.05 - 0.5
 #                          "SingleSupport_Min": 0.8,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
 #   Local Obj Tracking Type (for Single Step) can be None, cost, constraints
@@ -163,8 +168,30 @@ elif NumLookAhead > 1: #Multi Step NLP, all local obj related parameter becomes 
 InitSeedType = "previous"
 
 #---------------------
+#Get Current Robot State
+#---------------------
+rospy.init_node('listener', anonymous=True)
+msg_com = rospy.wait_for_message("/biped_walking_dcm_controller/com_states", CoMStateFeedback)
+msg_foot = rospy.wait_for_message("/biped_walking_dcm_controller/foot_poses", FootStateFeedback)
+
+print('Current CoM x pos is ', msg_com.actual_com_pos_x, msg_com.actual_com_pos_y, msg_com.actual_com_pos_z)
+print('Current Left Foot Step Location is: ', msg_foot.actual_lf_pos_x, msg_foot.actual_lf_pos_y, msg_foot.actual_lf_pos_z)
+print('Current Right Foot Step Location is: ', msg_foot.actual_rf_pos_x, msg_foot.actual_rf_pos_y, msg_foot.actual_rf_pos_z)
+#---------------------
 #Get Environment Model
 #---------------------
+
+#compute y_center(central y of terrains), x_offset (to align the terrain to the robot)
+x_lf = msg_foot.actual_lf_pos_x #msg_foot.data[0]
+x_rf = msg_foot.actual_rf_pos_x #msg_foot.data[6]
+x_offset = np.max((x_lf,x_rf))
+
+
+y_lf = msg_foot.actual_lf_pos_y #msg_foot.data[1]
+y_rf = msg_foot.actual_rf_pos_y #msg_foot.data[7]
+y_dist = np.abs(y_lf) + np.abs(y_rf)
+
+y_center = y_lf - y_dist/2.0
 
 #Define if we load terrain from file NOTE: None means no, then we generate terrain from code, depends on if we update external parameters
 TerrainModelPath = None
@@ -183,12 +210,12 @@ if TerrainModelPath == None:
         # #For local Testing
         TerrainSettings = {"terrain_type": "flat",#"antfarm_left",
                            "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
-                          "random_init_surf_size": False,
-                          "random_surfsize_flag": False,
-                          "random_Horizontal_Move": False,
+                           "random_init_surf_size": False,
+                           "random_surfsize_flag": False,
+                           "random_Horizontal_Move": False,
                            "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
                            "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-                           "Projected_Length": 0.55, "Projected_Width": 1.0, #0.55 and 1.0
+                           "Projected_Length": 0.4, "Projected_Width": 0.4,
                            "large_slope_flag":False,
                            "large_slope_index": [8],#[np.random.choice([16,17])],#select a patch from number 16 or 17
                            "large_slope_directions": ["X_positive"],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
@@ -239,7 +266,8 @@ if TerrainModelPath == None:
         #                 }
 
         #Generate Terrain
-        TerrainInfo = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],          fixed_inclination = TerrainSettings["fixed_inclination"], 
+        TerrainInfo = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],
+                                        fixed_inclination = TerrainSettings["fixed_inclination"], 
                                         randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
                                         random_surfsize = TerrainSettings["random_surfsize_flag"],
                                         randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
@@ -252,7 +280,9 @@ if TerrainModelPath == None:
                                         large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
                                         large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
                                         large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
-                                        large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"]) 
+                                        large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
+                                        y_center = y_center,
+                                        x_offset = x_offset)
     elif SpecialTerrain == True:
         #Terrain with Specific Patterns (flat/darpa)
         TerrainSettings = {"terrain_type": "darpa_left",#"single_large_slope_far",
@@ -334,6 +364,20 @@ InitConfig["PLx_init"], InitConfig["PLy_init"],InitConfig["PLz_init"],    \
 InitConfig["PRx_init"], InitConfig["PRy_init"],InitConfig["PRz_init"]\
 = getInitCondition_FirstStep(InitConditionType = ExternalParameters["InitConditionType"], 
                              InitConditionFilePath = ExternalParameters["InitConditionFilePath"])
+
+#Update the InitConfig base the current readings from the robot state
+InitConfig["x_init"] = msg_com.actual_com_pos_x #msg_com.data[0]
+InitConfig["y_init"] = msg_com.actual_com_pos_y #msg_com.data[1]
+InitConfig["z_init"] = msg_com.actual_com_pos_z #msg_com.data[2]
+
+InitConfig["PLx_init"] = msg_foot.actual_lf_pos_x #msg_foot.data[0]
+InitConfig["PLy_init"] = msg_foot.actual_lf_pos_y #msg_foot.data[1]
+InitConfig["PLz_init"] = msg_foot.actual_lf_pos_z #msg_foot.data[2]
+
+InitConfig["PRx_init"] = msg_foot.actual_rf_pos_x #msg_foot.data[6]
+InitConfig["PRy_init"] = msg_foot.actual_rf_pos_y #msg_foot.data[7]
+InitConfig["PRz_init"] = msg_foot.actual_rf_pos_z #msg_foot.data[8]
+
 #Get Init Contact Surfaces (here for the first step) and Orientation from the terrain info
 InitConfig["LeftInitSurf"]  = TerrainInfo["InitLeftSurfVertice"]
 InitConfig["RightInitSurf"] = TerrainInfo["InitRightSurfVertice"]
@@ -797,5 +841,7 @@ DumpedResults["FailedRoundInfo"] = FailedRoundInfo if not (len(AllOptResult) == 
 #print("Single-opt Result x_init (after dumping): ",DumpedResults["SingleOptResultSavings"][0]["InitConfig"]["x_init"])
 
 if saveData == True:
-    pickle.dump(DumpedResults, open(rolloutDirectory + '/' + Filename+".p", "wb"))    #Save Data
+    #pickle.dump(DumpedResults, open(rolloutDirectory + '/' + Filename+".p", "wb"))    #Save Data
+    pickle.dump(DumpedResults, open("/home/jiayu/Desktop/MLP_DataSet/SpecialCases/flat_temp.p", "wb"))    #Save Data
+if LogCMDLine == True:
     sys.stdout.close();   sys.stdout=stdoutOrigin                       #Close logging

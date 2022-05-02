@@ -23,14 +23,18 @@ def getInitCondition_FirstStep(InitConditionType = None, InitConditionFilePath =
         #SwingLeg Flag
         SwingLeftFirst = 1;   SwingRightFirst = 0
         #   Initial CoM State
-        x_init = 0.0;           y_init = 0.0;      z_init = 0.75
+        x_init = 0.0;           y_init = 0.0;      z_init = 0.85 #0.75
         xdot_init = 0.0;        ydot_init = 0.0;   zdot_init = 0.0
         Lx_init = 0.0;          Ly_init = 0.0;     Lz_init = 0.0
         Ldotx_init = 0.0;       Ldoty_init = 0.0;  Ldotz_init = 0.0
         #   Initial Contact Location Left Foot
-        PLx_init = x_init;    PLy_init = y_init + 0.1;  PLz_init = 0.0
+        PLx_init = x_init;    
+        PLy_init = y_init + 0.17/2.0;  
+        PLz_init = 0.0 #Distance between right and left foot is 0.17
         #   Initial Contact Location Right Foot
-        PRx_init = x_init;    PRy_init = y_init - 0.1;  PRz_init = 0.0
+        PRx_init = x_init;    
+        PRy_init = y_init - 0.17/2.0;  
+        PRz_init = 0.0
         ##   Initial Contact Tagents and Norms, should get from terrain patches
         #PL_init_TangentX = np.array([1,0,0]);   PL_init_TangentY = np.array([0,1,0]);   PL_init_Norm = np.array([0,0,1])
         #PR_init_TangentX = np.array([1,0,0]);   PR_init_TangentY = np.array([0,1,0]);   PR_init_Norm = np.array([0,0,1])

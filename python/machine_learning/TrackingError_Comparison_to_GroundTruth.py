@@ -1,11 +1,12 @@
 
-#Import packages
+# Import packages
 import numpy as np
-from multicontact_learning_local_objectives.python.rhp_plan.rhp_utils import * #Need get Init Config from global frame Function 
+# Need get Init Config from global frame Function
+from multicontact_learning_local_objectives.python.rhp_plan.rhp_utils import *
 import os
 import pickle
 from multicontact_learning_local_objectives.python.machine_learning.ml_utils import *
-import matplotlib.pyplot as plt #Matplotlib
+import matplotlib.pyplot as plt  # Matplotlib
 import time
 import shutil
 import sys
@@ -13,8 +14,8 @@ from multicontact_learning_local_objectives.python.rhp_plan.rhp_utils import *
 
 np.set_printoptions(precision=4)
 
-#--------------
-#Set up for Directories
+# --------------
+# Set up for Directories
 #   Define Working Directory
 workingDirectory = "/home/jiayu/Desktop/MLP_DataSet/Rubbles"
 print("Working folder: ", workingDirectory)
@@ -42,56 +43,67 @@ TrackingExpfilenames = os.listdir(TrackingExpPath)
 success_error_all = []
 failed_error_all = []
 
-#Loop over all the tracking exp files
+# Loop over all the tracking exp files
 for TrackingExp_filename in TrackingExpfilenames:
 
-    if ".p" in TrackingExp_filename:#a data file
-        
-        print("Process Tracking Exp File: ",TrackingExp_filename)
-        total_file_num = total_file_num + 1 #Process one file
-        
-        #Load Tracking Exp data
-        with open(TrackingExpPath + '/' +TrackingExp_filename, 'rb') as f:
-            TrackingExp_data= pickle.load(f)
-        
-        #Load Ground Truth data
+    if ".p" in TrackingExp_filename:  # a data file
+
+        print("Process Tracking Exp File: ", TrackingExp_filename)
+        total_file_num = total_file_num + 1  # Process one file
+
+        # Load Tracking Exp data
+        with open(TrackingExpPath + '/' + TrackingExp_filename, 'rb') as f:
+            TrackingExp_data = pickle.load(f)
+
+        # Load Ground Truth data
         #   Get Ground Truth File name
-        GroundTruthFileName_StartingIdx = TrackingExp_data["LocalObjSettings"]["GroundTruthTraj"].find("/Group")
-        GroundTruthFileName = TrackingExp_data["LocalObjSettings"]["GroundTruthTraj"][GroundTruthFileName_StartingIdx+1:]
+        GroundTruthFileName_StartingIdx = TrackingExp_data["LocalObjSettings"]["GroundTruthTraj"].find(
+            "/Group")
+        GroundTruthFileName = TrackingExp_data["LocalObjSettings"][
+            "GroundTruthTraj"][GroundTruthFileName_StartingIdx+1:]
         GroundTruth_file_path = GroundTruthPath + '/' + GroundTruthFileName
         with open(GroundTruth_file_path, 'rb') as f:
-            GroundTruth_data= pickle.load(f)
-            
-        #Compare Error in the Global Frame (Environment is the same, only compare state)
-        if len(TrackingExp_data["SingleOptResultSavings"]) < TrackingExp_data["Num_of_Rounds"] and len(TrackingExp_data["SingleOptResultSavings"]) > 0: #also need to filter out the cases with 0 step failed
-            #Failed Tracking Exp
+            GroundTruth_data = pickle.load(f)
+
+        # Compare Error in the Global Frame (Environment is the same, only compare state)
+        # also need to filter out the cases with 0 step failed
+        if len(TrackingExp_data["SingleOptResultSavings"]) < TrackingExp_data["Num_of_Rounds"] and len(TrackingExp_data["SingleOptResultSavings"]) > 0:
+            # Failed Tracking Exp
             print("- Failed Tracking Exp")
             failed_file_num = failed_file_num + 1
-            
-            #Loop Over all the rounds
+
+            # Loop Over all the rounds
             err_list_temp = []
             for roundIdx in range(len(TrackingExp_data["SingleOptResultSavings"])):
                 TrackingExp_SingleOptResult = TrackingExp_data["SingleOptResultSavings"][roundIdx]
-                TrackingExp_InitConfig_Temp, TrackingExp_TerminalConfig_Temp = getInitConfig_in_GlobalFrame_from_SingleOptResult(SingleOptRes=TrackingExp_SingleOptResult)
-                TrackingExp_State = np.array([TrackingExp_InitConfig_Temp["x_init"],TrackingExp_InitConfig_Temp["y_init"],TrackingExp_InitConfig_Temp["z_init"],
-                                              TrackingExp_InitConfig_Temp["xdot_init"],TrackingExp_InitConfig_Temp["ydot_init"],TrackingExp_InitConfig_Temp["zdot_init"],
-                                              TrackingExp_InitConfig_Temp["Lx_init"],TrackingExp_InitConfig_Temp["Ly_init"],TrackingExp_InitConfig_Temp["Lz_init"],
-                                              TrackingExp_InitConfig_Temp["PLx_init"],TrackingExp_InitConfig_Temp["PLy_init"],TrackingExp_InitConfig_Temp["PLz_init"],
-                                              TrackingExp_InitConfig_Temp["PRx_init"],TrackingExp_InitConfig_Temp["PRy_init"],TrackingExp_InitConfig_Temp["PRz_init"]])
-                
-                
+                TrackingExp_InitConfig_Temp, TrackingExp_TerminalConfig_Temp = getInitConfig_in_GlobalFrame_from_SingleOptResult(
+                    SingleOptRes=TrackingExp_SingleOptResult)
+                TrackingExp_State = np.array([TrackingExp_InitConfig_Temp["x_init"], TrackingExp_InitConfig_Temp["y_init"], TrackingExp_InitConfig_Temp["z_init"],
+                                              TrackingExp_InitConfig_Temp["xdot_init"], TrackingExp_InitConfig_Temp[
+                                                  "ydot_init"], TrackingExp_InitConfig_Temp["zdot_init"],
+                                              TrackingExp_InitConfig_Temp["Lx_init"], TrackingExp_InitConfig_Temp[
+                                                  "Ly_init"], TrackingExp_InitConfig_Temp["Lz_init"],
+                                              TrackingExp_InitConfig_Temp["PLx_init"], TrackingExp_InitConfig_Temp[
+                                                  "PLy_init"], TrackingExp_InitConfig_Temp["PLz_init"],
+                                              TrackingExp_InitConfig_Temp["PRx_init"], TrackingExp_InitConfig_Temp["PRy_init"], TrackingExp_InitConfig_Temp["PRz_init"]])
+
                 GroundTruth_SingleOptResult = GroundTruth_data["SingleOptResultSavings"][roundIdx]
-                GroundTruth_InitConfig_Temp, GroundTruth_TerminalConfig_Temp = getInitConfig_in_GlobalFrame_from_SingleOptResult(SingleOptRes=GroundTruth_SingleOptResult)
-                GroundTruth_State = np.array([GroundTruth_InitConfig_Temp["x_init"],GroundTruth_InitConfig_Temp["y_init"],GroundTruth_InitConfig_Temp["z_init"],
-                                              GroundTruth_InitConfig_Temp["xdot_init"],GroundTruth_InitConfig_Temp["ydot_init"],GroundTruth_InitConfig_Temp["zdot_init"],
-                                              GroundTruth_InitConfig_Temp["Lx_init"],GroundTruth_InitConfig_Temp["Ly_init"],GroundTruth_InitConfig_Temp["Lz_init"],
-                                              GroundTruth_InitConfig_Temp["PLx_init"],GroundTruth_InitConfig_Temp["PLy_init"],GroundTruth_InitConfig_Temp["PLz_init"],
-                                              GroundTruth_InitConfig_Temp["PRx_init"],GroundTruth_InitConfig_Temp["PRy_init"],GroundTruth_InitConfig_Temp["PRz_init"]])
-                
-                #Compute Error
-                error_vec = np.linalg.norm(TrackingExp_State - GroundTruth_State)
+                GroundTruth_InitConfig_Temp, GroundTruth_TerminalConfig_Temp = getInitConfig_in_GlobalFrame_from_SingleOptResult(
+                    SingleOptRes=GroundTruth_SingleOptResult)
+                GroundTruth_State = np.array([GroundTruth_InitConfig_Temp["x_init"], GroundTruth_InitConfig_Temp["y_init"], GroundTruth_InitConfig_Temp["z_init"],
+                                              GroundTruth_InitConfig_Temp["xdot_init"], GroundTruth_InitConfig_Temp[
+                                                  "ydot_init"], GroundTruth_InitConfig_Temp["zdot_init"],
+                                              GroundTruth_InitConfig_Temp["Lx_init"], GroundTruth_InitConfig_Temp[
+                                                  "Ly_init"], GroundTruth_InitConfig_Temp["Lz_init"],
+                                              GroundTruth_InitConfig_Temp["PLx_init"], GroundTruth_InitConfig_Temp[
+                                                  "PLy_init"], GroundTruth_InitConfig_Temp["PLz_init"],
+                                              GroundTruth_InitConfig_Temp["PRx_init"], GroundTruth_InitConfig_Temp["PRy_init"], GroundTruth_InitConfig_Temp["PRz_init"]])
+
+                # Compute Error
+                error_vec = np.linalg.norm(
+                    TrackingExp_State - GroundTruth_State)
                 err_list_temp.append(error_vec)
-            
+
             failed_error_all.append(err_list_temp)
             # print(err_list_temp)
             # fig=plt.figure();   ax = fig.gca()
@@ -100,49 +112,58 @@ for TrackingExp_filename in TrackingExpfilenames:
             #             TrackingExp_InitConfig, TrackingExp_TerminalConfig = getInitConfig_in_GlobalFrame_from_SingleOptResult(SingleOptRes=SingleOptResult_n_StepsBeforeFail)
 
         elif len(TrackingExp_data["SingleOptResultSavings"]) == TrackingExp_data["Num_of_Rounds"]:
-            #Successful Tracking Exp
+            # Successful Tracking Exp
             print("- Successful Tracking Exp")
             success_file_num = success_file_num + 1
 
-            #Loop Over all the rounds
+            # Loop Over all the rounds
             err_list_temp = []
             for roundIdx in range(len(TrackingExp_data["SingleOptResultSavings"])):
                 TrackingExp_SingleOptResult = TrackingExp_data["SingleOptResultSavings"][roundIdx]
-                TrackingExp_InitConfig_Temp, TrackingExp_TerminalConfig_Temp = getInitConfig_in_GlobalFrame_from_SingleOptResult(SingleOptRes=TrackingExp_SingleOptResult)
-                TrackingExp_State = np.array([TrackingExp_InitConfig_Temp["x_init"],TrackingExp_InitConfig_Temp["y_init"],TrackingExp_InitConfig_Temp["z_init"],
-                                              TrackingExp_InitConfig_Temp["xdot_init"],TrackingExp_InitConfig_Temp["ydot_init"],TrackingExp_InitConfig_Temp["zdot_init"],
-                                              TrackingExp_InitConfig_Temp["Lx_init"],TrackingExp_InitConfig_Temp["Ly_init"],TrackingExp_InitConfig_Temp["Lz_init"],
-                                              TrackingExp_InitConfig_Temp["PLx_init"],TrackingExp_InitConfig_Temp["PLy_init"],TrackingExp_InitConfig_Temp["PLz_init"],
-                                              TrackingExp_InitConfig_Temp["PRx_init"],TrackingExp_InitConfig_Temp["PRy_init"],TrackingExp_InitConfig_Temp["PRz_init"]])
-                
-                
+                TrackingExp_InitConfig_Temp, TrackingExp_TerminalConfig_Temp = getInitConfig_in_GlobalFrame_from_SingleOptResult(
+                    SingleOptRes=TrackingExp_SingleOptResult)
+                TrackingExp_State = np.array([TrackingExp_InitConfig_Temp["x_init"], TrackingExp_InitConfig_Temp["y_init"], TrackingExp_InitConfig_Temp["z_init"],
+                                              TrackingExp_InitConfig_Temp["xdot_init"], TrackingExp_InitConfig_Temp[
+                                                  "ydot_init"], TrackingExp_InitConfig_Temp["zdot_init"],
+                                              TrackingExp_InitConfig_Temp["Lx_init"], TrackingExp_InitConfig_Temp[
+                                                  "Ly_init"], TrackingExp_InitConfig_Temp["Lz_init"],
+                                              TrackingExp_InitConfig_Temp["PLx_init"], TrackingExp_InitConfig_Temp[
+                                                  "PLy_init"], TrackingExp_InitConfig_Temp["PLz_init"],
+                                              TrackingExp_InitConfig_Temp["PRx_init"], TrackingExp_InitConfig_Temp["PRy_init"], TrackingExp_InitConfig_Temp["PRz_init"]])
+
                 GroundTruth_SingleOptResult = GroundTruth_data["SingleOptResultSavings"][roundIdx]
-                GroundTruth_InitConfig_Temp, GroundTruth_TerminalConfig_Temp = getInitConfig_in_GlobalFrame_from_SingleOptResult(SingleOptRes=GroundTruth_SingleOptResult)
-                GroundTruth_State = np.array([GroundTruth_InitConfig_Temp["x_init"],GroundTruth_InitConfig_Temp["y_init"],GroundTruth_InitConfig_Temp["z_init"],
-                                              GroundTruth_InitConfig_Temp["xdot_init"],GroundTruth_InitConfig_Temp["ydot_init"],GroundTruth_InitConfig_Temp["zdot_init"],
-                                              GroundTruth_InitConfig_Temp["Lx_init"],GroundTruth_InitConfig_Temp["Ly_init"],GroundTruth_InitConfig_Temp["Lz_init"],
-                                              GroundTruth_InitConfig_Temp["PLx_init"],GroundTruth_InitConfig_Temp["PLy_init"],GroundTruth_InitConfig_Temp["PLz_init"],
-                                              GroundTruth_InitConfig_Temp["PRx_init"],GroundTruth_InitConfig_Temp["PRy_init"],GroundTruth_InitConfig_Temp["PRz_init"]])
-                
-                #Compute Error
-                error_vec = np.linalg.norm(TrackingExp_State - GroundTruth_State)
+                GroundTruth_InitConfig_Temp, GroundTruth_TerminalConfig_Temp = getInitConfig_in_GlobalFrame_from_SingleOptResult(
+                    SingleOptRes=GroundTruth_SingleOptResult)
+                GroundTruth_State = np.array([GroundTruth_InitConfig_Temp["x_init"], GroundTruth_InitConfig_Temp["y_init"], GroundTruth_InitConfig_Temp["z_init"],
+                                              GroundTruth_InitConfig_Temp["xdot_init"], GroundTruth_InitConfig_Temp[
+                                                  "ydot_init"], GroundTruth_InitConfig_Temp["zdot_init"],
+                                              GroundTruth_InitConfig_Temp["Lx_init"], GroundTruth_InitConfig_Temp[
+                                                  "Ly_init"], GroundTruth_InitConfig_Temp["Lz_init"],
+                                              GroundTruth_InitConfig_Temp["PLx_init"], GroundTruth_InitConfig_Temp[
+                                                  "PLy_init"], GroundTruth_InitConfig_Temp["PLz_init"],
+                                              GroundTruth_InitConfig_Temp["PRx_init"], GroundTruth_InitConfig_Temp["PRy_init"], GroundTruth_InitConfig_Temp["PRz_init"]])
+
+                # Compute Error
+                error_vec = np.linalg.norm(
+                    TrackingExp_State - GroundTruth_State)
                 err_list_temp.append(error_vec)
             print(err_list_temp)
-            
+
             success_error_all.append(err_list_temp)
 
-#Compute Mean error for success
-success_mean_error = np.mean(success_error_all,axis=0)
-success_std_error = np.std(success_error_all,axis=0)
+# Compute Mean error for success
+success_mean_error = np.mean(success_error_all, axis=0)
+success_std_error = np.std(success_error_all, axis=0)
 stepIdx = np.array([i for i in range(30)])
 print("mean error for sucess: ", success_mean_error)
 print("std error for sucess: ", success_std_error)
-fig=plt.figure();   ax = fig.gca()
+fig = plt.figure()
+ax = fig.gca()
 plt.errorbar(stepIdx, success_mean_error, success_std_error)
 plt.show()
 
 
-#Compute Mean error for failed
+# Compute Mean error for failed
 failed_mean_error = []
 failed_std_error = []
 
@@ -163,12 +184,12 @@ failed_std_error = np.array(failed_std_error)
 
 print("mean error for fail: ", failed_mean_error)
 print("std error for fail: ", failed_std_error)
-fig=plt.figure();   ax = fig.gca()
+fig = plt.figure()
+ax = fig.gca()
 plt.errorbar(stepIdx, failed_mean_error, failed_std_error)
 plt.show()
 
 
-            
 #         #Check if the current round is a failued round or success round
 #         if len(TrackingExp_data["SingleOptResultSavings"]) < TrackingExp_data["Num_of_Rounds"] and len(TrackingExp_data["SingleOptResultSavings"]) > 0: #also need to filter out the cases with 0 step failed
 #             #Failed Round identified
@@ -213,11 +234,10 @@ plt.show()
 
 #             #Save Files
 #             pickle.dump(UnseenState, open(UnseenStateFolder + '/' + TrackingExp_filename[:-2] + '_' + str(StepIndexbeforeFail) + 'StepBeforeFail' +".p", "wb"))    #Save Data
-            
+
 #             print(" ")
 
 # print("-------Summary--------")
 # print("Total number of Tracking Exp rollouts being processed: ", total_file_num)
 # print("Total number of Failed RollOuts: ", failed_file_num)
 # print(" ")
-

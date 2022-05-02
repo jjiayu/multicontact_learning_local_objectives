@@ -1,15 +1,15 @@
-#Input 1: Working Folder (.../LargeSlope)
-#Input 2: Rollout Folder Name
-#Input 3: Destination Folder Name
-#INput 4: Type of the large slope
+# Input 1: Working Folder (.../LargeSlope)
+# Input 2: Rollout Folder Name
+# Input 3: Destination Folder Name
+# INput 4: Type of the large slope
 
 
-#Import Packages
+# Import Packages
 import numpy as np
 import os
 import pickle
 from multicontact_learning_local_objectives.python.machine_learning.ml_utils import *
-import matplotlib.pyplot as plt #Matplotlib
+import matplotlib.pyplot as plt  # Matplotlib
 import time
 import shutil
 import sys
@@ -24,7 +24,7 @@ Dest_Path = WorkingDirectory + '/' + sys.argv[3]
 print("Destination Folder Path: ", Dest_Path)
 if os.path.isdir(Dest_Path):
     raise Exception("Destination Folder Exists Already")
-#Make the folder
+# Make the folder
 if not (os.path.isdir(Dest_Path)):
     os.mkdir(Dest_Path)
 
@@ -33,24 +33,24 @@ print("Type of the large slope: ", largeslope_type)
 
 totalfiles = 0
 
-#get all the file names
+# get all the file names
 filenames = os.listdir(RollOutPath)
 
 for filename in filenames:
-    if ".p" in filename:#a data file
+    if ".p" in filename:  # a data file
 
-        #Load data
+        # Load data
         with open(RollOutPath+"/"+filename, 'rb') as f:
-            data= pickle.load(f)
+            data = pickle.load(f)
 
         totalfiles = totalfiles + 1
-        #Get terrain path
+        # Get terrain path
         terrainPath = data["TerrainModelPath"]
-        #Get the appendix of the file name
+        # Get the appendix of the file name
         appendedNameIdx = terrainPath.find(largeslope_type+"_angle")
         appendedName = terrainPath[appendedNameIdx:-2]
-        
-        #Get File Names
+
+        # Get File Names
         origin_pFileName = filename
         origin_txtFileName = filename[0:-2] + ".txt"
         dest_pFileName = filename[0:-2]+"_"+appendedName+".p"
@@ -62,20 +62,15 @@ for filename in filenames:
         print("Destination txtFile Name: ", dest_txtFileName)
         print("------------------------------------------")
 
-        #Copy
-        #For pFile
+        # Copy
+        # For pFile
         pFile_src_path = RollOutPath + "/" + origin_pFileName
         pFile_dest_path = Dest_Path + "/" + dest_pFileName
         shutil.copy(pFile_src_path, pFile_dest_path)
 
-        #For txtFile
+        # For txtFile
         txtFile_src_path = RollOutPath + "/" + origin_txtFileName
         txtFile_dest_path = Dest_Path + "/" + dest_txtFileName
         shutil.copy(txtFile_src_path, txtFile_dest_path)
 
 print("Total Number of File Processed: ", totalfiles)
-
-
-        
-
-        
