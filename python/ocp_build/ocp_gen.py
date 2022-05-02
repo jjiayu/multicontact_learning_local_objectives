@@ -32,6 +32,9 @@ from sl1m.planner_scenarios.talos.constraints_shift import *
 
 #Function to build the first level
 def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList = None, PhaseDuration_Limits = None, miu = 0.3, LocalObjMode = False):
+    
+    #miu = 0.41
+
     #-----------------------------------------------------------------------------------------------------------------------
     #Define Constant Parameters
     #Parameters 
@@ -665,8 +668,10 @@ def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList 
                         h*(FL1z[k]/m + FL2z[k]/m + FL3z[k]/m + FL4z[k]/m + FR1z[k]/m + FR2z[k]/m + FR3z[k]/m + FR4z[k]/m - G)**2
                 #with Angular Momentum
                 J = J + h*Lx[k]**2 + h*Ly[k]**2 + h*Lz[k]**2
-                #With Angular momentum rate
-                #J = J + h*Ldotx[k]**2 + h*Ldoty[k]**2 + h*Ldotz[k]**2
+                # #With Angular momentum rate
+                # J = J + h*Ldotx[k]**2 + h*Ldoty[k]**2 + h*Ldotz[k]**2
+                # #with Velocity
+                # J = J + h*xdot[k]**2 + h*ydot[k]**2 + h*zdot[k]**2
 
     #Relative Foot Constraints
     # #   Check for init footstep locations
@@ -791,6 +796,9 @@ def NLP_SingleStep(m = 95.0, Nk_Local= 7, AngularDynamics = True, ParameterList 
 #Function to build the second level
 #Nsteps: Number of steps in the second level, = Total Number of Steps of the Entire Lookahead Horizon - 1
 def NLP_SecondLevel(m = 95.0, Nk_Local = 7, Nsteps = 1, AngularDynamics=True, ParameterList = None, PhaseDuration_Limits = None, miu = 0.3):
+
+    #miu = 0.41
+
     #-----------------------------------------------------------------------------------------------------------------------
     #Define Constant Parameters
     G = 9.80665 #kg/m^2
@@ -1933,8 +1941,10 @@ def NLP_SecondLevel(m = 95.0, Nk_Local = 7, Nsteps = 1, AngularDynamics=True, Pa
                         h*(FL1z[k]/m + FL2z[k]/m + FL3z[k]/m + FL4z[k]/m + FR1z[k]/m + FR2z[k]/m + FR3z[k]/m + FR4z[k]/m - G)**2
                 #with Angular Momentum
                 J = J + h*Lx[k]**2 + h*Ly[k]**2 + h*Lz[k]**2
-                #With Angular momentum rate
-                #J = J + h*Ldotx[k]**2 + h*Ldoty[k]**2 + h*Ldotz[k]**2
+                # #With Angular momentum rate
+                # J = J + h*Ldotx[k]**2 + h*Ldoty[k]**2 + h*Ldotz[k]**2
+                # #with Velocity
+                # J = J + h*xdot[k]**2 + h*ydot[k]**2 + h*zdot[k]**2
     
     #-------------------------------------
     #Relative Footstep Constraint
@@ -5416,7 +5426,7 @@ def ocp_solver_build(FirstLevel = None, SecondLevel = None, TotalNumSteps = None
     prob = {'x': DecisionVars, 'f': J, 'g': g, 'p': paras}
     opts = {}
     
-    #------------Kintro------------------
+    # #------------Kintro------------------
     #Good Setup of Knitro
     opts["knitro.presolve"] = 1
     opts["knitro.honorbnds"] = 0
@@ -5427,10 +5437,10 @@ def ocp_solver_build(FirstLevel = None, SecondLevel = None, TotalNumSteps = None
     #opts["knitro.bar_feasible"]=2
     solver = ca.nlpsol('solver', 'knitro', prob, opts)
 
-    #-------------IPOPT------------
-    #opts["ipopt.bound_push"] = 1e-7
-    #opts["ipopt.bound_frac"] = 1e-7
-    #opts["ipopt.constr_viol_tol"] = 1e-3
+    # -------------IPOPT------------
+    # opts["ipopt.bound_push"] = 1e-7
+    # opts["ipopt.bound_frac"] = 1e-7
+    # opts["ipopt.constr_viol_tol"] = 1e-3
     #solver = ca.nlpsol('solver', 'ipopt', prob, opts)
 
     return copy.deepcopy(solver), copy.deepcopy(DecisionVars_lb), copy.deepcopy(DecisionVars_ub), copy.deepcopy(glb), copy.deepcopy(gub), copy.deepcopy(var_index)

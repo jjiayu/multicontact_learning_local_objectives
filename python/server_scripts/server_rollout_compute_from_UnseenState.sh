@@ -14,6 +14,8 @@
 
 #GroupName=Group20 && longjob -28day -c "nice bash server_rollout_compute_from_UnseenState.sh TimeObj_Slack015_LargeSlopeOnly_Angle_17_26 RollOuts_8Steps_from_4StepbeforeFail_TrackTrainingAll_AllInitSet UnseenState_4StepBeforeFail_InitialAllSet $GroupName $GroupName 8"
 
+#GroupName=Group20 && longjob -28day -c "nice bash server_rollout_compute_from_UnseenState.sh LargeSlope_TimeTrack_Angle_17_26 RollOuts_8Steps_from_3StepbeforeFail_TrackTrainingInit_Aug_1Time Unseen_3StepbeforeFail_TrackingTrainingInit_Aug_1Time $GroupName $GroupName 8"
+
 #cd /afs/inf.ed.ac.uk/group/project/mlp_localobj/
 
 #homepath=/home/jiayu/Desktop/MLP_DataSet/

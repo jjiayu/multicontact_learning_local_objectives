@@ -278,5 +278,15 @@ def draw_timeSeries_and_traj(filePath = None, query_traj = None, traj_color = No
             if traj_idx <= len(Traj_Collected["x_result"])-1:
                 ax.plot(Traj_Collected["timeseries"][traj_idx],Traj_Collected[query_traj][traj_idx],color = traj_color)
 
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel(query_traj)
+    ax.set_title(query_traj)
 
     return None
+
+# #show the queried traj
+# traj_path = "/home/jiayu/Desktop/tsid_ggory/data/rubbles_Y_positive_25.p"
+# #traj_path = "/home/jiayu/Desktop/MLP_DataSet/TempRollOuts/temp1640000705.107216.p"
+# fig, ax = plt.subplots() 
+# draw_timeSeries_and_traj(filePath = traj_path, query_traj = "zdot_result", traj_color = None, startStepNum = 0, EndStepNum = 30, NumLocalKonts = 8, fig= fig, ax = ax)
+# plt.show()

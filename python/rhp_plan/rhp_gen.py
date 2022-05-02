@@ -34,8 +34,8 @@ ExternalParameters = {"WorkingDirectory": None,
                       "ML_ModelPath": None, #"/home/jiayu/Desktop/MLP_DataSet/2stepsVsOthers/ML_Models/NN_Model_Valid",
                       "DataSetPath": None, #"/home/jiayu/Desktop/MLP_DataSet/Rubbles/DataSet", #None,
                       "NumLookAhead": 4,
-                      "NumofRounds":30,
-                      "LargeSlopeAngle": 0,
+                      "NumofRounds":15,
+                      "LargeSlopeAngle": 24.0,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
                       "VisualizationFlag": "Yes",
@@ -179,7 +179,7 @@ SpecialTerrain = False
 if TerrainModelPath == None:
     #Terrain with Small (random) Patches
     if SpecialTerrain == False:
-        # # # #-----------------------------------------
+        #-----------------------------------------
         # # #For local Testing
         # TerrainSettings = {"terrain_type": "flat",#"antfarm_left",
         #                    "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
@@ -190,8 +190,8 @@ if TerrainModelPath == None:
         #                    "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
         #                    "Projected_Length": 0.55, "Projected_Width": 1.0,
         #                    "large_slope_flag":False,
-        #                    "large_slope_index": [8],#[np.random.choice([16,17])],#select a patch from number 16 or 17
-        #                    "large_slope_directions": ["X_positive"],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
+        #                    "large_slope_index": [9],#[np.random.choice([16,17])],#select a patch from number 16 or 17
+        #                    "large_slope_directions": ["Y_negative"],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
         #                    "large_slope_inclinations": [float(ExternalParameters["LargeSlopeAngle"])/180*np.pi],#[23/180*np.pi],#[np.round(np.random.uniform(17.0/180*np.pi,25.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
         #                    "large_slope_X_shifts": [0.0],#[0.0], 
         #                    "large_slope_Y_shifts": [0.0],#[0.0], 

@@ -8,10 +8,10 @@ mpl.rcParams['agg.path.chunksize'] = 1000000
 
 #Load Datta set 
 #Dataset filename 
-datasetfile_original = "/home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/DataSet/Training_InitSet/data.p"
-datasetfile_aug = "/home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/DataSet/Training_InitSet/data.p"
-datasetfile_failed_state = "/home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/DataSet/Training_InitSet/data.p"
-datasetfile_new = "/home/jiayu/Desktop/MLP_DataSet/TimeTrack_LargeSlopeOnly_Angle_17_26/DataSet/Training_InitSet/data.p"
+datasetfile_original = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_TimeTrack_Angle_17_26/DataSet/TrainingInit/data.p"
+datasetfile_aug = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_TimeTrack_Angle_17_26/DataSet/TrainingAug1Time_1StepBeforeFail_TrackTrainingExtra_InitSet/data.p"
+datasetfile_failed_state = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_TimeTrack_Angle_17_26/DataSet/TrainingAug1Time_2StepBeforeFail_TrackTrainingExtra_InitSet/data.p"
+datasetfile_new = "/home/jiayu/Desktop/MLP_DataSet/LargeSlope_TimeTrack_Angle_17_26/DataSet/TrainingAug1Time_3StepBeforeFail_TrackTrainingInit_InitSet/data.p"
 
 
 dataset_original = pickle.load(open(datasetfile_original,"rb"))
@@ -78,9 +78,9 @@ X_original = X_original
 from mpl_toolkits.mplot3d import Axes3D
 fig=plt.figure();   ax = Axes3D(fig)
 ax.scatter(X_original[:,0], X_original[:,1], X_original[:,2], c='g', marker='o', linewidth = 0.1, alpha=0.05) 
-ax.scatter(X_aug[:,0], X_aug[:,1], X_aug[:,2], c='b', marker='o', linewidth = 0.1, alpha=0.05)
+ax.scatter(X_aug[:,0], X_aug[:,1], X_aug[:,2], c='b', marker='o', linewidth = 0.1, alpha=0.)
 ax.scatter(X_failed[:,0], X_failed[:,1], X_failed[:,2], c='r', marker='o', linewidth = 0.1, alpha=0.) 
-ax.scatter(X_new[:,0], X_new[:,1], X_new[:,2], c='k', marker='o', linewidth = 0.1, alpha=0.) 
+ax.scatter(X_new[:,0], X_new[:,1], X_new[:,2], c='k', marker='o', linewidth = 0.1, alpha=0.5) 
 ax.set_title("CoM in Local Frame")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
@@ -91,9 +91,9 @@ plt.show()
 
 fig=plt.figure();   ax = Axes3D(fig)
 ax.scatter(X_original[:,3], X_original[:,4], X_original[:,5], c='g', marker='o', linewidth = 0.1, alpha=0.05) 
-ax.scatter(X_aug[:,3], X_aug[:,4], X_aug[:,5], c='b', marker='o', linewidth = 0.1, alpha=0.05) 
+ax.scatter(X_aug[:,3], X_aug[:,4], X_aug[:,5], c='b', marker='o', linewidth = 0.1, alpha=0.) 
 ax.scatter(X_failed[:,3], X_failed[:,4], X_failed[:,5], c='r', marker='o', linewidth = 0.1, alpha=0.) 
-ax.scatter(X_new[:,3], X_new[:,4], X_new[:,5], c='k', marker='o', linewidth = 0.1, alpha=0.) 
+ax.scatter(X_new[:,3], X_new[:,4], X_new[:,5], c='k', marker='o', linewidth = 0.1, alpha=0.5) 
 ax.set_title("CoM dot in Local Frame")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
@@ -102,9 +102,9 @@ plt.show()
 
 fig=plt.figure();   ax = Axes3D(fig)
 ax.scatter(X_original[:,6], X_original[:,7], X_original[:,8], c='g', marker='o', linewidth = 0.1, alpha=0.05) 
-ax.scatter(X_aug[:,6], X_aug[:,7], X_aug[:,8], c='b', marker='o', linewidth = 0.1, alpha=0.05)
+ax.scatter(X_aug[:,6], X_aug[:,7], X_aug[:,8], c='b', marker='o', linewidth = 0.1, alpha=0.)
 ax.scatter(X_failed[:,6], X_failed[:,7], X_failed[:,8], c='r', marker='o', linewidth = 0.1, alpha=0.) 
-ax.scatter(X_new[:,6], X_new[:,7], X_new[:,8], c='k', marker='o', linewidth = 0.1, alpha=0.) 
+ax.scatter(X_new[:,6], X_new[:,7], X_new[:,8], c='k', marker='o', linewidth = 0.1, alpha=0.5) 
 ax.set_title("Am in Local Frame")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
@@ -116,9 +116,9 @@ plt.show()
 
 fig=plt.figure();   ax = Axes3D(fig)
 ax.scatter(X_original[:,9], X_original[:,10], X_original[:,11], c='g', marker='o', linewidth = 0.1, alpha=0.05) 
-ax.scatter(X_aug[:,9], X_aug[:,10], X_aug[:,11], c='b', marker='o', linewidth = 0.1, alpha=0.05) 
+ax.scatter(X_aug[:,9], X_aug[:,10], X_aug[:,11], c='b', marker='o', linewidth = 0.1, alpha=0.) 
 ax.scatter(X_failed[:,9], X_failed[:,10], X_failed[:,11], c='r', marker='o', linewidth = 0.1, alpha=0.) 
-ax.scatter(X_new[:,9], X_new[:,10], X_new[:,11], c='k', marker='o', linewidth = 0.1, alpha=0.) 
+ax.scatter(X_new[:,9], X_new[:,10], X_new[:,11], c='k', marker='o', linewidth = 0.1, alpha=0.5) 
 ax.set_title("Contact Location in Local Frame")
 ax.set_xlabel("x")
 ax.set_ylabel("y")

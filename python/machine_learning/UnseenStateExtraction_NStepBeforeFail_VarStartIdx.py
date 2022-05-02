@@ -6,6 +6,8 @@
 #5: How many steps before failed tracking? (Count from 1)
 #6: Which round Idx should we start the trace back (start idx of the traj of large slope) (i.e. 2)
 
+#python3 UnseenStateExtraction_NStepBeforeFail_VarStartIdx.py /afs/inf.ed.ac.uk/user/s15/s1545529/Desktop/datastorage/LargeSlope_TimeTrack_Angle_17_26/ NN_TrackTrainingInit_LargeSlope_Aug_1Time CleanTrainingRollOuts_Init Unseen_3StepbeforeFail_TrackingTrainingInit_Aug_1Time 3 2
+
 import numpy as np
 from multicontact_learning_local_objectives.python.rhp_plan.rhp_utils import * #Need get Init Config from global frame Function 
 import os
