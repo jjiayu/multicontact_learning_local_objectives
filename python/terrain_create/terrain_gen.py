@@ -9,6 +9,342 @@ import copy
 
 # NOTE: ALL FUNCTIONS ONLY CONSIDER LEFT SWING IN THE FIRST STEP
 
+#The one we will be using for lab experiments
+def terrain_model_gen_lab(terrain_name=None,
+                      customized_terrain_pattern = [],
+                      Proj_Length=0.6, Proj_Width=0.6,
+                      fixed_inclination=0.0,
+                      randomInitSurfSize=False,
+                      random_surfsize=False, min_shrink_factor=0.0, max_shrink_factor=0.3,
+                      randomHorizontalMove=False,  # Need to add random Height Move for Normal Patches
+                      randomElevationShift=False, min_elevation_shift=-0.075, max_elevation_shift=0.075,
+                      randomMisAlignmentofFirstTwoPatches=False, MisAlignmentColumn=None, MisAlignmentAmount=0.25,
+                      NumSteps=None, NumLookAhead=None,
+                      large_slope_flag=False, large_slope_index=[],
+                      large_slope_directions=[], large_slope_inclinations=[],
+                      large_slope_X_shifts=[], large_slope_Y_shifts=[], large_slope_Z_shifts=[],
+                      y_center = 0.0,
+                      x_offset = 0.0):
+
+
+    # Check large slope parameters are in the same length
+    if large_slope_flag == True:
+        if (len(large_slope_index) == len(large_slope_directions)) and (len(large_slope_directions) == len(large_slope_inclinations)) and \
+           (len(large_slope_inclinations) == len(large_slope_X_shifts)) and (len(large_slope_X_shifts) == len(large_slope_Y_shifts)) and \
+           (len(large_slope_Y_shifts) == len(large_slope_Z_shifts)):
+            print("All Large Slope Parameters in the same Length")
+        else:
+            raise Exception("Large Slope Parameters in a Different Length")
+
+    # Surf Vertex Identification
+    # p2---------------------p1
+    # |                      |
+    # |                      |
+    # |                      |
+    # p3---------------------p4
+
+    # ---------------
+    # Decide Parameters
+    # Number of Surfaces based on Number of steps and Number of lookahead and initial patches
+    TotalNumSurfs = NumSteps + NumLookAhead - 1 + 2  # (include the intial two contact patches)
+
+    # ---------------
+    # Decide Which column will have Mis Alignment of (the first two patches) if not provided
+    if randomMisAlignmentofFirstTwoPatches == True:
+        if MisAlignmentColumn == None:
+            MisAlignmentColumn = np.random.choice(["left", "right"], 1)
+    elif randomMisAlignmentofFirstTwoPatches == False:
+        MisAlignmentColumn = "left"
+
+    # Convert to the index of the mismatch (NOTE: idx is for COntact Patch sequence, not all patches; start from zero)
+    if MisAlignmentColumn == "left":
+        MisAlignedPatchIdx = 0
+    elif MisAlignmentColumn == "right":
+        MisAlignedPatchIdx = 1
+    else:
+        raise Exception("Unknown column name")
+
+    # ---------------
+    # Generate Initial Patches (Currently Define as flat patches)
+    if randomInitSurfSize == False:
+        InitContactSurf_x_max = 0.15 + x_offset
+    elif randomInitSurfSize == True:
+        InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
+    else:
+        raise Exception("Unknow Flag for Init Contact Surf Left most Boder")
+
+    print("Left Init Contact Surface:")
+    Sl0 = np.array([[InitContactSurf_x_max, 1.0+y_center, 0.], [-0.2, 1.0+y_center, 0.],
+                   [-0.2, y_center, 0.], [InitContactSurf_x_max, y_center, 0.0]])
+    #Sl0 = np.array([[0.35, 1.0, 0.], [-0.35, 1.0, 0.], [-0.35, 0.0, 0.], [0.35, 0.0, 0.0]])
+    LeftSurfType = getSurfaceType(Sl0)  # "flat"
+    print("Left Init Contact Surface Type: ", LeftSurfType)
+    Sl0_TangentX, Sl0_TangentY, Sl0_Norm, Sl0_Orientation = getTerrainTagentsNormOrientation(
+        Sl0)
+
+    print("Right Init Contact Surface")
+    Sr0 = np.array([[InitContactSurf_x_max, y_center, 0.], [-0.2, y_center, 0.],
+                   [-0.2, -1.0 + y_center, 0.], [InitContactSurf_x_max, -1.0 + y_center, 0.0]])
+    #Sr0 = np.array([[0.7, 0, 0.], [0.0, 0, 0.], [0.0, -1.0, 0.], [0.7, -1.0, 0.0]])
+    RightSurfType = getSurfaceType(Sr0)  # "flat"
+    print("Right Init Contact Surface Type: ", RightSurfType)
+    Sr0_TangentX, Sr0_TangentY, Sr0_Norm, Sr0_Orientation = getTerrainTagentsNormOrientation(
+        Sr0)
+
+    # ------------
+    # Make Contact Patches
+    # --------------------------
+    #   Decide Terrain Pattern
+    if (terrain_name == "flat") or (terrain_name == "stair") or (terrain_name == "single_flat"):
+        terrain_pattern = ["flat", "flat", "flat", "flat"] * 50  # 200 steps
+
+    elif terrain_name == "antfarm_left":
+        # up v first, then down v
+        # NOTE: Currently Assume the Initial Contacts are Flat
+        terrain_pattern = ["X_negative", "X_positive",
+                           "X_positive", "X_negative"] * 50  # 200 steps
+
+    elif terrain_name == "up_and_down_left":
+        terrain_pattern = ["Y_negative", "Y_negative",
+                           "Y_positive", "Y_positive"] * 50  # 200 steps
+
+    elif terrain_name == "random":
+        #TerrainTypeList = ["flat", "X_positive", "X_negative", "Y_positive", "Y_negative"]
+        # 4 types of terrain, no flat
+        TerrainTypeList = ["X_positive",
+                           "X_negative", "Y_positive", "Y_negative"]
+        terrain_pattern = np.random.choice(TerrainTypeList, 200)
+    elif terrain_name == "customized":
+        terrain_pattern = customized_terrain_pattern + ["flat"]*200
+    else:
+        raise Exception("Unknown Terrain Type")
+
+    print(terrain_pattern)
+
+    # -----------------------------------
+    #   Create container for Patches
+    ContactSurfsVertice = []
+    ContactSurfsTypes = []
+    ContactSurfsNames = []
+    AllPatches = [Sl0, Sr0] + ContactSurfsVertice
+
+    # ------------------------------------
+    # Generate a sequence of flat patches
+    for surfNum in range(2, TotalNumSurfs):
+        print("Put Contact Patch ", surfNum)
+
+        # Decide Coordinate of reference point
+        if surfNum % 2 == 0:  # Even number of steps (Swing the Left)
+            # ----       #p2---------------------p1
+            #            |                      |
+            # Sn-2(Sl0) # |         Sn           |
+            # (L) #      |        (L)           |
+            # ----      #p3 (ref_x, ref_y)-------p4
+            #            |                      |
+            # Sn-1(Sr0) # |                      |
+            # (R) #      |                      |
+
+            # Define which Contact foot is for the Surface
+            SurfContactLeft = "left"
+            # ref_x decided by the P1_x of Sn-2 (-2 in index)
+            ref_x = AllPatches[-2][0][0]
+            # ref_y decided by the P1_y of Sn-1 (-1 in index)
+            ref_y = AllPatches[-1][0][1]
+            #center = getCenter(AllPatches[-1])
+            # center[2] #ref_z decided by the central z of Sn-1 (relative foot height constraints is enforced with respect to stationary foot)
+            ref_z = 0.0
+
+        elif surfNum % 2 == 1:  # Odd number of steps
+            # ---- #        ---------------------
+            #      |                      |
+            #      |         Sn-1         |
+            #      |          (L)         |
+            # ---- #      ---------------------
+            #     P2 (ref_x, ref_y)------P1
+            #      |                      |
+            # Sn-2(Sr0) # |         Sn           |
+            # (R) #      |        (R)           |
+            #    P3---------------------P4
+
+            # Define which Contact foot is for the Surface
+            SurfContactLeft = "right"
+            ref_x = AllPatches[-2][0][0]  # ref_x decided by the P1_x of Sn-2
+            # ref_y decided by the P3_y of Sn-1 (ContactSurfsVertice[-1])
+            ref_y = AllPatches[-1][2][1]
+            #center = getCenter(AllPatches[-1])
+            # center[2] #ref_z decided by the central z of Sn-1 (relative foot height constraints is enforced with respect to stationary foot)
+            ref_z = 0.0
+
+        # Shift along x-direction for mis alignment of First Two Patches
+        # Convert from Contact Patch Sequence index (start from 0) to all patches index (+ 2)
+        if surfNum == MisAlignedPatchIdx + 2:
+            if randomMisAlignmentofFirstTwoPatches == True:  # if we randomly mis align the first two patches
+                # MisAlignmentAmount = np.random.uniform(0.0,MaxMisAllignmentAmount) #random choose a mis aligned amount
+                ref_x = ref_x + MisAlignmentAmount  # shift the x-ref of the selected patch
+
+        # Build an initial flat surface
+        surf_temp = flat_patch_gen(PatchColumn=SurfContactLeft, ref_x=ref_x,
+                                   ref_y=ref_y, ref_z=ref_z, Proj_Length=Proj_Length, Proj_Width=Proj_Width)
+
+        # Add to current surface to lists
+        ContactSurfsVertice.append(surf_temp)
+        ContactSurfsNames.append("S"+str(surfNum-2))
+        ContactSurfsTypes.append(terrain_pattern[surfNum])
+        AllPatches.append(surf_temp)
+
+    # -----------------------------------
+    # Modify the patches
+    # Clear All Patches (because it finishes its duty)
+    AllPatches = []
+    # ----------------------------------------
+    # (Randomly) Shrink size if we want (only make smaller)
+    if random_surfsize == True:
+        for ContactSurfNum in range(len(ContactSurfsVertice)):
+            shrinkFactor = np.random.uniform(
+                min_shrink_factor, max_shrink_factor)
+            ContactSurfsVertice[ContactSurfNum] = flat_patch_shrink(
+                surf=ContactSurfsVertice[ContactSurfNum], shrinkFactor=shrinkFactor, Proj_Length=Proj_Length, Proj_Width=Proj_Width)
+            print("Shrink (Smaller) Contact Factor of Patch ",
+                  ContactSurfNum, "with Factor of ", shrinkFactor)
+
+    # Update AllPatches with newly genreated ContactSurfVertices
+    AllPatches = [Sl0, Sr0] + ContactSurfsVertice
+
+    # -----------------------------------------------------------
+    # Move the patches (in X Y directions only) (NOTE: We need to ensure no over shoot)
+    if randomHorizontalMove == True:
+        MovingDirectionList = ["X_positive",
+                               "X_negative", "Y_positive", "Y_negative"]
+        for surfNum in range(2, TotalNumSurfs):
+            # Decide Coordinate of reference point
+            if surfNum % 2 == 0:  # Even number of steps (Swing the Left)
+                SurfContactLeft = "left"
+                movingDirection = np.random.choice(MovingDirectionList, 1)
+                if movingDirection == "Y_positive" or movingDirection == "X_positive":  # Moving outwards need to be controlled
+                    movePortion = np.random.uniform(0.0, 0.1)
+                else:
+                    movePortion = np.random.uniform(0.0, 1.0)
+            elif surfNum % 2 == 1:  # Odd number of steps (Swing the Right)
+                SurfContactLeft = "right"
+                if movingDirection == "Y_negative" or movingDirection == "X_positive":  # Moving outwards need to be controlled
+                    movePortion = np.random.uniform(0.0, 0.1)
+                else:
+                    movePortion = np.random.uniform(0.0, 1.0)
+
+            # Move Patches
+            movedSurf = patch_move_horizontal_percentage(surf=AllPatches[surfNum], PatchColumn=SurfContactLeft, SurfIndex=surfNum,
+                                                         Direction=movingDirection, PercentageofMovingMargin=movePortion, AllSurfaces=AllPatches)
+            AllPatches[surfNum] = movedSurf
+            ContactSurfsVertice[surfNum-2] = movedSurf
+            print("Move Contact Patch ", surfNum-2, "Horizontally along Direction of ",
+                  movingDirection, "with portion of ", movePortion)
+
+    # -----------------------------------------
+    # Rotate the patches (can change rotation axis)
+    # Clear All Patches (because it finishes its duty)
+    AllPatches = []
+    for ContactSurfNum in range(len(ContactSurfsVertice)):
+        #If we enable the large slope to exist
+        if large_slope_flag == True:
+            # For Normal Patches
+            if not (ContactSurfNum in large_slope_index):
+                current_direction = terrain_pattern[ContactSurfNum]
+                current_inclination = fixed_inclination
+            # For Large Slope Patches
+            elif (ContactSurfNum in large_slope_index):
+                # Get index in large_slope arrays
+                idx_in_large_slope_array = large_slope_index.index(ContactSurfNum)
+                current_direction = large_slope_directions[idx_in_large_slope_array]
+                current_inclination = large_slope_inclinations[idx_in_large_slope_array]
+        #No large slope enabled
+        elif large_slope_flag == False:
+            current_direction = terrain_pattern[ContactSurfNum]
+            current_inclination = fixed_inclination
+        
+        #rotate patches
+        rotatedPatch = rotate_patch(
+            surf=ContactSurfsVertice[ContactSurfNum], PatchType=current_direction, theta=current_inclination)
+
+        ContactSurfsVertice[ContactSurfNum] = rotatedPatch
+
+        print("Rotate Patch ", ContactSurfNum, " along the direction of ", current_direction,
+              "with inclination of ", current_inclination, "(None means Random)")
+
+    # Update AllPatches with newly genreated ContactSurfVertices
+    AllPatches = [Sl0, Sr0] + ContactSurfsVertice
+
+    # -------------------------------------------
+    # Patch Elevation Changes (include non-change)
+    for surfNum in range(2, TotalNumSurfs):
+        # Compute elevation shift
+        # For normal Patches
+        if not ((surfNum-2) in large_slope_index):
+            if randomElevationShift == True:
+                elevation_dist = np.random.uniform(
+                    min_elevation_shift, max_elevation_shift)
+            else:
+                elevation_dist = 0.0
+        # For Large Slopes
+        elif ((surfNum-2) in large_slope_index):
+            idx_in_large_slope_array = large_slope_index.index(surfNum-2)
+            elevation_dist = large_slope_Z_shifts[idx_in_large_slope_array]
+
+        # manipulate the patch
+        elevated_patch = elevation_shift_wrt_adjacent_patch(
+            current_patch=AllPatches[surfNum], previous_patch=AllPatches[-1], elevation_shift=elevation_dist)
+
+        print("Elevation change of Patch ", surfNum-2, "with ",
+              elevation_dist, "with respect to the previous patch")
+
+        # Rebuild the array
+        AllPatches[surfNum] = elevated_patch
+        ContactSurfsVertice[surfNum-2] = elevated_patch
+
+    # ------------
+    # Build Useful arrays (Only for Contact Surfaces, NOTE the index)
+    #   Build containers
+    ContactSurfsHalfSpace = []
+    ContactSurfsTypes = []
+    ContactSurfsTangentX = []
+    ContactSurfsTangentY = []
+    ContactSurfsNorm = []
+    ContactSurfsOrientation = []
+
+    #   Get useful arrays
+    for ContactSurfNum in range(len(ContactSurfsVertice)):
+        HalfSpace_temp = np.concatenate(convert_surface_to_inequality(
+            ContactSurfsVertice[ContactSurfNum].T), axis=None)
+        TangentX_temp, TangentY_temp, Norm_temp, OrientationTemp = getTerrainTagentsNormOrientation(
+            ContactSurfsVertice[ContactSurfNum])
+
+        ContactSurfsHalfSpace.append(HalfSpace_temp)
+        ContactSurfsTypes.append(terrain_pattern[ContactSurfNum])
+        ContactSurfsTangentX.append(TangentX_temp)
+        ContactSurfsTangentY.append(TangentY_temp)
+        ContactSurfsNorm.append(Norm_temp)
+        ContactSurfsOrientation.append(OrientationTemp)
+
+    # Build All Patches array
+    AllPatches = [Sl0, Sr0] + ContactSurfsVertice
+
+    # ------------
+    # Build Terrain Model Vector
+    TerrainModel = {"InitLeftSurfVertice": Sl0,  "InitLeftSurfType": LeftSurfType,
+                    "InitLeftSurfTangentX": Sl0_TangentX, "InitLeftSurfTangentY": Sl0_TangentY, "InitLeftSurfNorm": Sl0_Norm, "InitLeftSurfOrientation": Sl0_Orientation,
+                    "InitRightSurfVertice": Sr0, "InitRightSurfType": RightSurfType,
+                    "InitRightSurfTangentX": Sr0_TangentX, "InitRightSurfTangentY": Sr0_TangentY, "InitRightSurfNorm": Sr0_Norm, "InitRightSurfOrientation": Sr0_Orientation,
+                    "ContactSurfsVertice": ContactSurfsVertice,
+                    "ContactSurfsHalfSpace": ContactSurfsHalfSpace,
+                    "ContactSurfsTypes": ContactSurfsTypes,
+                    "ContactSurfsNames": ContactSurfsNames,
+                    "ContactSurfsTangentX": ContactSurfsTangentX,
+                    "ContactSurfsTangentY": ContactSurfsTangentY,
+                    "ContactSurfsNorm": ContactSurfsNorm,
+                    "ContactSurfsOrientation": ContactSurfsOrientation,
+                    "AllPatchesVertices": AllPatches}
+
+    return TerrainModel
+
 #The one we used for simulation computation
 def terrain_model_gen(terrain_name=None,
                       Proj_Length=0.6, Proj_Width=0.6,
@@ -20,7 +356,7 @@ def terrain_model_gen(terrain_name=None,
                       randomMisAlignmentofFirstTwoPatches=False, MisAlignmentColumn=None, MisAlignmentAmount=0.25,
                       NumSteps=None, NumLookAhead=None,
                       large_slope_flag=False, large_slope_index=[8],
-                      large_slope_directions=["X_postive"], large_slope_inclinations=[18.0/180.0*np.pi],
+                      large_slope_directions=["X_positive"], large_slope_inclinations=[18.0/180.0*np.pi],
                       large_slope_X_shifts=[0.0], large_slope_Y_shifts=[0.0], large_slope_Z_shifts=[0.0],
                       y_center = 0.0,
                       x_offset = 0.0):
@@ -238,17 +574,24 @@ def terrain_model_gen(terrain_name=None,
     # Clear All Patches (because it finishes its duty)
     AllPatches = []
     for ContactSurfNum in range(len(ContactSurfsVertice)):
-        # For Normal Patches
-        if not (ContactSurfNum in large_slope_index):
+        #If we enable the large slope to exist
+        if large_slope_flag == True:
+            # For Normal Patches
+            if not (ContactSurfNum in large_slope_index):
+                current_direction = terrain_pattern[ContactSurfNum]
+                current_inclination = fixed_inclination
+            # For Large Slope Patches
+            elif (ContactSurfNum in large_slope_index):
+                # Get index in large_slope arrays
+                idx_in_large_slope_array = large_slope_index.index(ContactSurfNum)
+                current_direction = large_slope_directions[idx_in_large_slope_array]
+                current_inclination = large_slope_inclinations[idx_in_large_slope_array]
+        #No large slope enabled
+        elif large_slope_flag == False:
             current_direction = terrain_pattern[ContactSurfNum]
             current_inclination = fixed_inclination
-        # For Large Slope Patches
-        elif (ContactSurfNum in large_slope_index):
-            # Get index in large_slope arrays
-            idx_in_large_slope_array = large_slope_index.index(ContactSurfNum)
-            current_direction = large_slope_directions[idx_in_large_slope_array]
-            current_inclination = large_slope_inclinations[idx_in_large_slope_array]
 
+        #rotate patches
         rotatedPatch = rotate_patch(
             surf=ContactSurfsVertice[ContactSurfNum], PatchType=current_direction, theta=current_inclination)
         ContactSurfsVertice[ContactSurfNum] = rotatedPatch
@@ -554,6 +897,8 @@ def patch_move_XYZ_distance(surf=None, PatchColumn="left", X_shift=0.0, Y_shift=
 
 
 def rotate_patch(surf=None, PatchType=None, theta=None, min_theta=0.08, max_theta=0.2):
+    print(PatchType)
+    
     # get the flat patch
     rotatedPatch = surf
 

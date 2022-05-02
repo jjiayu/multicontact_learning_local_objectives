@@ -1,13 +1,18 @@
 #Scripts Building the environment model for optimization as well as the gazebo world file for simulation
 
-# Generate terrain model (for python)
+import os
+from multicontact_learning_local_objectives.python.terrain_create import *
+import multicontact_learning_local_objectives.python.visualization as viz
 
+# Check if we have the world file genrated or not
+world_file_path = "/home/jiayu/catkin_ws/src/pal_gazebo_worlds_slmc/worlds/uneven_terrain.world"
 
-# save the terrain model
+# Stop the program if we have uneven terrain world file already existed
+if os.path.isfile(world_file_path):
+    raise Exception("Uneven Terrain World Description File Already Exists")
 
-# construct the gazebo world file
-
-with open('uneven_terrain.world', 'x') as f:
+# Make a world file (with ground floor) if we dont have one
+with open(world_file_path, 'x') as f:
     f.write('<?xml version="1.0" ?>\n')
     f.write('<sdf version="1.4">\n')
     f.write('  <world name="default">\n')
@@ -37,11 +42,38 @@ with open('uneven_terrain.world', 'x') as f:
     f.write('    <include>\n')
     f.write('      <uri>model://ground_plane</uri>\n')
     f.write('    </include>\n')
-    f.write('    <!-- A bunch of chairs -->\n')
-    f.write('    <include>\n')
-    f.write('          <uri>model://Y_positive_10_lifted</uri>\n')
-    f.write('      <pose>1.0 0 0 0 0 0.0</pose>\n')
-    f.write('    </include>\n')
+
+# Generate terrain model (for python)
+env_model = terrain_model_gen_lab(terrain_name="customized",
+                      customized_terrain_pattern = ["X_positive"]*10,
+                      Proj_Length=0.6, Proj_Width=0.6,
+                      fixed_inclination=10.0/np.pi,
+                      randomInitSurfSize=False,
+                      random_surfsize=False, min_shrink_factor=0.0, max_shrink_factor=0.3,
+                      randomHorizontalMove=False,  # Need to add random Height Move for Normal Patches
+                      randomElevationShift=False, min_elevation_shift=-0.075, max_elevation_shift=0.075,
+                      randomMisAlignmentofFirstTwoPatches=False, MisAlignmentColumn=None, MisAlignmentAmount=0.25,
+                      NumSteps=10, NumLookAhead=4,
+                      large_slope_flag=False, large_slope_index=[8],
+                      large_slope_directions=["X_positive"], large_slope_inclinations=[18.0/180.0*np.pi],
+                      large_slope_X_shifts=[0.0], large_slope_Y_shifts=[0.0], large_slope_Z_shifts=[0.0],
+                      y_center = 0.0,
+                      x_offset = 0.0)
+
+viz.DisplayResults(TerrainModel=env_model, SingleOptResult=None, AllOptResult=None)
+
+# save the terrain model
+
+# # construct the gazebo world file, append terrain models
+# with open(world_file_path, 'a') as f:
+#     f.write('    <!-- A bunch of chairs -->\n')
+#     f.write('    <include>\n')
+#     f.write('          <uri>model://Y_positive_10_lifted</uri>\n')
+#     f.write('      <pose>1.0 0 0 0 0 0.0</pose>\n')
+#     f.write('    </include>\n')
+
+
+#Closing the world file
+with open(world_file_path, 'a') as f:
     f.write('  </world>\n')
     f.write('</sdf>\n')
-
