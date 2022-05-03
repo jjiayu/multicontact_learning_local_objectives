@@ -34,12 +34,11 @@ ExternalParameters = {"WorkingDirectory": None,
                       "ML_ModelPath": None, #"/home/jiayu/Desktop/MLP_DataSet/2stepsVsOthers/ML_Models/NN_Model_Valid",
                       "DataSetPath": None, #"/home/jiayu/Desktop/MLP_DataSet/Rubbles/DataSet", #None,
                       "NumLookAhead": 4,
-                      "NumofRounds":30,
+                      "NumofRounds":5,
                       "LargeSlopeAngle": 0,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
                       "VisualizationFlag": "Yes",
-                      "NumSteps_Use_LookUpObj": 0, #2
                       }
 
 #   Update External Parameters
@@ -94,14 +93,17 @@ Nrounds = int(ExternalParameters["NumofRounds"])#29
 #   Number of Knots per phase
 N_knots_per_phase = 8#8
 #   Robot Mass
-RobotMass= 95.0
+RobotMass= 100.0
 #   Phase Duration Limits
 #To Overcome very very large slopes, the ratio of DS and SS matters and the z-height to footstep distance needs to be lowered
 #i.e. DS upper limit 1.0, SS upper limit 1.5
 #phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 1.0, #1.5
 #                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.0}
-phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 0.5, #0.05 - 0.5
-                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.2}  #0.7 - 1.2
+#The one we use
+phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5
+                         "SingleSupport_Min": 0.6,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
+# phase_duration_limits = {"DoubleSupport_Min": 0.1, "DoubleSupport_Max": 0.1, #0.05 - 0.5
+#                          "SingleSupport_Min": 0.8,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
 #   Local Obj Tracking Type (for Single Step) can be None, cost, constraints
 LocalObjSettings = {}
 if NumLookAhead == 1: #Single-Step NLP, there is a point to set up local obj tracking parameters
@@ -138,7 +140,7 @@ if NumLookAhead == 1: #Single-Step NLP, there is a point to set up local obj tra
             LocalObjSettings["contact_representation_type"] = dataseSettings["Contact_Representation_Type"]
             LocalObjSettings["ScalingFactor"] = dataseSettings["VectorScaleFactor"]
             LocalObjSettings["NumPreviewSteps"] = dataseSettings["NumPreviewSteps"]
-        
+
         elif LocalObjSettings["local_obj_source"] == "kNN":
             #NOTE (Mannual Provide) Ground Truth Traj, Default can be None
             LocalObjSettings["GroundTruthTraj"] = ExternalParameters["EnvModelPath"] #NOTE: The Env Model has trajs as well
@@ -158,7 +160,7 @@ elif NumLookAhead > 1: #Multi Step NLP, all local obj related parameter becomes 
 #------------------
 
 #   Initial Seed Type 1) random seed 2)from previous result
-InitSeedType = "previous"   
+InitSeedType = "previous"
 
 #---------------------
 #Get Environment Model
@@ -177,44 +179,64 @@ SpecialTerrain = False
 if TerrainModelPath == None:
     #Terrain with Small (random) Patches
     if SpecialTerrain == False:
-        # # # #-----------------------------------------
-        # # #For local Testing
-        # TerrainSettings = {"terrain_type": "flat",#"antfarm_left",
-        #                    "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
-        #                   "random_init_surf_size": False,
-        #                   "random_surfsize_flag": False,
-        #                   "random_Horizontal_Move": False,
-        #                    "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
-        #                    "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-        #                    "Projected_Length": 0.55, "Projected_Width": 1.0,
-        #                    "large_slope_flag":False,
-        #                    "large_slope_index": [8],#[np.random.choice([16,17])],#select a patch from number 16 or 17
-        #                    "large_slope_directions": ["X_positive"],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
-        #                    "large_slope_inclinations": [float(ExternalParameters["LargeSlopeAngle"])/180*np.pi],#[23/180*np.pi],#[np.round(np.random.uniform(17.0/180*np.pi,25.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
-        #                    "large_slope_X_shifts": [0.0],#[0.0], 
-        #                    "large_slope_Y_shifts": [0.0],#[0.0], 
-        #                    "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
-        #                    }
-
-        #--------------------------------------
-        #For Generating Data Point On Uni Server
-        #NOTE: To close large slope, make lists to become [], currently the large slope flat is not functioning
-        TerrainSettings = {"terrain_type": "random",#"antfarm_left",
-                          "fixed_inclination": None, #0.0/180*np.pi, #radius, None means random inclination
+        # # #-----------------------------------------
+        # #For local Testing
+        TerrainSettings = {"terrain_type": "flat",#"antfarm_left",
+                           "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
                           "random_init_surf_size": False,
                           "random_surfsize_flag": False,
                           "random_Horizontal_Move": False,
-                          "MisMatch_Alignment_of_FirstTwoPatches": False,#bool(np.random.choice([True,False],1)), 
-                          "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-                          "Projected_Length": 0.575, "Projected_Width": 1.0,  #length 0.6 with misalignment maybe betters
-                          "large_slope_flag":False,
-                          "large_slope_index": [], #[np.random.choice([8,9])],#select a patch from number 16 or 17
-                          "large_slope_directions": [], #[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
-                          "large_slope_inclinations": [], #[np.round(np.random.uniform(21.0/180*np.pi,30.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
-                          "large_slope_X_shifts": [0.0], 
-                          "large_slope_Y_shifts": [0.0], 
-                          "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
-                        }
+                           "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
+                           "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
+                           "Projected_Length": 0.55, "Projected_Width": 1.0, #0.55 and 1.0
+                           "large_slope_flag":False,
+                           "large_slope_index": [8],#[np.random.choice([16,17])],#select a patch from number 16 or 17
+                           "large_slope_directions": ["X_positive"],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
+                           "large_slope_inclinations": [float(ExternalParameters["LargeSlopeAngle"])/180*np.pi],#[23/180*np.pi],#[np.round(np.random.uniform(17.0/180*np.pi,25.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
+                           "large_slope_X_shifts": [0.0],#[0.0], 
+                           "large_slope_Y_shifts": [0.0],#[0.0], 
+                           "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
+                           }
+
+        # #--------------------------------------
+        # #For Generating Data Point On Uni Server
+        # #NOTE: To close large slope, make lists to become [], currently the large slope flat is not functioning
+        # TerrainSettings = {"terrain_type": "random",#"antfarm_left",
+        #                   "fixed_inclination": None, #0.0/180*np.pi, #radius, None means random inclination
+        #                   "random_init_surf_size": False,
+        #                   "random_surfsize_flag": False,
+        #                   "random_Horizontal_Move": False,
+        #                   "MisMatch_Alignment_of_FirstTwoPatches": False,#bool(np.random.choice([True,False],1)), 
+        #                   "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
+        #                   "Projected_Length": 0.575, "Projected_Width": 1.0,  #length 0.6 with misalignment maybe betters
+        #                   "large_slope_flag":False,
+        #                   "large_slope_index": [], #[np.random.choice([8,9])],#select a patch from number 16 or 17
+        #                   "large_slope_directions": [], #[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
+        #                   "large_slope_inclinations": [], #[np.round(np.random.uniform(21.0/180*np.pi,30.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
+        #                   "large_slope_X_shifts": [0.0], 
+        #                   "large_slope_Y_shifts": [0.0], 
+        #                   "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
+        #                 }
+
+        # #--------------------------------------
+        # #For Generating Data Point On Uni Server
+        # #NOTE: To close large slope, make lists to become [], currently the large slope flat is not functioning
+        # TerrainSettings = {"terrain_type": "random",#"antfarm_left",
+        #                   "fixed_inclination": None, #0.0/180*np.pi, #radius, None means random inclination
+        #                   "random_init_surf_size": False,
+        #                   "random_surfsize_flag": False,
+        #                   "random_Horizontal_Move": False,
+        #                   "MisMatch_Alignment_of_FirstTwoPatches": False,#bool(np.random.choice([True,False],1)), 
+        #                   "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
+        #                   "Projected_Length": 0.575, "Projected_Width": 1.0,  #length 0.6 with misalignment maybe betters
+        #                   "large_slope_flag":False,
+        #                   "large_slope_index": [8], #[np.random.choice([8,9])],#select a patch from number 16 or 17
+        #                   "large_slope_directions": ['Y_positive'], #[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
+        #                   "large_slope_inclinations": [25.0/180*np.pi], #[np.round(np.random.uniform(21.0/180*np.pi,30.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
+        #                   "large_slope_X_shifts": [0.0], 
+        #                   "large_slope_Y_shifts": [0.0], 
+        #                   "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
+        #                 }
 
         #Generate Terrain
         TerrainInfo = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],          fixed_inclination = TerrainSettings["fixed_inclination"], 
@@ -279,9 +301,19 @@ print(" ")
 print("-------------------------------------")
 print("Terrain Set up")
 print("- Terrain Type/Name: ", TerrainSettings["terrain_type"])
-print("- Fixed Surf Incliation (radius): ", TerrainSettings["fixed_inclination"]) if TerrainSettings["fixed_inclination"] != None else print("- Random Surf Inclination")
-print("- Random Shrink the (Projected) Surf Size") if TerrainSettings["random_surfsize_flag"] == True else print("- Fixed (Projected) Surf Size")
-print("- Random Horizontal Move of the (Projected) Surf Size") if TerrainSettings["random_Horizontal_Move"] == True else print("- No random horizontal move")
+if TerrainSettings["fixed_inclination"] != None:
+    print("- Fixed Surf Incliation (radius): ", TerrainSettings["fixed_inclination"])
+else:
+    print("- Random Surf Inclination")
+
+if TerrainSettings["random_surfsize_flag"] == True:
+    print("- Random Shrink the (Projected) Surf Size")
+else:
+    print("- Fixed (Projected) Surf Size")
+if TerrainSettings["random_Horizontal_Move"] == True:
+    print("- Random Horizontal Move of the (Projected) Surf Size")
+else:
+    print("- No random horizontal move")
 
 print(" ")
 #   Display Terrain
@@ -343,7 +375,7 @@ print("- Initial Right Contact Surface Orientation: \n", InitConfig["RightInitSu
 #----------------------------------------------------------
 GoalState = {}
 #   Goal/Terminal CoM x, y, z
-GoalState["x_end"] = 30.0;           GoalState["y_end"] = 0.0;       GoalState["z_end"] = 0.75
+GoalState["x_end"] = 30.0;           GoalState["y_end"] = 0.0;       GoalState["z_end"] = 0.85
 #   Goal/Terminal CoMdot x, y, z (Not Used for now)
 GoalState["xdot_end"] = 0.0;         GoalState["ydot_end"] = 0.0;    GoalState["zdot_end"] = 0.0
 #   Print Terminal/goal State
@@ -483,34 +515,27 @@ for roundNum in range(Nrounds):
         LocalObj = getLocalobj(Mode = None)
     #       Yes, we need to track local obj
     elif LocalObjSettings["local_obj_tracking_type"] != None:
-        if roundNum + 1 <= int(ExternalParameters["NumSteps_Use_LookUpObj"]):
-            print(str(roundNum) + " th Step Using LookUp Table Approach")
-            LocalObj = getLocalobj(Mode = "fromFile", refTrajFile = LocalObjSettings["GroundTruthTraj"], 
-                                shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"],  roundNum = roundNum, 
-                                ContactParameterizationType = LocalObjSettings["contact_representation_type"],
-                                ScaleFactor = LocalObjSettings["ScalingFactor"])
-        else:
-            #   Get local obj from file (for sanity check/compare)
-            if LocalObjSettings["local_obj_source"] == "fromFile":
-                LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], refTrajFile = LocalObjSettings["GroundTruthTraj"], 
-                                    shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"],  roundNum = roundNum, 
+        #   Get local obj from file (for sanity check/compare)
+        if LocalObjSettings["local_obj_source"] == "fromFile":
+            LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], refTrajFile = LocalObjSettings["GroundTruthTraj"], 
+                                  shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"],  roundNum = roundNum, 
+                                  ContactParameterizationType = LocalObjSettings["contact_representation_type"],
+                                  ScaleFactor = LocalObjSettings["ScalingFactor"])
+        #   Get Local obj from Neural Network
+        elif LocalObjSettings["local_obj_source"] == "NeuralNetwork":
+            #Get Local Obj Predictions (Unshifted to World Frame, but Scale to normal Unit)
+            LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], MLModelPath = LocalObjSettings["MLModelPath"],
+                                   shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"], ContactParameterizationType = LocalObjSettings["contact_representation_type"],
+                                   ScaleFactor = LocalObjSettings["ScalingFactor"], 
+                                   InitConfig = InitConfig)
+        #   Get Local obj from kNN
+        elif LocalObjSettings["local_obj_source"] == "kNN":
+            LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], 
+                                    shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"], 
                                     ContactParameterizationType = LocalObjSettings["contact_representation_type"],
-                                    ScaleFactor = LocalObjSettings["ScalingFactor"])
-            #   Get Local obj from Neural Network
-            elif LocalObjSettings["local_obj_source"] == "NeuralNetwork":
-                #Get Local Obj Predictions (Unshifted to World Frame, but Scale to normal Unit)
-                LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], MLModelPath = LocalObjSettings["MLModelPath"],
-                                    shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"], ContactParameterizationType = LocalObjSettings["contact_representation_type"],
                                     ScaleFactor = LocalObjSettings["ScalingFactor"], 
-                                    InitConfig = InitConfig)
-            #   Get Local obj from kNN
-            elif LocalObjSettings["local_obj_source"] == "kNN":
-                LocalObj = getLocalobj(Mode = LocalObjSettings["local_obj_source"], 
-                                        shift_world_frame = LocalObjSettings["local_obj_world_frame_shift_mode"], 
-                                        ContactParameterizationType = LocalObjSettings["contact_representation_type"],
-                                        ScaleFactor = LocalObjSettings["ScalingFactor"], 
-                                        InitConfig = InitConfig,
-                                        DataSetPath = ExternalParameters["DataSetPath"])
+                                    InitConfig = InitConfig,
+                                    DataSetPath = ExternalParameters["DataSetPath"])
 
         #After Getting LocalObj, Shifting of Variables NOTE: x,y need to shift all together for Init CoM case but not implemented yet
         LocalObj = shiftLocalObj_to_WorldFrame(InitConfig = InitConfig, LocalObj = LocalObj, Local_Frame_Selection = LocalObjSettings["local_obj_world_frame_shift_mode"])
@@ -773,5 +798,5 @@ DumpedResults["FailedRoundInfo"] = FailedRoundInfo if not (len(AllOptResult) == 
 #print("Single-opt Result x_init (after dumping): ",DumpedResults["SingleOptResultSavings"][0]["InitConfig"]["x_init"])
 
 if saveData == True:
-    pickle.dump(DumpedResults, open(rolloutDirectory + '/' + Filename+".p", "wb"))    #Save Data
+    pickle.dump(DumpedResults, open("/home/jiayu/Desktop/MLP_DataSet/SpecialCases/uneven_plan.p", "wb"))    #Save Data
     sys.stdout.close();   sys.stdout=stdoutOrigin                       #Close logging

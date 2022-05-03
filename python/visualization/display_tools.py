@@ -543,6 +543,8 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
         # Label Terrain Patches
         ax = labelSurface(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
                           ContactSurfs=TerrainModel["ContactSurfsVertice"], fig=fig, ax=ax)
+        ax.set_zlim([-0.01,1.0])
+        ax.set_xlim([-1.0,3.0])
         plt.show()
 
     # Display Opimization Result of Current Round/Step (With the entire horizon)

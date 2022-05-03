@@ -14,6 +14,7 @@ def terrain_model_gen_lab(terrain_name=None,
                       customized_terrain_pattern = [],
                       Proj_Length=0.6, Proj_Width=0.6,
                       fixed_inclination=0.0,
+                      lab_blocks = False, lab_block_z_shift = 0.0,
                       randomInitSurfSize=False,
                       random_surfsize=False, min_shrink_factor=0.0, max_shrink_factor=0.3,
                       randomHorizontalMove=False,  # Need to add random Height Move for Normal Patches
@@ -46,7 +47,7 @@ def terrain_model_gen_lab(terrain_name=None,
     # ---------------
     # Decide Parameters
     # Number of Surfaces based on Number of steps and Number of lookahead and initial patches
-    TotalNumSurfs = NumSteps + NumLookAhead - 1 + 2  # (include the intial two contact patches)
+    TotalNumSurfs = NumSteps + NumLookAhead - 1 + 2  # (include the intial two contact patches
 
     # ---------------
     # Decide Which column will have Mis Alignment of (the first two patches) if not provided
@@ -126,6 +127,7 @@ def terrain_model_gen_lab(terrain_name=None,
     ContactSurfsVertice = []
     ContactSurfsTypes = []
     ContactSurfsNames = []
+    ContactSurfsInclinationsDegrees = []
     AllPatches = [Sl0, Sr0] + ContactSurfsVertice
 
     # ------------------------------------
@@ -242,6 +244,39 @@ def terrain_model_gen_lab(terrain_name=None,
     # -----------------------------------------
     # Rotate the patches (can change rotation axis)
     # Clear All Patches (because it finishes its duty)
+
+
+    #make rotation angle lists
+
+    #for customized terrains
+    if terrain_name == "customized":
+        print("Rotating Patches with *Customized* Terrain")
+        if isinstance(fixed_inclination, float) or (fixed_inclination == None): # if the fixed inclination is a single value (either flaot or None means random), we assign fixed incliation to all rotation patches, and all the rest (patch with type undefined) are 0
+            print("fixed_inclination is either a fixed slope angle or None (for all rotated patches, all the rest are 0): ", fixed_inclination)
+            surf_rot_angle = [fixed_inclination]*len(customized_terrain_pattern) + [0.0]*(len(ContactSurfsVertice)-len(customized_terrain_pattern))
+        elif isinstance(fixed_inclination, list) and len(fixed_inclination) == 1: #if the fixed inclination is a single value (in list mode and None means random), we assign fixed incliation to all rotation patches, and all the rest (patch with type undefined) are 0
+            print("fixed_inclination is either a fixed slope angle or None (for all rotated patches, all the rest are 0) (but in list mode): ", fixed_inclination)
+            surf_rot_angle = fixed_inclination*len(customized_terrain_pattern) + + [0.0]*(len(ContactSurfsVertice)-len(customized_terrain_pattern))
+        elif isinstance(fixed_inclination, list) and len(fixed_inclination) >= 1: #if the fixed inclination is a list with size >= 1
+            if len(fixed_inclination) == len(customized_terrain_pattern): #list are not having equal size
+                print("fixed_inclination is a list of pre-defined slope angles (consistent size with customized terrain pattern): ", fixed_inclination)
+                surf_rot_angle = fixed_inclination + [0.0]*(len(ContactSurfsVertice)-len(customized_terrain_pattern)) #append 0 for the non rotating pathces (defined as flat in the pattern)
+            else: #stop as we dont have same size of lists
+                raise Exception("Size of fixed_inclination and customized_terrain_pattern is not equal")
+    
+    #for other types of terrains
+    else:
+        print("Rotating Patches with Other Types of Terrain: ", terrain_name)
+        if isinstance(fixed_inclination, float) or (fixed_inclination == None): #if the fixed inclination is a single value (either flaot or None means random), we assign fixed incliation to all patches
+            print("fixed_inclination is either a fixed slope angle or None: ", fixed_inclination)
+            surf_rot_angle = [fixed_inclination]*len(ContactSurfsVertice)
+        elif isinstance(fixed_inclination, list) and len(fixed_inclination) == 1: #if the fixed inclination is a single value (in list mode and None means random), we assign fixed incliation to all patches
+            print("fixed_inclination is either a fixed slope angle or None (but in list mode): ", fixed_inclination)
+            surf_rot_angle = fixed_inclination*len(ContactSurfsVertice)
+        elif isinstance(fixed_inclination, list) and len(fixed_inclination) >= 1: #if the fixed inclination is a list with size >= 1
+            print("fixed_inclination is a list of pre-defined slope angles (can be smaller size than the total number of patches): ", fixed_inclination)
+            surf_rot_angle = fixed_inclination + [None]*(len(ContactSurfsVertice)-len(fixed_inclination)) #append None (random) for the patches with un-defined fixed-inclination
+
     AllPatches = []
     for ContactSurfNum in range(len(ContactSurfsVertice)):
         #If we enable the large slope to exist
@@ -249,7 +284,7 @@ def terrain_model_gen_lab(terrain_name=None,
             # For Normal Patches
             if not (ContactSurfNum in large_slope_index):
                 current_direction = terrain_pattern[ContactSurfNum]
-                current_inclination = fixed_inclination
+                current_inclination = surf_rot_angle[ContactSurfNum]
             # For Large Slope Patches
             elif (ContactSurfNum in large_slope_index):
                 # Get index in large_slope arrays
@@ -259,13 +294,14 @@ def terrain_model_gen_lab(terrain_name=None,
         #No large slope enabled
         elif large_slope_flag == False:
             current_direction = terrain_pattern[ContactSurfNum]
-            current_inclination = fixed_inclination
+            current_inclination = surf_rot_angle[ContactSurfNum]
         
         #rotate patches
         rotatedPatch = rotate_patch(
             surf=ContactSurfsVertice[ContactSurfNum], PatchType=current_direction, theta=current_inclination)
 
         ContactSurfsVertice[ContactSurfNum] = rotatedPatch
+        ContactSurfsInclinationsDegrees.append(current_inclination/np.pi*180)#save current inclination
 
         print("Rotate Patch ", ContactSurfNum, " along the direction of ", current_direction,
               "with inclination of ", current_inclination, "(None means Random)")
@@ -299,6 +335,35 @@ def terrain_model_gen_lab(terrain_name=None,
         # Rebuild the array
         AllPatches[surfNum] = elevated_patch
         ContactSurfsVertice[surfNum-2] = elevated_patch
+
+    #------------------------------------------------
+    # Shift the terrain with lab env elevation change
+    if lab_blocks == True: #shift the surfaces if we use lab blocks
+        print("lab blocks -> shift z to above horizontal line and shift the block z-axis with ", lab_block_z_shift)
+
+        for surfNum in range(2, TotalNumSurfs): #loop over all the contact surfaces
+            
+            if terrain_pattern[surfNum-2] in ["X_positive", "X_negative", "Y_positive", "Y_negative"]: #only shift the stepping stone blocks
+                #get curren patch
+                cur_surf = AllPatches[surfNum]
+                
+                min_z_vertice = np.min([cur_surf[0,2], cur_surf[1,2], cur_surf[2,2], cur_surf[3,2]]) #get the lowest z vertice for all the blocks
+
+                #lift all the points to have z >= 0
+                cur_surf[0,2] = cur_surf[0,2] - min_z_vertice
+                cur_surf[1,2] = cur_surf[1,2] - min_z_vertice
+                cur_surf[2,2] = cur_surf[2,2] - min_z_vertice
+                cur_surf[3,2] = cur_surf[3,2] - min_z_vertice
+
+                #lift patches with the z offset (the small flat offset)
+                cur_surf[0,2] = cur_surf[0,2] + lab_block_z_shift
+                cur_surf[1,2] = cur_surf[1,2] + lab_block_z_shift
+                cur_surf[2,2] = cur_surf[2,2] + lab_block_z_shift
+                cur_surf[3,2] = cur_surf[3,2] + lab_block_z_shift
+
+                #Rebuild the contact patch array
+                AllPatches[surfNum] = cur_surf
+                ContactSurfsVertice[surfNum-2] = cur_surf
 
     # ------------
     # Build Useful arrays (Only for Contact Surfaces, NOTE the index)
@@ -337,11 +402,14 @@ def terrain_model_gen_lab(terrain_name=None,
                     "ContactSurfsHalfSpace": ContactSurfsHalfSpace,
                     "ContactSurfsTypes": ContactSurfsTypes,
                     "ContactSurfsNames": ContactSurfsNames,
+                    "ContactSurfsInclinationsDegrees": ContactSurfsInclinationsDegrees,
                     "ContactSurfsTangentX": ContactSurfsTangentX,
                     "ContactSurfsTangentY": ContactSurfsTangentY,
                     "ContactSurfsNorm": ContactSurfsNorm,
                     "ContactSurfsOrientation": ContactSurfsOrientation,
                     "AllPatchesVertices": AllPatches}
+
+    print("Contact Surfaces inclinations: ", ContactSurfsInclinationsDegrees)
 
     return TerrainModel
 

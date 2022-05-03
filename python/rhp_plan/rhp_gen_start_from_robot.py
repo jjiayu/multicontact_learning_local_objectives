@@ -332,7 +332,7 @@ print("-------------------------------------")
 print("Terrain Set up")
 print("- Terrain Type/Name: ", TerrainSettings["terrain_type"])
 if TerrainSettings["fixed_inclination"] != None:
-    print("- Fixed Surf Incliation (degrees): ", TerrainSettings["fixed_inclination"]/np.pi*180)
+    print("- Fixed Surf Incliation (radius): ", TerrainSettings["fixed_inclination"])
 else:
     print("- Random Surf Inclination")
 if TerrainSettings["random_surfsize_flag"] == True:

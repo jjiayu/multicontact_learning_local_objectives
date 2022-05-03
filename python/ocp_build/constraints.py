@@ -39,7 +39,7 @@ def CoM_Kinematics(SwingLegIndicator=None, CoM_k=None, P=None, K_polytope=None, 
                    ContactFrameOrientation=ca.DM(
                        np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])),
                    g=None, glb=None, gub=None):
-    #ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
+    ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
     if SwingLegIndicator == None:
         g.append(K_polytope@ca.inv(ContactFrameOrientation)@(CoM_k-P)-ca.DM(k_polytope))
         glb.append(np.full((len(k_polytope),), -np.inf))
@@ -58,7 +58,7 @@ def CoM_to_Foot_Height_Limit(SwingLegIndicator=None, CoM_k=None, P=None, h_min=N
                              ContactFrameOrientation=ca.DM(
                                  np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])),
                              g=None, glb=None, gub=None):
-    #ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
+    ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
     if SwingLegIndicator == None:
         # Vector from CoM to footstep
         convertedVec = ca.inv(ContactFrameOrientation)@(CoM_k-P)
@@ -94,7 +94,7 @@ def Relative_Foot_Kinematics(SwingLegIndicator=None, p_next=None, p_cur=None, Q_
                              ContactFrameOrientation=ca.DM(
                                  np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])),
                              g=None, glb=None, gub=None):
-    #ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
+    ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
     if SwingLegIndicator == None:
         g.append(Q_polytope@ca.inv(ContactFrameOrientation)@(p_next-p_cur) - ca.DM(q_polytope))
         glb.append(np.full((len(q_polytope),), -np.inf))
