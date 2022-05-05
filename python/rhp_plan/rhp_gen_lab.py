@@ -14,6 +14,10 @@ import time
 import copy
 import os
 
+import rospy
+from std_msgs.msg import Float64MultiArray
+from centroidal_planning_msgs.msg import MotionPlanData, CoMStateFeedback, FootStateFeedback
+
 #-------------------------------
 #Reseed the random generator
 np.random.seed()
@@ -101,7 +105,7 @@ RobotMass= 100.0
 #                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.0}
 #The one we use
 phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5
-                         "SingleSupport_Min": 0.6,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
+                         "SingleSupport_Min": 0.8,  "SingleSupport_Max": 1.0}  #0.7 - 1.2
 # phase_duration_limits = {"DoubleSupport_Min": 0.1, "DoubleSupport_Max": 0.1, #0.05 - 0.5
 #                          "SingleSupport_Min": 0.8,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
 #   Local Obj Tracking Type (for Single Step) can be None, cost, constraints
@@ -163,6 +167,13 @@ elif NumLookAhead > 1: #Multi Step NLP, all local obj related parameter becomes 
 InitSeedType = "previous"
 
 #---------------------
+#Get Current Robot State
+#---------------------
+rospy.init_node('listener', anonymous=True)
+msg_com = rospy.wait_for_message("/biped_walking_dcm_controller/com_states", CoMStateFeedback)
+msg_foot = rospy.wait_for_message("/biped_walking_dcm_controller/foot_poses", FootStateFeedback)
+
+#---------------------
 #Get Environment Model
 #---------------------
 
@@ -183,19 +194,21 @@ if TerrainModelPath == None:
         # #For local Testing
         TerrainSettings = {"terrain_type": "flat",#"antfarm_left",
                            "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
-                          "random_init_surf_size": False,
-                          "random_surfsize_flag": False,
-                          "random_Horizontal_Move": False,
+                            "lab_blocks": True,
+                            "lab_block_z_shift": 0.006,
+                           "random_init_surf_size": False,
+                           "random_surfsize_flag": False,
+                           "random_Horizontal_Move": False,
                            "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
                            "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-                           "Projected_Length": 0.55, "Projected_Width": 1.0, #0.55 and 1.0
+                           "Projected_Length": 0.4, "Projected_Width": 0.4, #0.55 and 1.0
                            "large_slope_flag":False,
-                           "large_slope_index": [8],#[np.random.choice([16,17])],#select a patch from number 16 or 17
-                           "large_slope_directions": ["X_positive"],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
-                           "large_slope_inclinations": [float(ExternalParameters["LargeSlopeAngle"])/180*np.pi],#[23/180*np.pi],#[np.round(np.random.uniform(17.0/180*np.pi,25.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
-                           "large_slope_X_shifts": [0.0],#[0.0], 
-                           "large_slope_Y_shifts": [0.0],#[0.0], 
-                           "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
+                           "large_slope_index": [],#[np.random.choice([16,17])],#select a patch from number 16 or 17
+                           "large_slope_directions": [],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
+                           "large_slope_inclinations": [],#[23/180*np.pi],#[np.round(np.random.uniform(17.0/180*np.pi,25.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
+                           "large_slope_X_shifts": [],#[0.0], 
+                           "large_slope_Y_shifts": [],#[0.0], 
+                           "large_slope_Z_shifts": [],#[np.random.uniform(-0.25,0.25)],
                            }
 
         # #--------------------------------------
@@ -239,20 +252,22 @@ if TerrainModelPath == None:
         #                 }
 
         #Generate Terrain
-        TerrainInfo = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],          fixed_inclination = TerrainSettings["fixed_inclination"], 
-                                        randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
-                                        random_surfsize = TerrainSettings["random_surfsize_flag"],
-                                        randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
-                                        randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
-                                        MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
-                                        Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
-                                        NumSteps = Nrounds, NumLookAhead = 100,#Put NumLookAhead = 20 to give infinitely long terrains
-                                        large_slope_flag = TerrainSettings["large_slope_flag"], 
-                                        large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
-                                        large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
-                                        large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
-                                        large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
-                                        large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"]) 
+        TerrainInfo = terrain_model_gen_lab(terrain_name    = TerrainSettings["terrain_type"],          fixed_inclination = TerrainSettings["fixed_inclination"], 
+                                            lab_blocks = TerrainSettings["lab_blocks"],
+                                            lab_block_z_shift = TerrainSettings["lab_block_z_shift"],
+                                            randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
+                                            random_surfsize = TerrainSettings["random_surfsize_flag"],
+                                            randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
+                                            randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
+                                            MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
+                                            Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
+                                            NumSteps = Nrounds, NumLookAhead = 100,#Put NumLookAhead = 20 to give infinitely long terrains
+                                            large_slope_flag = TerrainSettings["large_slope_flag"], 
+                                            large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
+                                            large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
+                                            large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
+                                            large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
+                                            large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"]) 
     elif SpecialTerrain == True:
         #Terrain with Specific Patterns (flat/darpa)
         TerrainSettings = {"terrain_type": "darpa_left",#"single_large_slope_far",
@@ -335,6 +350,20 @@ InitConfig["PLx_init"], InitConfig["PLy_init"],InitConfig["PLz_init"],    \
 InitConfig["PRx_init"], InitConfig["PRy_init"],InitConfig["PRz_init"]\
 = getInitCondition_FirstStep(InitConditionType = ExternalParameters["InitConditionType"], 
                              InitConditionFilePath = ExternalParameters["InitConditionFilePath"])
+
+#Update the InitConfig base the current readings from the robot state
+InitConfig["x_init"] = msg_com.actual_com_pos_x #msg_com.data[0]
+InitConfig["y_init"] = msg_com.actual_com_pos_y #msg_com.data[1]
+InitConfig["z_init"] = msg_com.actual_com_pos_z #msg_com.data[2]
+
+InitConfig["PLx_init"] = msg_foot.actual_lf_pos_x #msg_foot.data[0]
+InitConfig["PLy_init"] = msg_foot.actual_lf_pos_y #msg_foot.data[1]
+InitConfig["PLz_init"] = msg_foot.actual_lf_pos_z #msg_foot.data[2]
+
+InitConfig["PRx_init"] = msg_foot.actual_rf_pos_x #msg_foot.data[6]
+InitConfig["PRy_init"] = msg_foot.actual_rf_pos_y #msg_foot.data[7]
+InitConfig["PRz_init"] = msg_foot.actual_rf_pos_z #msg_foot.data[8]
+
 #Get Init Contact Surfaces (here for the first step) and Orientation from the terrain info
 InitConfig["LeftInitSurf"]  = TerrainInfo["InitLeftSurfVertice"]
 InitConfig["RightInitSurf"] = TerrainInfo["InitRightSurfVertice"]
@@ -375,7 +404,7 @@ print("- Initial Right Contact Surface Orientation: \n", InitConfig["RightInitSu
 #----------------------------------------------------------
 GoalState = {}
 #   Goal/Terminal CoM x, y, z
-GoalState["x_end"] = 30.0;           GoalState["y_end"] = 0.0;       GoalState["z_end"] = 0.85
+GoalState["x_end"] = 30.0;           GoalState["y_end"] = 0.0;       GoalState["z_end"] = 0.88
 #   Goal/Terminal CoMdot x, y, z (Not Used for now)
 GoalState["xdot_end"] = 0.0;         GoalState["ydot_end"] = 0.0;    GoalState["zdot_end"] = 0.0
 #   Print Terminal/goal State

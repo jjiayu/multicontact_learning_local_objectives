@@ -11,7 +11,8 @@ import copy
 
 # For computing Kinematics Polytopes
 from sl1m.problem_definition import *
-from sl1m.planner_scenarios.talos.constraints_shift import *
+from sl1m.stand_alone_scenarios.constraints import *
+# from sl1m.planner_scenarios.talos.constraints_shift import *
 
 # def test_kine_constraint():
 #     K_CoM_Right,k_CoM_Right = right_foot_constraints(np.array([[1.0,0.0,0.0,0.0],[0.0,1.0,0.0,0.0],[0.0,0.0,1.0,0.0],[0.0,0.0,0.0,0.0]]))
@@ -59,7 +60,7 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     z_highest = 5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65
-    CoM_z_to_Foot_max = 0.88  # 0.75
+    CoM_z_to_Foot_max = 0.89  # 0.75
     # Terrain Model
     # Flat Terrain
     #TerrainNorm = [0,0,1]
@@ -1129,7 +1130,7 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
     z_highest = 5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65 #0.6
-    CoM_z_to_Foot_max = 0.88  # 0.75
+    CoM_z_to_Foot_max = 0.89  # 0.75
     #   Terrain Model
     #       Flat Terrain
     #TerrainNorm = [0,0,1]

@@ -24,8 +24,10 @@ stdoutOrigin=sys.stdout; sys.stdout = open(terrain_model_logfile_path, "w")
 #Make Terrain Setting
 
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
-                   "customized_terrain_pattern": ["X_positive"]*2,
-                   "fixed_inclination": 10.0/180*np.pi,#None,#0.0/180*np.pi, #radius, None means random inclination
+                   "customized_terrain_pattern": ["X_positive",  "X_negative",    "X_positive",   "X_negative",   "X_positive",   "X_negative",   "X_positive",   "X_negative"], #v-shape
+                   #"customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive",   "Y_negative",   "Y_negative",   "Y_positive",   "Y_positive"], #up and down
+                   "fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi],
+                   #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi],#None,#0.0/180*np.pi, #radius, None means random inclination
                    "lab_blocks": True, #make sure this is true to have the same patches as the lab env
                    "lab_block_z_shift": 0.006, #measured do not change
                    "random_init_surf_size": False,

@@ -36,10 +36,10 @@ def slackConstrained_SingleVar(a=None, b=None, slackratio=0.0, g=None, glb=None,
 
 
 def CoM_Kinematics(SwingLegIndicator=None, CoM_k=None, P=None, K_polytope=None, k_polytope=None,
-                   ContactFrameOrientation=ca.DM(
-                       np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])),
+                   ContactFrameOrientation=ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])),
                    g=None, glb=None, gub=None):
-    ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
+
+    #ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
     if SwingLegIndicator == None:
         g.append(K_polytope@ca.inv(ContactFrameOrientation)@(CoM_k-P)-ca.DM(k_polytope))
         glb.append(np.full((len(k_polytope),), -np.inf))
@@ -55,9 +55,9 @@ def CoM_Kinematics(SwingLegIndicator=None, CoM_k=None, P=None, K_polytope=None, 
 
 
 def CoM_to_Foot_Height_Limit(SwingLegIndicator=None, CoM_k=None, P=None, h_min=None, h_max=None,
-                             ContactFrameOrientation=ca.DM(
-                                 np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])),
+                             ContactFrameOrientation=ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])),
                              g=None, glb=None, gub=None):
+    
     ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
     if SwingLegIndicator == None:
         # Vector from CoM to footstep
@@ -91,10 +91,10 @@ def CoM_to_Foot_Height_Limit(SwingLegIndicator=None, CoM_k=None, P=None, h_min=N
 
 
 def Relative_Foot_Kinematics(SwingLegIndicator=None, p_next=None, p_cur=None, Q_polytope=None, q_polytope=None,
-                             ContactFrameOrientation=ca.DM(
-                                 np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])),
+                             ContactFrameOrientation=ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])),
                              g=None, glb=None, gub=None):
-    ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
+    
+    #ContactFrameOrientation = ca.DM(np.array([[1.0, 0.0, 0.0], [0.0, 1.0 ,0.0], [0.0, 0.0, 1.0]]))
     if SwingLegIndicator == None:
         g.append(Q_polytope@ca.inv(ContactFrameOrientation)@(p_next-p_cur) - ca.DM(q_polytope))
         glb.append(np.full((len(q_polytope),), -np.inf))
@@ -109,7 +109,7 @@ def Relative_Foot_Kinematics(SwingLegIndicator=None, p_next=None, p_cur=None, Q_
 # Footstep location Constraint
 
 
-def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=None, eq_E=None, eq_e=None, footlength = 0.22, footwidth = 0.12, g=None, glb=None, gub=None):
+def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=None, eq_E=None, eq_e=None, footlength = 0.22, footwidth = 0.12, margin = 0.02, g=None, glb=None, gub=None):
     # FootStep Location Constraint (On the Patch)
     # Enumperation of each contact point
     # P3----------------P1
@@ -117,6 +117,7 @@ def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=N
     # |                  |
     # |                  |
     # P4----------------P2
+    # margin is to set the safety margin towards the border of the patch
 
     print("Half Foot Length (Bigger Size for kinematics check): ", footlength/2.0)
     print("Half Foot Width (Bigger Size for kinematics check): ", footwidth/2.0)
@@ -127,9 +128,10 @@ def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=N
     P3 = P - footlength/2.0*P_TangentX + footwidth/2.0*P_TangentY
     P4 = P - footlength/2.0*P_TangentX - footwidth/2.0*P_TangentY
 
+    #-----------On Sufrace Constraint (Inequality integerated the margin from the foot border to the surface borders)
     # Contact Point 1
     # Inequality
-    g.append(ineq_K @ P1 - ineq_k)
+    g.append(ineq_K @ P1 - ineq_k + ca.DM(np.array([[margin],[margin],[margin],[margin]])))
     glb.append(np.full((4,), -np.inf))
     gub.append(np.full((4,), 0.0))
     # Equality
@@ -139,7 +141,7 @@ def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=N
 
     # Contact Point 2
     # Inequality
-    g.append(ineq_K @ P2 - ineq_k)
+    g.append(ineq_K @ P2 - ineq_k + ca.DM(np.array([[margin],[margin],[margin],[margin]])))
     glb.append(np.full((4,), -np.inf))
     gub.append(np.full((4,), 0.0))
     # Equality
@@ -149,7 +151,7 @@ def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=N
 
     # Contact Point 3
     # Inequality
-    g.append(ineq_K @ P3 - ineq_k)
+    g.append(ineq_K @ P3 - ineq_k + ca.DM(np.array([[margin],[margin],[margin],[margin]])))
     glb.append(np.full((4,), -np.inf))
     gub.append(np.full((4,), 0.0))
     # Equality
@@ -159,7 +161,7 @@ def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=N
 
     # Contact Point 4
     # Inequality
-    g.append(ineq_K @ P4 - ineq_k)
+    g.append(ineq_K @ P4 - ineq_k + ca.DM(np.array([[margin],[margin],[margin],[margin]])))
     glb.append(np.full((4,), -np.inf))
     gub.append(np.full((4,), 0.0))
     # Equality
