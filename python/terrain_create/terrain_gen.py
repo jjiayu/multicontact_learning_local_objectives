@@ -25,7 +25,8 @@ def terrain_model_gen_lab(terrain_name=None,
                       large_slope_directions=[], large_slope_inclinations=[],
                       large_slope_X_shifts=[], large_slope_Y_shifts=[], large_slope_Z_shifts=[],
                       y_center = 0.0,
-                      x_offset = 0.0):
+                      x_offset = 0.0,
+                      twosteps_on_patch = False):
 
 
     # Check large slope parameters are in the same length
@@ -391,6 +392,30 @@ def terrain_model_gen_lab(terrain_name=None,
 
     # Build All Patches array
     AllPatches = [Sl0, Sr0] + ContactSurfsVertice
+    
+    #contact sequence get doubled as we want to put two steps on a single patch 
+    #   Build containers
+    Doubled_ContactSurfsVertice = []
+    Doubled_ContactSurfsHalfSpace = []
+    Doubled_ContactSurfsTypes = []
+    Doubled_ContactSurfsNames = []
+    Doubled_ContactSurfsInclinationsDegrees = []
+    Doubled_ContactSurfsTangentX = []
+    Doubled_ContactSurfsTangentY = []
+    Doubled_ContactSurfsNorm = []
+    Doubled_ContactSurfsOrientation = []
+    if twosteps_on_patch == True:
+        for patch_index in range(len(ContactSurfsVertice)):
+            if patch_index%2 == 0: #even number, then double the patches
+                Doubled_ContactSurfsVertice.extend(ContactSurfsVertice[patch_index:patch_index+1+1]*2)
+                Doubled_ContactSurfsHalfSpace.extend(ContactSurfsHalfSpace[patch_index:patch_index+1+1]*2)
+                Doubled_ContactSurfsTypes.extend(ContactSurfsTypes[patch_index:patch_index+1+1]*2)
+                Doubled_ContactSurfsNames.extend(ContactSurfsNames[patch_index:patch_index+1+1]*2)
+                Doubled_ContactSurfsInclinationsDegrees.extend(ContactSurfsInclinationsDegrees[patch_index:patch_index+1+1]*2)
+                Doubled_ContactSurfsTangentX.extend(ContactSurfsTangentX[patch_index:patch_index+1+1]*2)
+                Doubled_ContactSurfsTangentY.extend(ContactSurfsTangentY[patch_index:patch_index+1+1]*2)
+                Doubled_ContactSurfsNorm.extend(ContactSurfsNorm[patch_index:patch_index+1+1]*2)
+                Doubled_ContactSurfsOrientation.extend(ContactSurfsOrientation[patch_index:patch_index+1+1]*2)
 
     # ------------
     # Build Terrain Model Vector
@@ -409,7 +434,22 @@ def terrain_model_gen_lab(terrain_name=None,
                     "ContactSurfsOrientation": ContactSurfsOrientation,
                     "AllPatchesVertices": AllPatches}
 
+    #update the terrain model
+    if twosteps_on_patch == True:
+        TerrainModel["ContactSurfsVertice"] = Doubled_ContactSurfsVertice
+        TerrainModel["ContactSurfsHalfSpace"] = Doubled_ContactSurfsHalfSpace
+        TerrainModel["ContactSurfsTypes"] = Doubled_ContactSurfsTypes
+        TerrainModel["ContactSurfsNames"] = Doubled_ContactSurfsNames
+        TerrainModel["ContactSurfsInclinationsDegrees"] = Doubled_ContactSurfsInclinationsDegrees
+        TerrainModel["ContactSurfsTangentX"] = Doubled_ContactSurfsTangentX
+        TerrainModel["ContactSurfsTangentY"] = Doubled_ContactSurfsTangentY
+        TerrainModel["ContactSurfsNorm"] = Doubled_ContactSurfsNorm
+        TerrainModel["ContactSurfsOrientation"] = Doubled_ContactSurfsOrientation
+
     print("Contact Surfaces inclinations: ", ContactSurfsInclinationsDegrees)
+
+    #print("length!!!:",len(ContactSurfsVertice))
+    #print("length!!!:",len(TerrainModel["ContactSurfsTangentX"]))
 
     return TerrainModel
 

@@ -1,6 +1,8 @@
 #Scripts Building the environment model for optimization as well as the gazebo world file for simulation
 
 import os
+
+from sympy import EX
 from multicontact_learning_local_objectives.python.terrain_create import *
 import multicontact_learning_local_objectives.python.visualization as viz
 from multicontact_learning_local_objectives.python.terrain_create.geometry_utils import *
@@ -17,17 +19,21 @@ if os.path.isfile(world_file_path):
     raise Exception("Uneven Terrain World Description File Already Exists")
 
 #Logging command line output
-stdoutOrigin=sys.stdout; sys.stdout = open(terrain_model_logfile_path, "w")
+logging = False
+if logging == True: 
+    stdoutOrigin=sys.stdout; sys.stdout = open(terrain_model_logfile_path, "w")
 
 #-------------------------------------
 #For terrain generation
 #Make Terrain Setting
 
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
-                   "customized_terrain_pattern": ["X_positive",  "X_negative",    "X_positive",   "X_negative",   "X_positive",   "X_negative",   "X_positive",   "X_negative"], #v-shape
+                   #"customized_terrain_pattern": ["X_positive",  "X_negative",    "X_positive",   "X_negative",   "X_positive",   "X_negative",   "X_positive",   "X_negative"], #v-shape
                    #"customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive",   "Y_negative",   "Y_negative",   "Y_positive",   "Y_positive"], #up and down
-                   "fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi],
+                   "customized_terrain_pattern": ["Y_negative",  "X_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "X_positive"], #random
+                   #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi],
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi],#None,#0.0/180*np.pi, #radius, None means random inclination
+                   "fixed_inclination":10/180*np.pi,
                    "lab_blocks": True, #make sure this is true to have the same patches as the lab env
                    "lab_block_z_shift": 0.006, #measured do not change
                    "random_init_surf_size": False,
@@ -44,7 +50,8 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    "large_slope_Y_shifts": [],#[0.0], 
                    "large_slope_Z_shifts": [],#[np.random.uniform(-0.25,0.25)],
                    "y_center_offset": 0.0,
-                   "x_offset": 0.0
+                   "x_offset": 0.0,
+                   "twosteps_on_patch": True,
                     }
 
 if TerrainSettings["terrain_type"] == "customized":
@@ -73,7 +80,8 @@ terrain_model = terrain_model_gen_lab(terrain_name    = TerrainSettings["terrain
                                       large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
                                       large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
                                       y_center = TerrainSettings["y_center_offset"],
-                                      x_offset = TerrainSettings["x_offset"],) 
+                                      x_offset = TerrainSettings["x_offset"],
+                                      twosteps_on_patch = TerrainSettings["twosteps_on_patch"]) 
 
 viz.DisplayResults(TerrainModel=terrain_model, SingleOptResult=None, AllOptResult=None)
 
@@ -87,6 +95,13 @@ pickle.dump(env_model_to_save, open(terrain_model_file_path, "wb"))
 
 #-----------------------------
 # Make the world file
+
+# Check if we have the correct 
+if (TerrainSettings["Projected_Length"] == 0.4 and TerrainSettings["Projected_Width"] == 0.4) or (TerrainSettings["Projected_Length"] == 0.3 and TerrainSettings["Projected_Width"] == 0.3):
+    print("We have the terrain models")
+else:
+    raise Exception("We don't have the terrain models")
+
 # Make a world file (with ground floor) if we dont have one
 with open(world_file_path, 'x') as f:
     f.write('<?xml version="1.0" ?>\n')
@@ -124,11 +139,12 @@ with open(world_file_path, 'x') as f:
 
 # # construct the gazebo world file, append terrain models
 with open(world_file_path, 'a') as f:
-    for surf_idx in range(len(terrain_model["ContactSurfsVertice"])):
-        temp_type = terrain_model["ContactSurfsTypes"][surf_idx]
-        temp_surf = terrain_model["ContactSurfsVertice"][surf_idx]
+    for surf_idx in range(2,len(terrain_model["AllPatchesVertices"])):
+        #temp_type = terrain_model["AllPatchesVertices"][surf_idx]
+        temp_surf = terrain_model["AllPatchesVertices"][surf_idx]
         temp_center_x, temp_center_y, temp_center_z = getCenter(temp_surf)
-        temp_surf_inclination = terrain_model["ContactSurfsInclinationsDegrees"][surf_idx]
+        temp_type = getSurfaceType(temp_surf)
+        temp_surf_inclination = abs(getTerrainRotationAngle(temp_surf))#terrain_model["ContactSurfsInclinationsDegrees"][surf_idx]
         if temp_type != "flat": #if NOT flat add the terrain blocks
             if temp_type == "X_positive":
                 yaw_rot_angle = np.pi/2*3 #rotate 3/4 circle
@@ -145,7 +161,10 @@ with open(world_file_path, 'a') as f:
             f.write('    <include>\n')
             f.write('      <name>block_'+str(surf_idx)+'</name>\n')
             f.write('      <static>'+ str(1) +'</static>\n')
-            f.write('      <uri>model://Y_positive_' + str(int(temp_surf_inclination)) + '_lifted</uri>\n')
+            if TerrainSettings["Projected_Length"] == 0.4:
+                f.write('      <uri>model://Y_positive_' + str(int(temp_surf_inclination)) + '_lifted</uri>\n')
+            elif TerrainSettings["Projected_Length"] == 0.3:
+                f.write('      <uri>model://Y_positive_' + str(int(temp_surf_inclination)) + '_lifted_size_30</uri>\n')
             f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(0.0) + ' 0.0 0.0 ' + str(yaw_rot_angle) + '</pose>\n')
             f.write('    </include>\n')
             f.write('\n')
@@ -155,4 +174,5 @@ with open(world_file_path, 'a') as f:
     f.write('  </world>\n')
     f.write('</sdf>\n')
 
-sys.stdout.close();   sys.stdout=stdoutOrigin  
+if logging == True:
+    sys.stdout.close();   sys.stdout=stdoutOrigin  
