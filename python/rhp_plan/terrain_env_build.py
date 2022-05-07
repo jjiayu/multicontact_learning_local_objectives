@@ -19,7 +19,7 @@ if os.path.isfile(world_file_path):
     raise Exception("Uneven Terrain World Description File Already Exists")
 
 #Logging command line output
-logging = False
+logging = True
 if logging == True: 
     stdoutOrigin=sys.stdout; sys.stdout = open(terrain_model_logfile_path, "w")
 
@@ -30,12 +30,12 @@ if logging == True:
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
                    #"customized_terrain_pattern": ["X_positive",  "X_negative",    "X_positive",   "X_negative",   "X_positive",   "X_negative",   "X_positive",   "X_negative"], #v-shape
                    #"customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive",   "Y_negative",   "Y_negative",   "Y_positive",   "Y_positive"], #up and down
-                   "customized_terrain_pattern": ["Y_negative",  "X_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "X_positive"], #random
+                   "customized_terrain_pattern": ["Y_negative",  "X_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #random
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi],
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi],#None,#0.0/180*np.pi, #radius, None means random inclination
                    "fixed_inclination":10/180*np.pi,
                    "lab_blocks": True, #make sure this is true to have the same patches as the lab env
-                   "lab_block_z_shift": 0.006, #measured do not change
+                   "lab_block_z_shift": 0.006 + 0.018, #measured do not change, bottom + surface height
                    "random_init_surf_size": False,
                    "random_surfsize_flag": False,
                    "random_Horizontal_Move": False,
