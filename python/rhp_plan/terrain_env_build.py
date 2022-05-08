@@ -28,9 +28,13 @@ if logging == True:
 #Make Terrain Setting
 
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
+                   "twosteps_on_patch": True,
                    #"customized_terrain_pattern": ["X_positive",  "X_negative",    "X_positive",   "X_negative",   "X_positive",   "X_negative",   "X_positive",   "X_negative"], #v-shape
                    #"customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive",   "Y_negative",   "Y_negative",   "Y_positive",   "Y_positive"], #up and down
-                   "customized_terrain_pattern": ["Y_negative",  "X_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #random
+                   #"customized_terrain_pattern": ["Y_negative",  "X_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #random
+                   #"customized_terrain_pattern": ["DiagX_positive",  "DiagX_negative",    "DiagY_positive",   "DiagY_negative", "DiagX_positive",  "DiagX_negative",    "DiagY_positive",   "DiagY_negative"], #diag example
+                   "customized_terrain_pattern": ["Y_negative",  "DiagX_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #mixed
+                   #"customized_terrain_pattern": ["X_positive",  "X_negative",    "Y_positive",   "Y_negative"], #straight example
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi],
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi],#None,#0.0/180*np.pi, #radius, None means random inclination
                    "fixed_inclination":10/180*np.pi,
@@ -51,7 +55,6 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    "large_slope_Z_shifts": [],#[np.random.uniform(-0.25,0.25)],
                    "y_center_offset": 0.0,
                    "x_offset": 0.0,
-                   "twosteps_on_patch": True,
                     }
 
 if TerrainSettings["terrain_type"] == "customized":
@@ -154,17 +157,35 @@ with open(world_file_path, 'a') as f:
                 yaw_rot_angle = np.pi/2*0.0 #no rotation
             elif temp_type == "Y_negative":
                 yaw_rot_angle = np.pi/2*2 # rotate half of the circle
+            elif temp_type == "DiagX_positive":
+                yaw_rot_angle = np.pi/2*3.0 #rotate 3/4 circle
+            elif temp_type == "DiagX_negative":
+                yaw_rot_angle = np.pi/2*1.0 #rotate a quater of a circle
+            elif temp_type == "DiagY_positive":
+                yaw_rot_angle = np.pi/2*0.0 #no rotation
+            elif temp_type == "DiagY_negative":
+                yaw_rot_angle = np.pi/2*2 # rotate half of the circle
             else:
-                raise Exception("Unrecognised Terrain type")
+               raise Exception("Unrecognised Terrain type")
+
+            print(temp_type)
             
             f.write('    <!-- Place a Block -->\n')
             f.write('    <include>\n')
             f.write('      <name>block_'+str(surf_idx)+'</name>\n')
             f.write('      <static>'+ str(1) +'</static>\n')
-            if TerrainSettings["Projected_Length"] == 0.4:
-                f.write('      <uri>model://Y_positive_' + str(int(temp_surf_inclination)) + '_lifted</uri>\n')
-            elif TerrainSettings["Projected_Length"] == 0.3:
-                f.write('      <uri>model://Y_positive_' + str(int(temp_surf_inclination)) + '_lifted_size_30</uri>\n')
+            if temp_type in ["X_positive","X_negative","Y_positive","Y_negative"]:
+                if TerrainSettings["Projected_Length"] == 0.4:
+                    f.write('      <uri>model://Y_positive_' + str(int(temp_surf_inclination)) + '_lifted</uri>\n')
+                elif TerrainSettings["Projected_Length"] == 0.3:
+                    f.write('      <uri>model://Y_positive_' + str(int(temp_surf_inclination)) + '_lifted_size_30</uri>\n')
+            elif temp_type in ["DiagX_positive", "DiagX_negative", "DiagY_positive", "DiagY_negative"]:
+                if TerrainSettings["Projected_Length"] == 0.4:
+                    f.write('      <uri>model://diag_Y_positive_' + str(int(temp_surf_inclination)) + '_lifted</uri>\n')
+                elif TerrainSettings["Projected_Length"] == 0.3:
+                    f.write('      <uri>model://diag_Y_positive_' + str(int(temp_surf_inclination)) + '_lifted_size_30</uri>\n')
+            else:
+                raise Exception("Unknown terrain type")
             f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(0.0) + ' 0.0 0.0 ' + str(yaw_rot_angle) + '</pose>\n')
             f.write('    </include>\n')
             f.write('\n')

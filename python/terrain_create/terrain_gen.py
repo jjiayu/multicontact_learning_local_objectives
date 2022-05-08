@@ -116,6 +116,10 @@ def terrain_model_gen_lab(terrain_name=None,
         TerrainTypeList = ["X_positive",
                            "X_negative", "Y_positive", "Y_negative"]
         terrain_pattern = np.random.choice(TerrainTypeList, 200)
+    elif terrain_name == "random_diag":
+        TerrainTypeList = ["X_positive","X_negative", "Y_positive", "Y_negative",
+                           "DiagX_positive", "DiagX_negative", "DiagY_positive", "DiagY_negative"]
+        terrain_pattern = np.random.choice(TerrainTypeList, 200)
     elif terrain_name == "customized":
         terrain_pattern = customized_terrain_pattern + ["flat"]*200
     else:
@@ -344,13 +348,13 @@ def terrain_model_gen_lab(terrain_name=None,
 
         for surfNum in range(2, TotalNumSurfs): #loop over all the contact surfaces
             
-            if terrain_pattern[surfNum-2] in ["X_positive", "X_negative", "Y_positive", "Y_negative"]: #only shift the stepping stone blocks
+            if terrain_pattern[surfNum-2] in ["X_positive", "X_negative", "Y_positive", "Y_negative", "DiagX_positive", "DiagX_negative", "DiagY_positive", "DiagY_negative"]: #only shift the stepping stone blocks
                 #get curren patch
                 cur_surf = AllPatches[surfNum]
                 
                 min_z_vertice = np.min([cur_surf[0,2], cur_surf[1,2], cur_surf[2,2], cur_surf[3,2]]) #get the lowest z vertice for all the blocks
 
-                #lift all the points to have z >= 0
+                #lift all the points to have z >= 0 (min z = 0)
                 cur_surf[0,2] = cur_surf[0,2] - min_z_vertice
                 cur_surf[1,2] = cur_surf[1,2] - min_z_vertice
                 cur_surf[2,2] = cur_surf[2,2] - min_z_vertice
@@ -1091,6 +1095,84 @@ def rotate_patch(surf=None, PatchType=None, theta=None, min_theta=0.08, max_thet
         rotatedPatch[1][2] = rotatedPatch[1][2] - delta_z
         rotatedPatch[2][2] = rotatedPatch[2][2] - delta_z
         rotatedPatch[3][2] = rotatedPatch[3][2] + delta_z
+
+    elif PatchType == "DiagX_positive":
+        # p2---------------------p1 (*on rotation axis, positive direction)
+        # |                 -     |
+        # |         -             |
+        # |  -                    |
+        # p3---------------------p4
+        # (on rotation axis)
+        print("TerrainGen Rotation along Diagonal X postive, with ",
+              str(theta/np.pi*180), "degrees")
+        
+        proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2)
+        delta_z = proj_diagonal_length/2.0*np.tan(theta)
+        
+        rotatedPatch[0][2] = rotatedPatch[0][2]
+        rotatedPatch[1][2] = rotatedPatch[1][2] + delta_z
+        rotatedPatch[2][2] = rotatedPatch[2][2]
+        rotatedPatch[3][2] = rotatedPatch[3][2] - delta_z
+
+    elif PatchType == "DiagX_negative":
+        #use Projected diagonal length, because 
+
+        # p2---------------------p1 (on rotation axis)
+        # |                 -     |
+        # |         -             |
+        # |  -                    |
+        # p3---------------------p4
+        # (*on rotation axis, on positive direction)
+        print("TerrainGen Rotation along Diagonal X negative, with ",
+              str(theta/np.pi*180), "degrees")
+        
+        proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2)
+        delta_z = proj_diagonal_length/2.0*np.tan(theta)
+        
+        rotatedPatch[0][2] = rotatedPatch[0][2]
+        rotatedPatch[1][2] = rotatedPatch[1][2] - delta_z
+        rotatedPatch[2][2] = rotatedPatch[2][2]
+        rotatedPatch[3][2] = rotatedPatch[3][2] + delta_z
+
+    elif PatchType == "DiagY_positive":
+        #(*on rotation axis, positive direction)
+        # p2---------------------p1 
+        # | -                     |
+        # |         -             |
+        # |                  -    |
+        # p3---------------------p4
+        #                           (on rotation axis)
+        print("TerrainGen Rotation along Diagonal Y postive, with ",
+              str(theta/np.pi*180), "degrees")
+        
+        proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2)
+        delta_z = proj_diagonal_length/2.0*np.tan(theta)
+        
+        rotatedPatch[0][2] = rotatedPatch[0][2] - delta_z
+        rotatedPatch[1][2] = rotatedPatch[1][2] 
+        rotatedPatch[2][2] = rotatedPatch[2][2] + delta_z
+        rotatedPatch[3][2] = rotatedPatch[3][2] 
+
+    elif PatchType == "DiagY_negative":
+
+        #(on rotation axis)
+        # p2---------------------p1 
+        # | -                     |
+        # |         -             |
+        # |                  -    |
+        # p3---------------------p4
+        #                           (*on rotation axis, positive direction)
+        print("TerrainGen Rotation along Diagonal Y negative, with ",
+              str(theta/np.pi*180), "degrees")
+        
+        proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2)
+        delta_z = proj_diagonal_length/2.0*np.tan(theta)
+        
+        rotatedPatch[0][2] = rotatedPatch[0][2] + delta_z
+        rotatedPatch[1][2] = rotatedPatch[1][2] 
+        rotatedPatch[2][2] = rotatedPatch[2][2] - delta_z
+        rotatedPatch[3][2] = rotatedPatch[3][2] 
+
     else:
         raise Exception("Unknown Patch Type")
 

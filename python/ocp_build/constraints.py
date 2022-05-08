@@ -109,7 +109,7 @@ def Relative_Foot_Kinematics(SwingLegIndicator=None, p_next=None, p_cur=None, Q_
 # Footstep location Constraint
 
 
-def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=None, eq_E=None, eq_e=None, footlength = 0.22, footwidth = 0.12, margin = 0.03, g=None, glb=None, gub=None):
+def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=None, eq_E=None, eq_e=None, footlength = 0.22, footwidth = 0.12, margin = 0.02, g=None, glb=None, gub=None):
     # FootStep Location Constraint (On the Patch)
     # Enumperation of each contact point
     # P3----------------P1
