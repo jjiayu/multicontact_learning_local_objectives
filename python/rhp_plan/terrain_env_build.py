@@ -2,7 +2,6 @@
 
 import os
 
-from sympy import EX
 from multicontact_learning_local_objectives.python.terrain_create import *
 import multicontact_learning_local_objectives.python.visualization as viz
 from multicontact_learning_local_objectives.python.terrain_create.geometry_utils import *
@@ -28,7 +27,7 @@ if logging == True:
 #Make Terrain Setting
 
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
-                   "twosteps_on_patch": True,
+                   "twosteps_on_patch": False,
                    #"customized_terrain_pattern": ["X_positive",  "X_negative",    "X_positive",   "X_negative",   "X_positive",   "X_negative",   "X_positive",   "X_negative"], #v-shape
                    #"customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive",   "Y_negative",   "Y_negative",   "Y_positive",   "Y_positive"], #up and down
                    #"customized_terrain_pattern": ["Y_negative",  "X_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #random
@@ -40,12 +39,13 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    "fixed_inclination":10/180*np.pi,
                    "lab_blocks": True, #make sure this is true to have the same patches as the lab env
                    "lab_block_z_shift": 0.006 + 0.018, #measured do not change, bottom + surface height
+                   "inner_blocks": False, "inner_block_length": 0.27,
                    "random_init_surf_size": False,
                    "random_surfsize_flag": False,
                    "random_Horizontal_Move": False,
                    "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
                    "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-                   "Projected_Length": 0.4, "Projected_Width": 0.4, #0.55 and 1.0
+                   "Projected_Length": 0.3, "Projected_Width": 0.3, #0.55 and 1.0
                    "large_slope_flag":False,
                    "large_slope_index": [],#[np.random.choice([16,17])],#select a patch from number 16 or 17
                    "large_slope_directions": [],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
@@ -63,11 +63,13 @@ else:
     TerrainSettings["num_of_steps"] = 30
 
 # Generate terrain model (for python)
-terrain_model = terrain_model_gen_lab(terrain_name    = TerrainSettings["terrain_type"],  
+terrain_model = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
                                       customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
                                       fixed_inclination = TerrainSettings["fixed_inclination"], 
                                       lab_blocks = TerrainSettings["lab_blocks"],
                                       lab_block_z_shift = TerrainSettings["lab_block_z_shift"],
+                                      inner_block_length=TerrainSettings["inner_block_length"],
+                                      inner_blocks=TerrainSettings["inner_blocks"],
                                       randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
                                       random_surfsize = TerrainSettings["random_surfsize_flag"],
                                       randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
@@ -75,7 +77,7 @@ terrain_model = terrain_model_gen_lab(terrain_name    = TerrainSettings["terrain
                                       MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
                                       Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
                                       NumSteps = TerrainSettings["num_of_steps"], 
-                                      NumLookAhead = 100,#Put NumLookAhead = 20 to give infinitely long terrains
+                                      NumLookAhead = 10,#Put NumLookAhead = 20 to give infinitely long terrains
                                       large_slope_flag = TerrainSettings["large_slope_flag"], 
                                       large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
                                       large_slope_inclinations = TerrainSettings["large_slope_inclinations"],

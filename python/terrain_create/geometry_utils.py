@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+import copy
 
 
 def getCenter(Surface=None):
@@ -18,6 +19,9 @@ def getCenter(Surface=None):
     center_x = p2[0] + np.abs((p1[0] - p2[0])/2)
     center_y = p4[1] + np.abs((p4[1] - p1[1])/2)
 
+    min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
+    max_height = np.max([[p1[2], p2[2], p3[2], p4[2]]])
+
     # decide z
     if p1[2] == p2[2] and p1[2] == p4[2]:  # flat patch
         center_z = p1[2]
@@ -29,10 +33,9 @@ def getCenter(Surface=None):
     elif p1[2] == p2[2] and p3[2] == p4[2] and (not p2[2]-p3[2] == 0) and (not p1[2]-p4[2] == 0):
         #low + diff/2
         center_z = np.min([p1[2], p4[2]]) + np.abs((p1[2] - p4[2])/2.0)
-    #tilt around diagnol X                        or diagonal Y
-    elif (p1[2] == p3[2]) and (not p2[2] == p4[2]) or ((p2[2] == p4[2]) and (not p1[2] == p3[2])):
-        min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
-        max_height = np.max([[p1[2], p2[2], p3[2], p4[2]]])
+    #tilt around diagnol X                                                                                   or diagonal Y
+    elif (p2[2] == max_height and p4[2] == min_height) or (p2[2] == min_height and p4[2] == max_height) or (p1[2] == max_height and p3[2] == min_height) or (p1[2] == min_height and p3[2] == max_height):
+    #(not p1[2] == p2[2]) and (not p1[2] == p4[2]): #and ((not p2[2] == p4[2]) and (not p1[2] == p3[2])):
         center_z = min_height + np.abs((max_height - min_height)/2.0)
     else:
         raise Exception("Unknown Patch Type")
@@ -59,6 +62,9 @@ def getTerrainRotationAngle(Patch):  # Note: Absolute Number only
     # Patch Width = abs([p1][y] - [p4][y])
     patchWidth = np.abs(p1[1] - p4[1])
 
+    min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
+    max_height = np.max([[p1[2], p2[2], p3[2], p4[2]]])
+
     # Case 1 all flat
     # print(Patch)
     if p1[2] == p2[2] and p2[2] == p3[2] and p3[2] == p4[2] and p4[2] == p1[2]:
@@ -77,7 +83,7 @@ def getTerrainRotationAngle(Patch):  # Note: Absolute Number only
         RotationAngle = tiltAngle/np.pi*180
         print("rotation around x-axis patch, rotation angle = ", RotationAngle)
     #tilt around diagnol X
-    elif (p1[2] == p3[2]) and (not p2[2] == p4[2]):
+    elif (p2[2] == max_height and p4[2] == min_height) or (p2[2] == min_height and p4[2] == max_height):#(p1[2] == p3[2]) and (not p2[2] == p4[2]):
         proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2)
         #min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
         #max_height = np.max([[p1[2], p2[2], p3[2], p4[2]]])
@@ -86,7 +92,7 @@ def getTerrainRotationAngle(Patch):  # Note: Absolute Number only
         RotationAngle = tiltAngle/np.pi*180
         print("rotation around Diagonal X-axis patch, rotation angle = ", RotationAngle)
     #tile around diagnal Y
-    elif ((p2[2] == p4[2]) and (not p1[2] == p3[2])):
+    elif (p1[2] == max_height and p3[2] == min_height) or (p1[2] == min_height and p3[2] == max_height):#((p2[2] == p4[2]) and (not p1[2] == p3[2])):
         proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2) 
         #min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
         #max_height = np.max([[p1[2], p2[2], p3[2], p4[2]]])
@@ -117,6 +123,9 @@ def getTerrainTagentsNormOrientation(Patch):
     patchLength = np.abs(p1[0] - p2[0])
     # Patch Width = abs([p1][y] - [p4][y])
     patchWidth = np.abs(p1[1] - p4[1])
+
+    min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
+    max_height = np.max([[p1[2], p2[2], p3[2], p4[2]]])
 
     # Unrotated Terrain Norm and Tangents
     TerrainTangentX = np.array([1, 0, 0])
@@ -172,8 +181,8 @@ def getTerrainTagentsNormOrientation(Patch):
             angle_between(np.array([0, 0, 1]), TerrainNorm)/np.pi*180), "degrees")
         print(" ")
 
-    #tilt around diagnol X                        
-    elif (p1[2] == p3[2]) and (not p2[2] == p4[2]):
+    #tilt around diagnol X
+    elif (p2[2] == max_height and p4[2] == min_height) or (p2[2] == min_height and p4[2] == max_height):#(p1[2] == p3[2]) and (not p2[2] == p4[2]):
         #rotate terrain norm first
         proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2)
         #min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
@@ -211,7 +220,7 @@ def getTerrainTagentsNormOrientation(Patch):
         print("Terrain Norm: ", TerrainNorm)
         print("Terrain Orientation: ", TerrainOrientation)
     #tile around diagnal Y
-    elif ((p2[2] == p4[2]) and (not p1[2] == p3[2])):
+    elif (p1[2] == max_height and p3[2] == min_height) or (p1[2] == min_height and p3[2] == max_height):#((p2[2] == p4[2]) and (not p1[2] == p3[2])):
         #rotate terrain norm first
         proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2)
         #min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
@@ -274,6 +283,9 @@ def getSurfaceType(Patch):
     # Patch Width = abs([p1][y] - [p4][y])
     patchWidth = np.abs(p1[1] - p4[1])
 
+    min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
+    max_height = np.max([[p1[2], p2[2], p3[2], p4[2]]])
+
     if p1[2] == p2[2] and p2[2] == p3[2] and p3[2] == p4[2] and p4[2] == p1[2]:  # Flat Patch
         terrainType = "flat"
     # Case 2, tilt arond Y axis
@@ -294,8 +306,8 @@ def getSurfaceType(Patch):
             terrainType = "X_positive"
         else:
             raise Exception("Cannot Identify Surface Type")
-    #tilt around diagnol X                        
-    elif (p1[2] == p3[2]) and (not p2[2] == p4[2]):
+    #tilt around diagnol X
+    elif (p2[2] == max_height and p4[2] == min_height) or (p2[2] == min_height and p4[2] == max_height):#(p1[2] == p3[2]) and (not p2[2] == p4[2]):
         proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2)
         #min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
         #max_height = np.max([[p1[2], p2[2], p3[2], p4[2]]])
@@ -307,8 +319,8 @@ def getSurfaceType(Patch):
             terrainType = "DiagX_positive"
         else:
             raise Exception("Cannot Identify Surface Type")
-    #tilt around diagnal Y
-    elif ((p2[2] == p4[2]) and (not p1[2] == p3[2])):
+    #tile around diagnal Y
+    elif (p1[2] == max_height and p3[2] == min_height) or (p1[2] == min_height and p3[2] == max_height):#((p2[2] == p4[2]) and (not p1[2] == p3[2])):
         proj_diagonal_length = np.sqrt(patchLength**2 + patchWidth**2)
         #min_height = np.min([[p1[2], p2[2], p3[2], p4[2]]])
         #max_height = np.max([[p1[2], p2[2], p3[2], p4[2]]])
@@ -325,6 +337,84 @@ def getSurfaceType(Patch):
 
     return terrainType
 
+
+def cut_patch_from_one_boder(patch, rotation_type, rotation_angle, cut_border_side = None, cut_length = 0.0):
+    # Input Format
+    # p2---------------------p1
+    # |                      |
+    # |                      |
+    # |                      |
+    # p3---------------------p4
+    #(left)                 (right)
+
+    cutted_patch = copy.deepcopy(patch)
+
+    # Patch Length = abs([p1][x] - [p2][x])
+    patchLength = np.abs(cutted_patch[0][0] - cutted_patch[1][0])
+    # Patch Width = abs([p1][y] - [p4][y])
+    patchWidth = np.abs(cutted_patch[0][1] - cutted_patch[3][1])
+
+    if cut_border_side == 'left':
+        cutted_patch[1][0] = cutted_patch[1][0] + cut_length
+        cutted_patch[2][0] = cutted_patch[2][0] + cut_length
+
+        #height changes
+        if rotation_type == 'flat':
+            h_change = 0.0
+        elif rotation_type in ["X_negative", "X_positive"]:
+            h_change = 0.0
+        elif rotation_type == "Y_negative": #edge move up
+            h_change = cut_length*np.tan(rotation_angle)
+        elif rotation_type == "Y_positive": #edge move down
+            h_change = -cut_length*np.tan(rotation_angle)
+        elif rotation_type == "DiagX_positive":
+            h_change = -cut_length*np.abs(cutted_patch[0][2]-cutted_patch[1][2])/patchLength
+        elif rotation_type == "DiagX_negative":
+            h_change = cut_length*np.abs(cutted_patch[0][2]-cutted_patch[1][2])/patchLength
+        elif rotation_type == "DiagY_positive":
+            h_change = -cut_length*np.abs(cutted_patch[0][2]-cutted_patch[1][2])/patchLength
+        elif rotation_type == "DiagY_negative":
+            h_change = cut_length*np.abs(cutted_patch[0][2]-cutted_patch[1][2])/patchLength
+        else:
+            raise Exception("Unknown patch type")
+
+        cutted_patch[1][2] = cutted_patch[1][2] + h_change #for y rotation only
+        cutted_patch[2][2] = cutted_patch[2][2] + h_change
+
+    elif cut_border_side == 'right':
+        cutted_patch[0][0] = cutted_patch[0][0] - cut_length
+        cutted_patch[3][0] = cutted_patch[3][0] - cut_length
+
+        #height changes
+        if rotation_type == 'flat':
+            h_change = 0.0
+        elif rotation_type in ["X_negative", "X_positive"]:
+            h_change = 0.0
+        elif rotation_type == "Y_negative": #edge move down
+            h_change = -cut_length*np.tan(rotation_angle)
+        elif rotation_type == "Y_positive": #edge move up
+            h_change = cut_length*np.tan(rotation_angle)
+        elif rotation_type == "DiagX_positive":
+            h_change = cut_length*np.abs(cutted_patch[0][2]-cutted_patch[1][2])/patchLength
+        elif rotation_type == "DiagX_negative":
+            h_change = -cut_length*np.abs(cutted_patch[0][2]-cutted_patch[1][2])/patchLength
+        elif rotation_type == "DiagY_positive":
+            h_change = cut_length*np.abs(cutted_patch[0][2]-cutted_patch[1][2])/patchLength
+        elif rotation_type == "DiagY_negative":
+            h_change = -cut_length*np.abs(cutted_patch[0][2]-cutted_patch[1][2])/patchLength
+        else:
+            raise Exception("Unknown patch type")
+
+        print("!!!h_change",h_change)
+
+        cutted_patch[0][2] = cutted_patch[0][2] + h_change #for y rotation only
+        cutted_patch[3][2] = cutted_patch[3][2] + h_change
+
+    else:
+        raise Exception("unknow cut border side")
+
+
+    return cutted_patch
 
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """

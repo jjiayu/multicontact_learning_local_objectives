@@ -109,7 +109,7 @@ def Relative_Foot_Kinematics(SwingLegIndicator=None, p_next=None, p_cur=None, Q_
 # Footstep location Constraint
 
 
-def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=None, eq_E=None, eq_e=None, footlength = 0.22, footwidth = 0.12, margin = 0.02, g=None, glb=None, gub=None):
+def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=None, eq_E=None, eq_e=None, footlength = 0.22, footwidth = 0.12, margin = 0.01, g=None, glb=None, gub=None):
     # FootStep Location Constraint (On the Patch)
     # Enumperation of each contact point
     # P3----------------P1
@@ -117,7 +117,7 @@ def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=N
     # |                  |
     # |                  |
     # P4----------------P2
-    # margin is to set the safety margin towards the border of the patch
+    # margin is to set the safety margin towards the border of the patch, but there is no margin set for the contact points towrads the left edge (this is for making smaller steps)
 
     print("Half Foot Length (Bigger Size for kinematics check): ", footlength/2.0)
     print("Half Foot Width (Bigger Size for kinematics check): ", footwidth/2.0)
