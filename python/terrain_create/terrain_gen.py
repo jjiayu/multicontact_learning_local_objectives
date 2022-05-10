@@ -11,6 +11,7 @@ import copy
 
 #The one we will be using for lab experiments
 def terrain_model_gen_lab_inner_blocks(terrain_name=None,
+                      backward_motion = False,
                       customized_terrain_pattern = [],
                       Proj_Length=0.6, Proj_Width=0.6,
                       fixed_inclination=0.0,
@@ -74,7 +75,11 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
     # ---------------
     # Generate Initial Patches (Currently Define as flat patches)
     if randomInitSurfSize == False:
-        InitContactSurf_x_max = 0.13 + x_offset
+        
+        if backward_motion == True: #simulator footstep initialization is negative, put it a bit further for backward motion
+            InitContactSurf_x_max = 0.17 + x_offset
+        elif backward_motion == False: #for forward motion is ok
+            InitContactSurf_x_max = 0.13 + x_offset
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:
@@ -203,6 +208,35 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
         ContactSurfsNames.append("S"+str(surfNum-2))
         ContactSurfsTypes.append(terrain_pattern[surfNum])
         AllPatches.append(surf_temp)
+
+    #backward motion need to change the x coordinates NOTE: we are just modifying the flat patches, so we dont need to change the y and z coordinates
+    if backward_motion == True:#flit the x if we turn on the backward motion
+        
+        #for Sl0
+        temp_Sl0 = copy.deepcopy(Sl0)
+        #flit vertices 1 and 2 swap, 3 and 4 swap
+        Sl0[0] = temp_Sl0[1]; Sl0[0][0] = -Sl0[0][0]
+        Sl0[1] = temp_Sl0[0]; Sl0[1][0] = -Sl0[1][0]
+        Sl0[2] = temp_Sl0[3]; Sl0[2][0] = -Sl0[2][0]
+        Sl0[3] = temp_Sl0[2]; Sl0[3][0] = -Sl0[3][0]
+
+        #for Sr0
+        temp_Sr0 = copy.deepcopy(Sr0)
+        #flit vertices 1 and 2 swap, 3 and 4 swap
+        Sr0[0] = temp_Sr0[1]; Sr0[0][0] = -Sr0[0][0]
+        Sr0[1] = temp_Sr0[0]; Sr0[1][0] = -Sr0[1][0]
+        Sr0[2] = temp_Sr0[3]; Sr0[2][0] = -Sr0[2][0]
+        Sr0[3] = temp_Sr0[2]; Sr0[3][0] = -Sr0[3][0]
+
+        temp_ContactSurfsVertice = copy.deepcopy(ContactSurfsVertice)
+        for surf_idx in range(len(ContactSurfsVertice)):
+            ContactSurfsVertice[surf_idx][0] = temp_ContactSurfsVertice[surf_idx][1]; ContactSurfsVertice[surf_idx][0][0] = -ContactSurfsVertice[surf_idx][0][0]
+            ContactSurfsVertice[surf_idx][1] = temp_ContactSurfsVertice[surf_idx][0]; ContactSurfsVertice[surf_idx][1][0] = -ContactSurfsVertice[surf_idx][1][0]
+            ContactSurfsVertice[surf_idx][2] = temp_ContactSurfsVertice[surf_idx][3]; ContactSurfsVertice[surf_idx][2][0] = -ContactSurfsVertice[surf_idx][2][0]
+            ContactSurfsVertice[surf_idx][3] = temp_ContactSurfsVertice[surf_idx][2]; ContactSurfsVertice[surf_idx][3][0] = -ContactSurfsVertice[surf_idx][3][0]
+
+    # Update AllPatches with newly genreated ContactSurfVertices
+    AllPatches = [Sl0, Sr0] + ContactSurfsVertice
 
     # -----------------------------------
     # Modify the patches

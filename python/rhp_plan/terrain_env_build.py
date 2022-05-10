@@ -28,12 +28,22 @@ if logging == True:
 
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
                    "twosteps_on_patch": False,
+                   "backward_motion": False,
+                   #---------
+                   #forward motions
                    #"customized_terrain_pattern": ["X_positive",  "X_negative",    "X_positive",   "X_negative",   "X_positive",   "X_negative",   "X_positive",   "X_negative"], #v-shape
                    #"customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive",   "Y_negative",   "Y_negative",   "Y_positive",   "Y_positive"], #up and down
                    #"customized_terrain_pattern": ["Y_negative",  "X_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #random
                    #"customized_terrain_pattern": ["DiagX_positive",  "DiagX_negative",    "DiagY_positive",   "DiagY_negative", "DiagX_positive",  "DiagX_negative",    "DiagY_positive",   "DiagY_negative"], #diag example
-                   "customized_terrain_pattern": ["Y_negative",  "DiagX_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #mixed
+                   #"customized_terrain_pattern": ["Y_negative",  "DiagX_negative",    "Y_positive",   "X_positive",   "X_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #mixed
                    #"customized_terrain_pattern": ["X_positive",  "X_negative",    "Y_positive",   "Y_negative"], #straight example
+                   # almost flat
+                   #"customized_terrain_pattern": ["Y_negative",  "DiagX_negative",    "Y_positive",   "DiagY_positive",   "DiagY_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #mixed
+                   "customized_terrain_pattern": ["Y_negative",  "Y_negative",    "DiagX_positive",   "Y_positive",   "Y_negative",   "DiagX_negative",   "Y_positive",   "DiagY_positive"], #mixed
+                   #---------
+                   #backword motions
+                   #almost flat
+                   #"customized_terrain_pattern": ["Y_positive",  "DiagY_positive",    "Y_negative",   "DiagX_negative",   "DiagX_positive",   "Y_positive",   "Y_negative",   "Y_negative", "Y_positive",   "Y_positive"], #mixed
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi],
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi],#None,#0.0/180*np.pi, #radius, None means random inclination
                    "fixed_inclination":10/180*np.pi,
@@ -45,7 +55,7 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    "random_Horizontal_Move": False,
                    "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
                    "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-                   "Projected_Length": 0.3, "Projected_Width": 0.3, #0.55 and 1.0
+                   "Projected_Length": 0.4, "Projected_Width": 0.4, #0.55 and 1.0
                    "large_slope_flag":False,
                    "large_slope_index": [],#[np.random.choice([16,17])],#select a patch from number 16 or 17
                    "large_slope_directions": [],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
@@ -66,6 +76,7 @@ else:
 terrain_model = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
                                       customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
                                       fixed_inclination = TerrainSettings["fixed_inclination"], 
+                                      backward_motion=TerrainSettings["backward_motion"],
                                       lab_blocks = TerrainSettings["lab_blocks"],
                                       lab_block_z_shift = TerrainSettings["lab_block_z_shift"],
                                       inner_block_length=TerrainSettings["inner_block_length"],

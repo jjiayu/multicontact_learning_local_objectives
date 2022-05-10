@@ -34,7 +34,7 @@ from sl1m.stand_alone_scenarios.constraints import *
 # Function to build the first level
 
 
-def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3, LocalObjMode=False):
+def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3, LocalObjMode=False, backward_motion = False):
     # -----------------------------------------------------------------------------------------------------------------------
     # Define Constant Parameters
     # Parameters
@@ -381,8 +381,8 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     for stepIdx in range(Nstep):
         pxtemp = ca.SX.sym('px'+str(stepIdx))
         px.append(pxtemp)
-        px_lb.append(np.array([-1.0]))
-        px_ub.append(np.array([50.0]))
+        px_lb.append(np.array([-1.0])); px_lb = np.concatenate(px_lb, axis=None)
+        px_ub.append(np.array([50.0])); px_ub = np.concatenate(px_ub, axis=None)
         pytemp = ca.SX.sym('py'+str(stepIdx))
         py.append(pytemp)
         py_lb.append(np.array([-2.0]))
@@ -415,6 +415,18 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     DecisionVarsShape = DecisionVars.shape
 
     #   Collect all lower bound and upper bound
+
+    #   flip over upper and lower bounds for x varibale if backward motion is on
+    if backward_motion == True:
+        x_lb = -copy.deepcopy(x_ub)
+        x_ub = -copy.deepcopy(x_lb)
+
+        xdot_lb = -copy.deepcopy(xdot_ub)
+        xdot_ub = -copy.deepcopy(xdot_lb)
+
+        px_lb = -copy.deepcopy(px_ub)
+        px_ub = -copy.deepcopy(px_lb)
+
     #   Lower Bounds for Decision Variables
     DecisionVars_lb = (x_lb,    y_lb,    z_lb,    xdot_lb,    ydot_lb,    zdot_lb,
                        Lx_lb,   Ly_lb,   Lz_lb,   Ldotx_lb,   Ldoty_lb,   Ldotz_lb,
@@ -1105,7 +1117,7 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
 # Nsteps: Number of steps in the second level, = Total Number of Steps of the Entire Lookahead Horizon - 1
 
 
-def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3):
+def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3, backward_motion = False):
     # -----------------------------------------------------------------------------------------------------------------------
     # Define Constant Parameters
     G = 9.80665  # kg/m^2
@@ -1396,8 +1408,8 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
     # Initial Contact Location (First step made in the first level), need to connect to the first level landing location
     #   Px, Py, Pz
     px_init = ca.SX.sym('px_init')
-    px_init_lb = np.array([-1.0])
-    px_init_ub = np.array([50.0])
+    px_init_lb = np.array([-1.0]); px_init_lb = np.concatenate(px_init_lb, axis=None)
+    px_init_ub = np.array([50.0]); px_init_ub = np.concatenate(px_init_ub, axis=None)
     py_init = ca.SX.sym('py_init')
     py_init_lb = np.array([-2.0])
     py_init_ub = np.array([2.0])
@@ -1432,6 +1444,9 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
         pz_lb.append(np.array([-5.0]))
         pz_ub.append(np.array([5.0]))
 
+    px_lb = np.concatenate(px_lb, axis=None)
+    px_ub = np.concatenate(px_ub, axis=None)
+
     # Switching Time Vector
     Ts = []
     Ts_lb = []
@@ -1457,6 +1472,21 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
     DecisionVarsShape = DecisionVars.shape
 
     #   Collect all lower bound and upper bound
+
+    #   flip over upper and lower bounds for x varibale if backward motion is on
+    if backward_motion == True:
+        x_lb = -copy.deepcopy(x_ub)
+        x_ub = -copy.deepcopy(x_lb)
+
+        xdot_lb = -copy.deepcopy(xdot_ub)
+        xdot_ub = -copy.deepcopy(xdot_lb)
+
+        px_init_lb = -copy.deepcopy(px_init_ub)
+        px_init_ub = -copy.deepcopy(px_init_lb)
+
+        px_lb = -copy.deepcopy(px_ub)
+        px_ub = -copy.deepcopy(px_lb)
+
     DecisionVars_lb = (x_lb,     y_lb,     z_lb,     xdot_lb,  ydot_lb,  zdot_lb,
                        Lx_lb,    Ly_lb,    Lz_lb,    Ldotx_lb, Ldoty_lb, Ldotz_lb,
                        FL1x_lb,  FL1y_lb,  FL1z_lb,  FL2x_lb,  FL2y_lb,  FL2z_lb,  FL3x_lb,  FL3y_lb,  FL3z_lb,  FL4x_lb,  FL4y_lb,  FL4z_lb,
@@ -2879,7 +2909,7 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
 
 
 # NOTE: Ponton Methods do not have rotated kinematics polytopes
-def Ponton_FourPoints(m=100.0, Nk_Local=7, Nsteps=1, ParameterList=None, PontonTerm_bounds=0.55):
+def Ponton_FourPoints(m=100.0, Nk_Local=7, Nsteps=1, ParameterList=None, PontonTerm_bounds=0.55, backward_motion = False):
     # -------------------------------------------
     # Define Constant Parameters
     #   Gravitational Acceleration
@@ -5414,7 +5444,7 @@ def Ponton_FourPoints(m=100.0, Nk_Local=7, Nsteps=1, ParameterList=None, PontonT
 # NOTE: Ponton Methods do not have rotated kinematics polytopes
 
 
-def Ponton_SinglePoint(m=100.0, Nk_Local=7, Nsteps=1, ParameterList=None, PontonTerm_bounds=0.55):
+def Ponton_SinglePoint(m=100.0, Nk_Local=7, Nsteps=1, ParameterList=None, PontonTerm_bounds=0.55, backward_motion = False):
 
     # -------------------------------------------
     # Define Constant Parameters
@@ -6786,7 +6816,7 @@ def Ponton_SinglePoint(m=100.0, Nk_Local=7, Nsteps=1, ParameterList=None, Ponton
 #      None:           means we reach the far goal, which is will fail for sure
 
 
-def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, LocalObjTrackingType=None, N_knots_local=7, robot_mass=100.0, PhaseDurationLimits=None, miu=0.3, max_compute_time=1000.0):
+def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, LocalObjTrackingType=None, N_knots_local=7, robot_mass=100.0, PhaseDurationLimits=None, miu=0.3, max_compute_time=1000.0, backward_motion_flag = False):
     # Check if the First Level is selected properly
     assert FirstLevel != None, "First Level is Not Selected."
     assert TotalNumSteps != None, "Total Number of Steps Un-defined."
@@ -6951,10 +6981,10 @@ def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, Loca
         if TotalNumSteps == 1:  # Local obj mode
             # make the first level
             var_lv1, var_lb_lv1, var_ub_lv1, J_lv1, g_lv1, glb_lv1, gub_lv1, var_idx_lv1 = NLP_SingleStep(
-                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjMode=True)
+                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjMode=True, backward_motion=backward_motion_flag)
         else:
             var_lv1, var_lb_lv1, var_ub_lv1, J_lv1, g_lv1, glb_lv1, gub_lv1, var_idx_lv1 = NLP_SingleStep(
-                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjMode=False)
+                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjMode=False, backward_motion= backward_motion_flag)
     else:
         raise Exception("Unknown First Level Name")
     # ----------
@@ -6971,13 +7001,13 @@ def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, Loca
     elif TotalNumSteps > 1:
         if SecondLevel == "NLP_SecondLevel":  # Number of Step = Total Number of Step - 1 as the first step is included in the first level
             var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = NLP_SecondLevel(
-                ParameterList=ParaList, Nsteps=TotalNumSteps-1, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu)
+                ParameterList=ParaList, Nsteps=TotalNumSteps-1, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, backward_motion=backward_motion_flag)
         elif SecondLevel == "Ponton_FourPoints":
             var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = Ponton_FourPoints(
-                ParameterList=ParaList, Nsteps=TotalNumSteps-1, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits)
+                ParameterList=ParaList, Nsteps=TotalNumSteps-1, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, backward_motion=backward_motion_flag)
         elif SecondLevel == "Ponton_SinglePoint":
             var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = Ponton_SinglePoint(
-                ParameterList=ParaList, Nsteps=TotalNumSteps-1, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits)
+                ParameterList=ParaList, Nsteps=TotalNumSteps-1, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, backward_motion=backward_motion_flag)
         else:
             raise Exception("Unknown Second Level Name")
     # -----------

@@ -193,6 +193,7 @@ if TerrainModelPath == None:
         # # #-----------------------------------------
         # #For local Testing
         TerrainSettings = {"terrain_type": "flat",#"antfarm_left",
+                           "backward_motion": False,
                            "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
                             "lab_blocks": True,
                             "lab_block_z_shift": 0.006,
@@ -405,6 +406,9 @@ print("- Initial Right Contact Surface Orientation: \n", InitConfig["RightInitSu
 GoalState = {}
 #   Goal/Terminal CoM x, y, z
 GoalState["x_end"] = 30.0;           GoalState["y_end"] = 0.0;       GoalState["z_end"] = 0.88
+#flip target x if we turn on backward motion
+if TerrainSettings["backward_motion"] == True:
+    GoalState["x_end"] = -GoalState["x_end"]
 #   Goal/Terminal CoMdot x, y, z (Not Used for now)
 GoalState["xdot_end"] = 0.0;         GoalState["ydot_end"] = 0.0;    GoalState["zdot_end"] = 0.0
 #   Print Terminal/goal State
@@ -416,15 +420,18 @@ if NumLookAhead == 1: #Single Step NLP
     solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
                                                                                      LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
                                                                                      N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
-                                                                                     PhaseDurationLimits=phase_duration_limits)
+                                                                                     PhaseDurationLimits=phase_duration_limits,
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"])
 elif NumLookAhead > 1: #Multiple Steps NLP
     solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
                                                                                      TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
                                                                                      N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
-                                                                                     PhaseDurationLimits=phase_duration_limits)
+                                                                                     PhaseDurationLimits=phase_duration_limits,
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"])
 
     # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "Ponton_SinglePoint", \
-    #                                                                                  TotalNumSteps = NumLookAhead, LocalObjTrackingType = None)
+    #                                                                                  TotalNumSteps = NumLookAhead, LocalObjTrackingType = None,
+    #                                                                                  backward_motion_flag=TerrainSettings["backward_motion"]))
 
 #----------------------------------------
 #Start Computing Trajectories

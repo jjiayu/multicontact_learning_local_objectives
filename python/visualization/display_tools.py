@@ -544,7 +544,14 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
         ax = labelSurface(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
                           ContactSurfs=TerrainModel["ContactSurfsVertice"], fig=fig, ax=ax)
         ax.set_zlim([-0.01,1.0])
-        ax.set_xlim([-1.0,3.0])
+        
+        #backward motion terrain
+        if TerrainModel["AllPatchesVertices"][-1][0][0] <= 0:
+            ax.set_xlim([-3.0,1.0])
+        #forward motion
+        elif TerrainModel["AllPatchesVertices"][-1][0][0] >= 0:
+            ax.set_xlim([-1.0,3.0])
+        
         plt.show()
 
     # Display Opimization Result of Current Round/Step (With the entire horizon)
@@ -557,6 +564,14 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
         ax = drawSingleOptTraj(optResult=SingleOptResult, fig=fig, ax=ax)
         ax = labelSurface(Sl0surf=SingleOptResult["LeftInitSurf"], Sr0surf=SingleOptResult["RightInitSurf"],
                           ContactSurfs=SingleOptResult["ContactSurfs"], fig=fig, ax=ax)
+        
+        #backward motion terrain
+        if TerrainModel["AllPatchesVertices"][-1][0][0] <= 0:
+            ax.set_xlim([-3.0,1.0])
+        #forward motion
+        #elif TerrainModel["AllPatchesVertices"][-1][0][0] >= 0:
+        #    ax.view_init([0.0,0.0])
+        
         plt.show()
 
     # Display Optimization Result for all rounds/steps
@@ -570,6 +585,14 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
                 allOptResult=AllOptResult, fig=fig, ax=ax)
             ax = labelSurface(Sl0surf=AllOptResult[0]["LeftInitSurf"], Sr0surf=AllOptResult[0]["RightInitSurf"],
                               ContactSurfs=TerrainModel["ContactSurfsVertice"], fig=fig, ax=ax)
+            
+            #backward motion terrain
+            if TerrainModel["AllPatchesVertices"][-1][0][0] <= 0:
+                ax.set_xlim([-3.0,1.0])
+            ##forward motion
+            #elif TerrainModel["AllPatchesVertices"][-1][0][0] >= 0:
+            #    ax.view_init([0.0,0.0])
+            
             plt.show()
 
     # Show Figure
