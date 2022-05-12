@@ -79,7 +79,7 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
         if backward_motion == True: #simulator footstep initialization is negative, put it a bit further for backward motion
             InitContactSurf_x_max = 0.17 + x_offset
         elif backward_motion == False: #for forward motion is ok
-            InitContactSurf_x_max = 0.13 + x_offset
+            InitContactSurf_x_max = 0.16 + x_offset
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:

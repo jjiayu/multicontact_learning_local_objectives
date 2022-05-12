@@ -715,7 +715,7 @@ for roundNum in range(len(LoadTerrainModel["SingleOptResultSavings"])): #range(N
                            "ContactSurfs":InitConfig["ContactSurfs"], #Vertice representation
                            "SurfTangentsX":InitConfig["SurfTangentsX"],  "SurfTangentsY":InitConfig["SurfTangentsY"],  "SurfNorms":InitConfig["SurfNorms"],
                            "SurfOrientations":InitConfig["SurfOrientations"],
-                           "InitConfig":InitConfig}
+                           "InitConfig":copy.deepcopy(InitConfig)}
 
         #print("Single-opt Result x_init (after collecting): ",SingleOptResult["InitConfig"]["x_init"])
         
@@ -757,7 +757,7 @@ for roundNum in range(len(LoadTerrainModel["SingleOptResultSavings"])): #range(N
                            "ContactSurfs":InitConfig["ContactSurfs"], #Vertice representation
                            "SurfTangentsX":InitConfig["SurfTangentsX"],  "SurfTangentsY":InitConfig["SurfTangentsY"],  "SurfNorms":InitConfig["SurfNorms"],
                            "SurfOrientations":InitConfig["SurfOrientations"],
-                           "InitConfig":InitConfig}
+                           "InitConfig":copy.deepcopy(InitConfig)}
 
         break
     #-----------------
