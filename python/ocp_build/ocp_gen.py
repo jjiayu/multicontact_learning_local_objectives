@@ -34,7 +34,7 @@ from sl1m.stand_alone_scenarios.constraints import *
 # Function to build the first level
 
 
-def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3, LocalObjMode=False, backward_motion = False):
+def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3, LocalObjTimingTracking=False, backward_motion = False):
     # -----------------------------------------------------------------------------------------------------------------------
     # Define Constant Parameters
     # Parameters
@@ -514,8 +514,8 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
         for Local_k_Count in range(Nk_ThisPhase):
             # Get knot number across the entire time line
             k = Nph*Nk_Local + Local_k_Count
-            print("Phase Count: ", Nph)
-            print(k)
+            #print("Phase Count: ", Nph)
+            #print(k)
 
             # ------------------------------------------
             # Build useful vectors
@@ -1008,8 +1008,8 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     # ---------
     # For Local Obj Tracking of Large Slope (need time guide)
     # ---------
-    if LocalObjMode == False:
-        print("Normal Switching Time limit")
+    if LocalObjTimingTracking == False:
+        print("Phase duration timing constraint uses the pre-defined limits")
         # Switching Time Constraint
         for phase_cnt in range(Nphase):
             if GaitPattern[phase_cnt] == 'InitialDouble':
@@ -1035,8 +1035,8 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
                     np.array([PhaseDuration_Limits["DoubleSupport_Max"]]))
             else:
                 raise Exception("Unknown Phase Name")
-    elif LocalObjMode == True:
-        print("Local Obj Switching Time Limit")
+    elif LocalObjTimingTracking == True:
+        print("Phase switching timing constraint tightened based on the local objective")
         # Timing Constraints (Slack Constrained)
         g, glb, gub = slackConstrained_SingleVar(
             a=Ts[0], b=InitDS_Ts_obj, slackratio=0.15, g=g, glb=glb, gub=gub)
@@ -6816,7 +6816,10 @@ def Ponton_SinglePoint(m=100.0, Nk_Local=7, Nsteps=1, ParameterList=None, Ponton
 #      None:           means we reach the far goal, which is will fail for sure
 
 
-def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, LocalObjTrackingType=None, N_knots_local=7, robot_mass=100.0, PhaseDurationLimits=None, miu=0.3, max_compute_time=1000.0, backward_motion_flag = False):
+def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, LocalObjTrackingType=None, N_knots_local=7, robot_mass=100.0, PhaseDurationLimits=None, miu=0.3, max_compute_time=1000.0, backward_motion_flag = False, TrackingTiming = False):
+    
+    print("Constructing the Solver")
+
     # Check if the First Level is selected properly
     assert FirstLevel != None, "First Level is Not Selected."
     assert TotalNumSteps != None, "Total Number of Steps Un-defined."
@@ -6981,10 +6984,10 @@ def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, Loca
         if TotalNumSteps == 1:  # Local obj mode
             # make the first level
             var_lv1, var_lb_lv1, var_ub_lv1, J_lv1, g_lv1, glb_lv1, gub_lv1, var_idx_lv1 = NLP_SingleStep(
-                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjMode=True, backward_motion=backward_motion_flag)
+                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjTimingTracking=TrackingTiming, backward_motion=backward_motion_flag)
         else:
             var_lv1, var_lb_lv1, var_ub_lv1, J_lv1, g_lv1, glb_lv1, gub_lv1, var_idx_lv1 = NLP_SingleStep(
-                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjMode=False, backward_motion= backward_motion_flag)
+                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjTimingTracking=TrackingTiming, backward_motion= backward_motion_flag)
     else:
         raise Exception("Unknown First Level Name")
     # ----------
@@ -7176,7 +7179,7 @@ def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, Loca
     # Good Setup of Knitro
     opts["knitro.presolve"] = 1
     opts["knitro.honorbnds"] = 0
-    opts["knitro.OutLev"] = 2
+    opts["knitro.OutLev"] = 2 #0: no printing, 1: only summary, 2: (default) per 10 iter
     opts["knitro.bar_directinterval"] = 0
     opts["knitro.maxit"] = 10000
     opts["knitro.maxtime_real"] = max_compute_time

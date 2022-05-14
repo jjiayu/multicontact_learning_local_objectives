@@ -23,9 +23,9 @@ def getLocalobj(Mode=None, refTrajFile=None, roundNum=None,
     # Get From File Directly
     if Mode == "fromFile":
 
-        print(" ")
+        #print(" ")
         print("Get Local Obj from File, with Timing Info")
-        print(" ")
+        #print(" ")
 
         with open(refTrajFile, 'rb') as f:
             data = pickle.load(f)
@@ -55,7 +55,7 @@ def getLocalobj(Mode=None, refTrajFile=None, roundNum=None,
         opt_res = optResult["opt_res"]
 
         Ts_vec = opt_res[var_Idx_lv1["Ts"][0]:var_Idx_lv1["Ts"][1]+1]
-        print("Timing Vec", Ts_vec)
+        #print("Timing Vec", Ts_vec)
 
         InitDS_Dur = Ts_vec[-3]
         SS_Dur = Ts_vec[-2] - Ts_vec[-3]

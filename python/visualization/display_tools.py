@@ -118,6 +118,7 @@ def labelSurface(Sl0surf=None, Sr0surf=None, ContactSurfs=None, fig=None, ax=Non
 def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4):
     # Process the First Level
     # Get First Level Result
+
     var_idx_lv1 = optResult["var_idx"]["Level1_Var_Index"]
 
     # Get Full optimization result
@@ -171,6 +172,14 @@ def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4):
     ax = drawFootPatch(P=np.concatenate((px_lv1_res, py_lv1_res, pz_lv1_res), axis=None),
                        P_TangentX=optResult["SurfTangentsX"][0], P_TangentY=optResult["SurfTangentsY"][0], line_color=StepColor, LineType = 'dashed', footlength = 0.2, footwidth = 0.1, ax=ax)
 
+    # Draw the projected starting knot of the swing phase
+    ax.scatter(x_lv1_res[int((len(x_lv1_res)-1)/3)], y_lv1_res[int((len(x_lv1_res)-1)/3)], 0.0, c='black',
+                marker='o', linewidth=5)
+
+    # Draw the projected ending knot of the swing phase (starting knot of the double support phase)
+    ax.scatter(x_lv1_res[int((len(x_lv1_res)-1)/3*2)], y_lv1_res[int((len(x_lv1_res)-1)/3*2)], 0.0, c='black',
+                marker='o', linewidth=5)
+
     # Process the Second Level
     # Get opt result for the second level
     x_opt_lv2 = x_opt[var_idx_lv1["Ts"][1]+1:]
@@ -200,14 +209,6 @@ def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4):
         ax.plot3D(x_lv2_res, y_lv2_res, np.zeros(z_lv2_res.shape), color='green',
                   linestyle='dashed', linewidth=2, markersize=12)
                   #plot where the com from swing phase (num of knots = (len(x_lv1_res)-1)/3)
-
-        # Draw the projected starting knot of the swing phase
-        ax.scatter(x_lv1_res[int((len(x_lv1_res)-1)/3)], y_lv1_res[int((len(x_lv1_res)-1)/3)], 0.0, c='black',
-                   marker='o', linewidth=5)
-
-        # Draw the projected ending knot of the swing phase (starting knot of the double support phase)
-        ax.scatter(x_lv1_res[int((len(x_lv1_res)-1)/3*2)], y_lv1_res[int((len(x_lv1_res)-1)/3*2)], 0.0, c='black',
-                   marker='o', linewidth=5)
 
         # Contact Parameters of Level 2
         lv2_ContactTengentX = optResult["SurfTangentsX"][1:]
@@ -303,12 +304,12 @@ def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize
                allOptResult[0]["PLz_init"], c='r', marker='o', linewidth=FootMarkerSize)
     # The actual footsize (larger size)
     ax = drawFootPatch(P=np.array([allOptResult[0]["PLx_init"], allOptResult[0]["PLy_init"], allOptResult[0]["PLz_init"]]),
-                       P_TangentX=allOptResult[0]["PL_init_TangentX"], P_TangentY=allOptResult[0]["PL_init_TangentY"], line_color='r', 
+                       P_TangentX=allOptResult[0]["PL_init_TangentX"], P_TangentY=allOptResult[0]["PL_init_TangentY"], line_color='r',
                        LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                        ax=ax)
     # The shrinked footsize for defining contact points (smaller size)
     ax = drawFootPatch(P=np.array([allOptResult[0]["PLx_init"], allOptResult[0]["PLy_init"], allOptResult[0]["PLz_init"]]),
-                       P_TangentX=allOptResult[0]["PL_init_TangentX"], P_TangentY=allOptResult[0]["PL_init_TangentY"], line_color='r', 
+                       P_TangentX=allOptResult[0]["PL_init_TangentX"], P_TangentY=allOptResult[0]["PL_init_TangentY"], line_color='r',
                        LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                        ax=ax)
 
@@ -317,12 +318,12 @@ def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize
                allOptResult[0]["PRz_init"], c='b', marker='o', linewidth=FootMarkerSize)
     # The actual footsize (larger size)
     ax = drawFootPatch(P=np.array([allOptResult[0]["PRx_init"], allOptResult[0]["PRy_init"], allOptResult[0]["PRz_init"]]),
-                       P_TangentX=allOptResult[0]["PR_init_TangentX"], P_TangentY=allOptResult[0]["PR_init_TangentY"], line_color='b', 
+                       P_TangentX=allOptResult[0]["PR_init_TangentX"], P_TangentY=allOptResult[0]["PR_init_TangentY"], line_color='b',
                        LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                        ax=ax)
     # The shrinked footsize for defining contact points (smaller size)
     ax = drawFootPatch(P=np.array([allOptResult[0]["PRx_init"], allOptResult[0]["PRy_init"], allOptResult[0]["PRz_init"]]),
-                    P_TangentX=allOptResult[0]["PR_init_TangentX"], P_TangentY=allOptResult[0]["PR_init_TangentY"], line_color='b', 
+                    P_TangentX=allOptResult[0]["PR_init_TangentX"], P_TangentY=allOptResult[0]["PR_init_TangentY"], line_color='b',
                     LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                     ax=ax)
 
@@ -373,7 +374,7 @@ def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize
         # Plot CoM
         ax.plot3D(x_lv1_res, y_lv1_res, z_lv1_res, color=CoM_Color,
                   linestyle='dashed', linewidth=2, markersize=12)
-        
+
         #plot com projection
         ax.plot3D(x_lv1_res, y_lv1_res, np.zeros(z_lv1_res.shape), color=CoM_Color,
                   linestyle='dashed', linewidth=2, markersize=12)
@@ -392,12 +393,12 @@ def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize
         # Draw Contact Patch
         # The actual footsize (larger size)
         ax = drawFootPatch(P=np.concatenate((px_lv1_res, py_lv1_res, pz_lv1_res), axis=None),
-                           P_TangentX=Contact_TangentX, P_TangentY=Contact_TangentY, line_color=P_Color, 
+                           P_TangentX=Contact_TangentX, P_TangentY=Contact_TangentY, line_color=P_Color,
                            LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                            ax=ax)
         # The shrinked footsize for defining contact points (smaller size)
         ax = drawFootPatch(P=np.concatenate((px_lv1_res, py_lv1_res, pz_lv1_res), axis=None),
-                           P_TangentX=Contact_TangentX, P_TangentY=Contact_TangentY, line_color=P_Color, 
+                           P_TangentX=Contact_TangentX, P_TangentY=Contact_TangentY, line_color=P_Color,
                            LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                            ax=ax)
     # Set xlim
@@ -411,18 +412,18 @@ def drawInitConfig(InitConfig=None, fig=None, ax=None, color=None, LineWidth=10)
         # draw init CoM
         ax.scatter(InitConfig["x_init"], InitConfig["y_init"],
                    InitConfig["z_init"], c='g', marker='o', linewidth=LineWidth)
-        
+
         # draw init Left contact location and patch
         ax.scatter(InitConfig["PLx_init"], InitConfig["PLy_init"],
                    InitConfig["PLz_init"], c='r', marker='o', linewidth=LineWidth)
         # The actual footsize (larger size)
         drawFootPatch(P=np.array([InitConfig["PLx_init"], InitConfig["PLy_init"], InitConfig["PLz_init"]]),
-                      P_TangentX=InitConfig["PL_init_TangentX"], P_TangentY=InitConfig["PL_init_TangentY"], line_color='r', 
+                      P_TangentX=InitConfig["PL_init_TangentX"], P_TangentY=InitConfig["PL_init_TangentY"], line_color='r',
                       LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                       ax=ax)
         # The shrinked footsize for defining contact points (smaller size)
         drawFootPatch(P=np.array([InitConfig["PLx_init"], InitConfig["PLy_init"], InitConfig["PLz_init"]]),
-                      P_TangentX=InitConfig["PL_init_TangentX"], P_TangentY=InitConfig["PL_init_TangentY"], line_color='r', 
+                      P_TangentX=InitConfig["PL_init_TangentX"], P_TangentY=InitConfig["PL_init_TangentY"], line_color='r',
                       LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                       ax=ax)
 
@@ -431,30 +432,30 @@ def drawInitConfig(InitConfig=None, fig=None, ax=None, color=None, LineWidth=10)
                    InitConfig["PRz_init"], c='b', marker='o', linewidth=LineWidth)
         # The actual footsize (larger size)
         drawFootPatch(P=np.array([InitConfig["PRx_init"], InitConfig["PRy_init"], InitConfig["PRz_init"]]),
-                      P_TangentX=InitConfig["PR_init_TangentX"], P_TangentY=InitConfig["PR_init_TangentY"], line_color='b', 
+                      P_TangentX=InitConfig["PR_init_TangentX"], P_TangentY=InitConfig["PR_init_TangentY"], line_color='b',
                       LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                       ax=ax)
         # The shrinked footsize for defining contact points (smaller size)
         drawFootPatch(P=np.array([InitConfig["PRx_init"], InitConfig["PRy_init"], InitConfig["PRz_init"]]),
-                      P_TangentX=InitConfig["PR_init_TangentX"], P_TangentY=InitConfig["PR_init_TangentY"], line_color='b', 
+                      P_TangentX=InitConfig["PR_init_TangentX"], P_TangentY=InitConfig["PR_init_TangentY"], line_color='b',
                       LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                       ax=ax)
     else:
         # draw init CoM
         ax.scatter(InitConfig["x_init"], InitConfig["y_init"],
                    InitConfig["z_init"], c=color, marker='o', linewidth=LineWidth)
-        
+
         # draw init Left contact location and patch
         ax.scatter(InitConfig["PLx_init"], InitConfig["PLy_init"],
                    InitConfig["PLz_init"], c=color, marker='o', linewidth=LineWidth)
         # The actual footsize (larger size)
         drawFootPatch(P=np.array([InitConfig["PLx_init"], InitConfig["PLy_init"], InitConfig["PLz_init"]]),
-                      P_TangentX=InitConfig["PL_init_TangentX"], P_TangentY=InitConfig["PL_init_TangentY"], line_color=color, 
+                      P_TangentX=InitConfig["PL_init_TangentX"], P_TangentY=InitConfig["PL_init_TangentY"], line_color=color,
                       LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                       ax=ax)
         # The shrinked footsize for defining contact points (smaller size)
         drawFootPatch(P=np.array([InitConfig["PLx_init"], InitConfig["PLy_init"], InitConfig["PLz_init"]]),
-                      P_TangentX=InitConfig["PL_init_TangentX"], P_TangentY=InitConfig["PL_init_TangentY"], line_color=color, 
+                      P_TangentX=InitConfig["PL_init_TangentX"], P_TangentY=InitConfig["PL_init_TangentY"], line_color=color,
                       LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                       ax=ax)
 
@@ -463,12 +464,12 @@ def drawInitConfig(InitConfig=None, fig=None, ax=None, color=None, LineWidth=10)
                    InitConfig["PRz_init"], c=color, marker='o', linewidth=LineWidth)
         # The actual footsize (larger size)
         drawFootPatch(P=np.array([InitConfig["PRx_init"], InitConfig["PRy_init"], InitConfig["PRz_init"]]),
-                      P_TangentX=InitConfig["PR_init_TangentX"], P_TangentY=InitConfig["PR_init_TangentY"], line_color=color, 
+                      P_TangentX=InitConfig["PR_init_TangentX"], P_TangentY=InitConfig["PR_init_TangentY"], line_color=color,
                       LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                       ax=ax)
         # The shrinked footsize for defining contact points (smaller size)
         drawFootPatch(P=np.array([InitConfig["PRx_init"], InitConfig["PRy_init"], InitConfig["PRz_init"]]),
-                      P_TangentX=InitConfig["PR_init_TangentX"], P_TangentY=InitConfig["PR_init_TangentY"], line_color=color, 
+                      P_TangentX=InitConfig["PR_init_TangentX"], P_TangentY=InitConfig["PR_init_TangentY"], line_color=color,
                       LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                       ax=ax)
 
@@ -482,16 +483,16 @@ def drawLocaObj(LocalObj=None, InitConfig=None, fig=None, ax=None, LineWidth=10)
     # draw Contact location and foot patch
     ax.scatter(LocalObj["Px_obj"], LocalObj["Py_obj"],
                LocalObj["Pz_obj"], c='c', marker='o', linewidth=LineWidth)
-    
+
     # The actual footsize (larger size)
     ax = drawFootPatch(P=np.concatenate(([LocalObj["Px_obj"], LocalObj["Py_obj"], LocalObj["Pz_obj"]]), axis=None),
-                       P_TangentX=InitConfig["SurfTangentsX"][0], P_TangentY=InitConfig["SurfTangentsY"][0], line_color='c', 
+                       P_TangentX=InitConfig["SurfTangentsX"][0], P_TangentY=InitConfig["SurfTangentsY"][0], line_color='c',
                        LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                        ax=ax)
 
     # The shrinked footsize for defining contact points (smaller size)
     ax = drawFootPatch(P=np.concatenate(([LocalObj["Px_obj"], LocalObj["Py_obj"], LocalObj["Pz_obj"]]), axis=None),
-                       P_TangentX=InitConfig["SurfTangentsX"][0], P_TangentY=InitConfig["SurfTangentsY"][0], line_color='c', 
+                       P_TangentX=InitConfig["SurfTangentsX"][0], P_TangentY=InitConfig["SurfTangentsY"][0], line_color='c',
                        LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                        ax=ax)
 
@@ -505,16 +506,16 @@ def drawTerminalConfig(TerminalConfig=None, InitConfig=None, fig=None, ax=None, 
     # draw Contact location and foot patch
     ax.scatter(TerminalConfig["Px"], TerminalConfig["Py"],
                TerminalConfig["Pz"], c=color, marker='o', linewidth=LineWidth)
-    
+
     # The actual footsize (larger size)
     ax = drawFootPatch(P=np.concatenate(([TerminalConfig["Px"], TerminalConfig["Py"], TerminalConfig["Pz"]]), axis=None),
-                       P_TangentX=InitConfig["SurfTangentsX"][0], P_TangentY=InitConfig["SurfTangentsY"][0], line_color=color, 
-                       LineType = 'solid', footlength = 0.22, footwidth = 0.12, 
+                       P_TangentX=InitConfig["SurfTangentsX"][0], P_TangentY=InitConfig["SurfTangentsY"][0], line_color=color,
+                       LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                        ax=ax)
     # The shrinked footsize for defining contact points (smaller size)
     ax = drawFootPatch(P=np.concatenate(([TerminalConfig["Px"], TerminalConfig["Py"], TerminalConfig["Pz"]]), axis=None),
-                       P_TangentX=InitConfig["SurfTangentsX"][0], P_TangentY=InitConfig["SurfTangentsY"][0], line_color=color, 
-                       LineType = 'dashed', footlength = 0.2, footwidth = 0.1, 
+                       P_TangentX=InitConfig["SurfTangentsX"][0], P_TangentY=InitConfig["SurfTangentsY"][0], line_color=color,
+                       LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                        ax=ax)
     return ax
 
@@ -544,14 +545,14 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
         ax = labelSurface(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
                           ContactSurfs=TerrainModel["ContactSurfsVertice"], fig=fig, ax=ax)
         ax.set_zlim([-0.01,1.0])
-        
+
         #backward motion terrain
         if TerrainModel["AllPatchesVertices"][-1][0][0] <= 0:
             ax.set_xlim([-3.0,1.0])
         #forward motion
         elif TerrainModel["AllPatchesVertices"][-1][0][0] >= 0:
             ax.set_xlim([-1.0,3.0])
-        
+
         plt.show()
 
     # Display Opimization Result of Current Round/Step (With the entire horizon)
@@ -564,14 +565,14 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
         ax = drawSingleOptTraj(optResult=SingleOptResult, fig=fig, ax=ax)
         ax = labelSurface(Sl0surf=SingleOptResult["LeftInitSurf"], Sr0surf=SingleOptResult["RightInitSurf"],
                           ContactSurfs=SingleOptResult["ContactSurfs"], fig=fig, ax=ax)
-        
+
         #backward motion terrain
         if TerrainModel["AllPatchesVertices"][-1][0][0] <= 0:
             ax.set_xlim([-3.0,1.0])
         #forward motion
         #elif TerrainModel["AllPatchesVertices"][-1][0][0] >= 0:
         #    ax.view_init([0.0,0.0])
-        
+
         plt.show()
 
     # Display Optimization Result for all rounds/steps
@@ -585,14 +586,14 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
                 allOptResult=AllOptResult, fig=fig, ax=ax)
             ax = labelSurface(Sl0surf=AllOptResult[0]["LeftInitSurf"], Sr0surf=AllOptResult[0]["RightInitSurf"],
                               ContactSurfs=TerrainModel["ContactSurfsVertice"], fig=fig, ax=ax)
-            
+
             #backward motion terrain
             if TerrainModel["AllPatchesVertices"][-1][0][0] <= 0:
                 ax.set_xlim([-3.0,1.0])
             ##forward motion
             #elif TerrainModel["AllPatchesVertices"][-1][0][0] >= 0:
             #    ax.view_init([0.0,0.0])
-            
+
             plt.show()
 
     # Show Figure

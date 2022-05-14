@@ -43,6 +43,7 @@ ExternalParameters = {"WorkingDirectory": None,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
                       "VisualizationFlag": "Yes",
+                      "TrackTiming": "No"
                       }
 
 #   Update External Parameters
@@ -52,6 +53,14 @@ for i in range(len(externalParasList)//2):
         ExternalParameters[externalParasList[2*i][1:]] = externalParasList[2*i + 1] #remove the "-" from the parameter list
     else:
         raise Exception("Unknown Parameter: ", externalParasList[2*i][1:])
+
+#   Convert TrackTiming Flag into boolean
+if ExternalParameters["TrackTiming"] == "No":
+    ExternalParameters["TrackTiming"] = False
+elif ExternalParameters["TrackTiming"] == "Yes":
+    ExternalParameters["TrackTiming"] = True
+else:
+    raise Exception("Unknow TrackTiming Flag")
 
 #-------------------------------
 #Log File and Save Data
@@ -435,7 +444,8 @@ if NumLookAhead == 1: #Single Step NLP
                                                                                      LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
                                                                                      N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
                                                                                      PhaseDurationLimits=phase_duration_limits,
-                                                                                     backward_motion_flag=TerrainSettings["backward_motion"])
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                     TrackingTiming = ExternalParameters["TrackTiming"])
 elif NumLookAhead > 1: #Multiple Steps NLP
     solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
                                                                                      TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
@@ -849,6 +859,6 @@ DumpedResults["FailedRoundInfo"] = FailedRoundInfo if not (len(AllOptResult) == 
 
 if saveData == True:
     #pickle.dump(DumpedResults, open(rolloutDirectory + '/' + Filename+".p", "wb"))    #Save Data
-    pickle.dump(DumpedResults, open("/home/jiayu/Desktop/MLP_DataSet/SpecialCases/flat_temp.p", "wb"))    #Save Data
+    pickle.dump(DumpedResults, open("/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/flat_temp.p", "wb"))    #Save Data
 if LogCMDLine == True:
     sys.stdout.close();   sys.stdout=stdoutOrigin                       #Close logging

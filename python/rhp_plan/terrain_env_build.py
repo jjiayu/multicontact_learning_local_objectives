@@ -55,7 +55,7 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    "random_Horizontal_Move": False,
                    "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
                    "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-                   "Projected_Length": 0.4, "Projected_Width": 0.4, #0.55 and 1.0
+                   "Projected_Length": 0.3, "Projected_Width": 0.3, #0.55 and 1.0
                    "large_slope_flag":False,
                    "large_slope_index": [],#[np.random.choice([16,17])],#select a patch from number 16 or 17
                    "large_slope_directions": [],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 

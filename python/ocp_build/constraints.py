@@ -119,8 +119,8 @@ def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=N
     # P4----------------P2
     # margin is to set the safety margin towards the border of the patch, but there is no margin set for the contact points towrads the left edge (this is for making smaller steps)
 
-    print("Half Foot Length (Bigger Size for kinematics check): ", footlength/2.0)
-    print("Half Foot Width (Bigger Size for kinematics check): ", footwidth/2.0)
+    #print("Half Foot Length (Bigger Size for kinematics check): ", footlength/2.0)
+    #print("Half Foot Width (Bigger Size for kinematics check): ", footwidth/2.0)
 
     # Contact Points
     P1 = P + footlength/2.0*P_TangentX + footwidth/2.0*P_TangentY
