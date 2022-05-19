@@ -182,6 +182,10 @@ rospy.init_node('listener', anonymous=True)
 msg_com = rospy.wait_for_message("/biped_walking_dcm_controller/com_states", CoMStateFeedback)
 msg_foot = rospy.wait_for_message("/biped_walking_dcm_controller/foot_poses", FootStateFeedback)
 
+print('Current CoM x pos in (Map) is ', msg_com.actual_com_pos_x_map, msg_com.actual_com_pos_y_map, msg_com.actual_com_pos_z_map)
+print('Current Left Foot Step Location in (Map) is: ', msg_foot.actual_lf_pos_x_map, msg_foot.actual_lf_pos_y_map, msg_foot.actual_lf_pos_z_map)
+print('Current Right Foot Step Location in (Map) is: ', msg_foot.actual_rf_pos_x_map, msg_foot.actual_rf_pos_y_map, msg_foot.actual_rf_pos_z_map)
+
 #---------------------
 #Get Environment Model
 #---------------------
@@ -361,18 +365,18 @@ InitConfig["PRx_init"], InitConfig["PRy_init"],InitConfig["PRz_init"]\
 = getInitCondition_FirstStep(InitConditionType = ExternalParameters["InitConditionType"], 
                              InitConditionFilePath = ExternalParameters["InitConditionFilePath"])
 
-#Update the InitConfig base the current readings from the robot state
-InitConfig["x_init"] = msg_com.actual_com_pos_x #msg_com.data[0]
-InitConfig["y_init"] = msg_com.actual_com_pos_y #msg_com.data[1]
-InitConfig["z_init"] = msg_com.actual_com_pos_z #msg_com.data[2]
+#Update the InitConfig base the current readings from the robot state (In Map Frame)
+InitConfig["x_init"] = msg_com.actual_com_pos_x_map #msg_com.data[0]
+InitConfig["y_init"] = msg_com.actual_com_pos_y_map #msg_com.data[1]
+InitConfig["z_init"] = msg_com.actual_com_pos_z_map #msg_com.data[2]
 
-InitConfig["PLx_init"] = msg_foot.actual_lf_pos_x #msg_foot.data[0]
-InitConfig["PLy_init"] = msg_foot.actual_lf_pos_y #msg_foot.data[1]
-InitConfig["PLz_init"] = msg_foot.actual_lf_pos_z #msg_foot.data[2]
+InitConfig["PLx_init"] = msg_foot.actual_lf_pos_x_map #msg_foot.data[0]
+InitConfig["PLy_init"] = msg_foot.actual_lf_pos_y_map #msg_foot.data[1]
+InitConfig["PLz_init"] = msg_foot.actual_lf_pos_z_map #msg_foot.data[2]
 
-InitConfig["PRx_init"] = msg_foot.actual_rf_pos_x #msg_foot.data[6]
-InitConfig["PRy_init"] = msg_foot.actual_rf_pos_y #msg_foot.data[7]
-InitConfig["PRz_init"] = msg_foot.actual_rf_pos_z #msg_foot.data[8]
+InitConfig["PRx_init"] = msg_foot.actual_rf_pos_x_map #msg_foot.data[6]
+InitConfig["PRy_init"] = msg_foot.actual_rf_pos_y_map #msg_foot.data[7]
+InitConfig["PRz_init"] = msg_foot.actual_rf_pos_z_map #msg_foot.data[8]
 
 #Get Init Contact Surfaces (here for the first step) and Orientation from the terrain info
 InitConfig["LeftInitSurf"]  = TerrainInfo["InitLeftSurfVertice"]

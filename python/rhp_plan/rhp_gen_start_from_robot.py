@@ -38,7 +38,7 @@ ExternalParameters = {"WorkingDirectory": None,
                       "ML_ModelPath": None, #"/home/jiayu/Desktop/MLP_DataSet/2stepsVsOthers/ML_Models/NN_Model_Valid",
                       "DataSetPath": None, #"/home/jiayu/Desktop/MLP_DataSet/Rubbles/DataSet", #None,
                       "NumLookAhead": 4,
-                      "NumofRounds":6,
+                      "NumofRounds":8,
                       "LargeSlopeAngle": 0,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
@@ -183,24 +183,25 @@ rospy.init_node('listener', anonymous=True)
 msg_com = rospy.wait_for_message("/biped_walking_dcm_controller/com_states", CoMStateFeedback)
 msg_foot = rospy.wait_for_message("/biped_walking_dcm_controller/foot_poses", FootStateFeedback)
 
-print('Current CoM x pos is ', msg_com.actual_com_pos_x, msg_com.actual_com_pos_y, msg_com.actual_com_pos_z)
-print('Current Left Foot Step Location is: ', msg_foot.actual_lf_pos_x, msg_foot.actual_lf_pos_y, msg_foot.actual_lf_pos_z)
-print('Current Right Foot Step Location is: ', msg_foot.actual_rf_pos_x, msg_foot.actual_rf_pos_y, msg_foot.actual_rf_pos_z)
+print('Current CoM x pos in (Map) is ', msg_com.actual_com_pos_x_map, msg_com.actual_com_pos_y_map, msg_com.actual_com_pos_z_map)
+print('Current Left Foot Step Location in (Map) is: ', msg_foot.actual_lf_pos_x_map, msg_foot.actual_lf_pos_y_map, msg_foot.actual_lf_pos_z_map)
+print('Current Right Foot Step Location in (Map) is: ', msg_foot.actual_rf_pos_x_map, msg_foot.actual_rf_pos_y_map, msg_foot.actual_rf_pos_z_map)
+
 #---------------------
 #Get Environment Model
 #---------------------
 
 #compute y_center(central y of terrains), x_offset (to align the terrain to the robot)
-x_lf = msg_foot.actual_lf_pos_x #msg_foot.data[0]
-x_rf = msg_foot.actual_rf_pos_x #msg_foot.data[6]
+x_lf = msg_foot.actual_lf_pos_x_map #msg_foot.data[0]
+x_rf = msg_foot.actual_rf_pos_x_map #msg_foot.data[6]
 x_offset = np.max((x_lf,x_rf))
 
 
-y_lf = msg_foot.actual_lf_pos_y #msg_foot.data[1]
-y_rf = msg_foot.actual_rf_pos_y #msg_foot.data[7]
+y_lf = msg_foot.actual_lf_pos_y_map #msg_foot.data[1]
+y_rf = msg_foot.actual_rf_pos_y_map #msg_foot.data[7]
 y_dist = np.abs(y_lf) + np.abs(y_rf)
 
-y_center = y_lf - y_dist/2.0
+y_center = y_lf - y_dist/2.0 #+ 0.05
 
 #Define if we load terrain from file NOTE: None means no, then we generate terrain from code, depends on if we update external parameters
 TerrainModelPath = None
@@ -225,7 +226,7 @@ if TerrainModelPath == None:
                            "random_Horizontal_Move": False,
                            "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
                            "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-                           "Projected_Length": 0.4, "Projected_Width": 0.4,
+                           "Projected_Length": 0.3, "Projected_Width": 0.3,
                            "large_slope_flag":False,
                            "large_slope_index": [8],#[np.random.choice([16,17])],#select a patch from number 16 or 17
                            "large_slope_directions": ["X_positive"],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
@@ -375,18 +376,18 @@ InitConfig["PRx_init"], InitConfig["PRy_init"],InitConfig["PRz_init"]\
 = getInitCondition_FirstStep(InitConditionType = ExternalParameters["InitConditionType"], 
                              InitConditionFilePath = ExternalParameters["InitConditionFilePath"])
 
-#Update the InitConfig base the current readings from the robot state
-InitConfig["x_init"] = msg_com.actual_com_pos_x #msg_com.data[0]
-InitConfig["y_init"] = msg_com.actual_com_pos_y #msg_com.data[1]
-InitConfig["z_init"] = msg_com.actual_com_pos_z #msg_com.data[2]
+#Update the InitConfig base the current readings from the robot state (In Map Frame)
+InitConfig["x_init"] = msg_com.actual_com_pos_x_map #msg_com.data[0]
+InitConfig["y_init"] = msg_com.actual_com_pos_y_map #msg_com.data[1]
+InitConfig["z_init"] = msg_com.actual_com_pos_z_map #msg_com.data[2]
 
-InitConfig["PLx_init"] = msg_foot.actual_lf_pos_x #msg_foot.data[0]
-InitConfig["PLy_init"] = msg_foot.actual_lf_pos_y #msg_foot.data[1]
-InitConfig["PLz_init"] = msg_foot.actual_lf_pos_z #msg_foot.data[2]
+InitConfig["PLx_init"] = msg_foot.actual_lf_pos_x_map #msg_foot.data[0]
+InitConfig["PLy_init"] = msg_foot.actual_lf_pos_y_map #msg_foot.data[1]
+InitConfig["PLz_init"] = msg_foot.actual_lf_pos_z_map #msg_foot.data[2]
 
-InitConfig["PRx_init"] = msg_foot.actual_rf_pos_x #msg_foot.data[6]
-InitConfig["PRy_init"] = msg_foot.actual_rf_pos_y #msg_foot.data[7]
-InitConfig["PRz_init"] = msg_foot.actual_rf_pos_z #msg_foot.data[8]
+InitConfig["PRx_init"] = msg_foot.actual_rf_pos_x_map #msg_foot.data[6]
+InitConfig["PRy_init"] = msg_foot.actual_rf_pos_y_map #msg_foot.data[7]
+InitConfig["PRz_init"] = msg_foot.actual_rf_pos_z_map #msg_foot.data[8]
 
 #Get Init Contact Surfaces (here for the first step) and Orientation from the terrain info
 InitConfig["LeftInitSurf"]  = TerrainInfo["InitLeftSurfVertice"]
