@@ -50,28 +50,57 @@ def drawFootPatch(P=None, P_TangentX=None, P_TangentY=None, line_color=None, Lin
 #   The first element is the left init patch, the second element is the right init patch, all the rest are the contact patches
 
 
-def drawTerrain(Sl0surf=None, Sr0surf=None, ContactSurfs=None, printTerrainVertice=True, fig=None, ax=None, EndPatchNum=30):
-
+def drawTerrain(Sl0surf=None, Sr0surf=None, ContactSurfs=None, printTerrainVertice=True, fig=None, ax=None, EndPatchNum=30, 
+                HomoTran = np.array([[1.0,0.0,0.0,0.0],
+                                     [0.0,1.0,0.0,0.0],
+                                     [0.0,0.0,1.0,0.0],
+                                     [0.0,0.0,0.0,1.0]])):
+    
     # Draw Initial Left Contact Surface
+
+    #Left init patch
+    #Apply homogeneous transformation (to whatever frame) to the terrain model, default identity
+    Sl0surf_transformed_temp = np.hstack((copy.deepcopy(Sl0surf),np.array([[1.0],[1.0],[1.0],[1.0]])))
+    Sl0surf_transformed_temp = HomoTran@Sl0surf_transformed_temp.T
+    Sl0surf_transformed_temp = Sl0surf_transformed_temp[0:3,:].T
+    #Sl0surf = Sl0surf_transformed_temp
+
     if printTerrainVertice == True:
         print("Patches:")
-        print("Surface::left init patch: \n", Sl0surf)
-    ax = drawSurface(Surface=Sl0surf, ax=ax)
+        print("Surface::left init patch (in map frame): \n", Sl0surf)
+
+    ax = drawSurface(Surface=Sl0surf_transformed_temp, ax=ax)
 
     # Draw Initial Right Contact Surface
+
+    #Apply homogeneous transformation (to whatever frame) to the terrain model, default identity
+    Sr0surf_transformed_temp = np.hstack((copy.deepcopy(Sr0surf),np.array([[1.0],[1.0],[1.0],[1.0]])))
+    Sr0surf_transformed_temp = HomoTran@Sr0surf_transformed_temp.T
+    Sr0surf_transformed_temp = Sr0surf_transformed_temp[0:3,:].T
+    #Sr0surf = Sr0surf_transformed_temp
+
+    #Right init patch
     if printTerrainVertice == True:
-        print("Surface::right init patch: \n", Sr0surf)
-    ax = drawSurface(Surface=Sr0surf, ax=ax)
+        print("Surface::right init patch in map frame: \n", Sr0surf)
+
+    ax = drawSurface(Surface=Sr0surf_transformed_temp, ax=ax)
 
     # Draw Contact Patches
     surf_cnt = 0
     for surf in ContactSurfs:
+
+        #Apply homogeneous transformation (to whatever frame) to the terrain model, default identity
+        surf_transformed_temp = np.hstack((copy.deepcopy(surf),np.array([[1.0],[1.0],[1.0],[1.0]])))
+        surf_transformed_temp = HomoTran@surf_transformed_temp.T
+        surf_transformed_temp = surf_transformed_temp[0:3,:].T
+        #surf = surf_transformed_temp
+
         # Draw Patch
-        ax = drawSurface(Surface=surf, ax=ax)
+        ax = drawSurface(Surface=surf_transformed_temp, ax=ax)
 
         if printTerrainVertice == True:
             print("Surface::Step ", str(surf_cnt),
-                  ": \n", surf)  # count from 0
+                  " in map frame: \n", surf)  # count from 0
 
         # update surface count
         surf_cnt = surf_cnt + 1
@@ -115,7 +144,11 @@ def labelSurface(Sl0surf=None, Sr0surf=None, ContactSurfs=None, fig=None, ax=Non
 # Draw Trajectory of a single Optimization Routine (with the entire horizon)
 
 
-def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4):
+def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4, 
+                      HomoTran = np.array([[1.0,0.0,0.0,0.0],
+                                           [0.0,1.0,0.0,0.0],
+                                           [0.0,0.0,1.0,0.0],
+                                           [0.0,0.0,0.0,1.0]])):
     # Process the First Level
     # Get First Level Result
 
@@ -129,31 +162,65 @@ def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4):
     y_lv1_res = np.array(x_opt[var_idx_lv1["y"][0]:var_idx_lv1["y"][1]+1])
     z_lv1_res = np.array(x_opt[var_idx_lv1["z"][0]:var_idx_lv1["z"][1]+1])
     # Get Contact Location
-    px_lv1_res = np.array(x_opt[var_idx_lv1["px"][0]:var_idx_lv1["px"][1]+1])
-    py_lv1_res = np.array(x_opt[var_idx_lv1["py"][0]:var_idx_lv1["py"][1]+1])
-    pz_lv1_res = np.array(x_opt[var_idx_lv1["pz"][0]:var_idx_lv1["pz"][1]+1])
+    px_lv1_res = np.array([x_opt[var_idx_lv1["px"][0]:var_idx_lv1["px"][1]+1]])
+    py_lv1_res = np.array([x_opt[var_idx_lv1["py"][0]:var_idx_lv1["py"][1]+1]])
+    pz_lv1_res = np.array([x_opt[var_idx_lv1["pz"][0]:var_idx_lv1["pz"][1]+1]])
+
+    #Apply transformation
+    #For CoM
+    CoM_lv1_transformed_temp = np.vstack((copy.deepcopy(x_lv1_res),copy.deepcopy(y_lv1_res),copy.deepcopy(z_lv1_res),np.ones(x_lv1_res.shape)))
+    CoM_lv1_transformed_temp = HomoTran@CoM_lv1_transformed_temp
+    x_lv1_res_transformed = CoM_lv1_transformed_temp[0,:]
+    y_lv1_res_transformed = CoM_lv1_transformed_temp[1,:]
+    z_lv1_res_transformed = CoM_lv1_transformed_temp[2,:]
+    #For Contact Footstep
+    footstep_lv1_transformed_temp = np.vstack((copy.deepcopy(px_lv1_res),copy.deepcopy(py_lv1_res),copy.deepcopy(pz_lv1_res),np.ones(px_lv1_res.shape)))
+    footstep_lv1_transformed_temp = HomoTran@footstep_lv1_transformed_temp
+    px_lv1_res_transformed = footstep_lv1_transformed_temp[0,:]
+    py_lv1_res_transformed = footstep_lv1_transformed_temp[1,:]
+    pz_lv1_res_transformed = footstep_lv1_transformed_temp[2,:]
+
+    #For initial Contact (Left)
+    init_left_foot_position_transformed_temp = np.vstack((copy.deepcopy(np.array([optResult["PLx_init"]])),
+                                                          copy.deepcopy(np.array([optResult["PLy_init"]])),
+                                                          copy.deepcopy(np.array([optResult["PLz_init"]])),
+                                                          np.ones(np.array([optResult["PLx_init"]]).shape)))
+    init_left_foot_position_transformed_temp = HomoTran@init_left_foot_position_transformed_temp
+    init_left_pos_x = init_left_foot_position_transformed_temp[0,:]
+    init_left_pos_y = init_left_foot_position_transformed_temp[1,:]
+    init_left_pos_z = init_left_foot_position_transformed_temp[2,:]
+
+    #For initial Contact (Right)
+    init_right_foot_position_transformed_temp = np.vstack((copy.deepcopy(np.array([optResult["PRx_init"]])),
+                                                           copy.deepcopy(np.array([optResult["PRy_init"]])),
+                                                           copy.deepcopy(np.array([optResult["PRz_init"]])),
+                                                           np.ones(np.array([optResult["PRx_init"]]).shape)))
+    init_right_foot_position_transformed_temp = HomoTran@init_right_foot_position_transformed_temp
+    init_right_pos_x = init_right_foot_position_transformed_temp[0,:]
+    init_right_pos_y = init_right_foot_position_transformed_temp[1,:]
+    init_right_pos_z = init_right_foot_position_transformed_temp[2,:]
 
     # Plot CoM Traj
-    ax.plot3D(x_lv1_res, y_lv1_res, z_lv1_res, color='blue',
+    ax.plot3D(x_lv1_res_transformed, y_lv1_res_transformed, z_lv1_res_transformed, color='blue',
               linestyle='dashed', linewidth=2, markersize=12)
     #Projection of the CoM trajectory on the Ground
-    ax.plot3D(x_lv1_res, y_lv1_res, np.zeros(z_lv1_res.shape), color='blue',
+    ax.plot3D(x_lv1_res_transformed, y_lv1_res_transformed, np.zeros(z_lv1_res_transformed.shape), color='blue',
               linestyle='dashed', linewidth=2, markersize=12)
     # Plot Initial Contact Location
-    ax.scatter(optResult["PLx_init"], optResult["PLy_init"],
-               optResult["PLz_init"], c='r', marker='o', linewidth=FootMarkerSize)
-    ax.scatter(optResult["PRx_init"], optResult["PRy_init"],
-               optResult["PRz_init"], c='b', marker='o', linewidth=FootMarkerSize)
+    ax.scatter(init_left_pos_x, init_left_pos_y,
+               init_left_pos_z, c='r', marker='o', linewidth=FootMarkerSize)
+    ax.scatter(init_right_pos_x, init_right_pos_y,
+               init_right_pos_z, c='b', marker='o', linewidth=FootMarkerSize)
     # Draw Initial Contact Patches
     # The actual footsize (larger size)
-    ax = drawFootPatch(P=np.array([optResult["PLx_init"], optResult["PLy_init"], optResult["PLz_init"]]),
+    ax = drawFootPatch(P=np.concatenate((init_left_pos_x, init_left_pos_y, init_left_pos_z),axis=None),
                        P_TangentX=optResult["PL_init_TangentX"], P_TangentY=optResult["PL_init_TangentY"], line_color='r', LineType = 'solid', footlength = 0.22, footwidth = 0.12, ax=ax)
-    ax = drawFootPatch(P=np.array([optResult["PRx_init"], optResult["PRy_init"], optResult["PRz_init"]]),
+    ax = drawFootPatch(P=np.concatenate((init_right_pos_x, init_right_pos_y, init_right_pos_z),axis=None),
                        P_TangentX=optResult["PR_init_TangentX"], P_TangentY=optResult["PR_init_TangentY"], line_color='b', LineType = 'solid', footlength = 0.22, footwidth = 0.12, ax=ax)
     # The shrinked footsize for defining contact points (smaller size)
-    ax = drawFootPatch(P=np.array([optResult["PLx_init"], optResult["PLy_init"], optResult["PLz_init"]]),
+    ax = drawFootPatch(P=np.concatenate((init_left_pos_x, init_left_pos_y, init_left_pos_z),axis=None),
                        P_TangentX=optResult["PL_init_TangentX"], P_TangentY=optResult["PL_init_TangentY"], line_color='r', LineType = 'dashed', footlength = 0.2, footwidth = 0.1, ax=ax)
-    ax = drawFootPatch(P=np.array([optResult["PRx_init"], optResult["PRy_init"], optResult["PRz_init"]]),
+    ax = drawFootPatch(P=np.concatenate((init_right_pos_x, init_right_pos_y, init_right_pos_z),axis=None),
                        P_TangentX=optResult["PR_init_TangentX"], P_TangentY=optResult["PR_init_TangentY"], line_color='b', LineType = 'dashed', footlength = 0.2, footwidth = 0.1, ax=ax)
 
     # Plot the Swing Foot
@@ -162,22 +229,22 @@ def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4):
     elif optResult["RightSwingFlag"] == 1:
         StepColor = 'b'
     # plot location
-    ax.scatter(px_lv1_res, py_lv1_res, pz_lv1_res, c=StepColor,
+    ax.scatter(px_lv1_res_transformed, py_lv1_res_transformed, pz_lv1_res_transformed, c=StepColor,
                marker='o', linewidth=FootMarkerSize)
     # draw Patch for the first step (index 0 in contact lists)
     # The actual footsize (larger size)
-    ax = drawFootPatch(P=np.concatenate((px_lv1_res, py_lv1_res, pz_lv1_res), axis=None),
+    ax = drawFootPatch(P=np.concatenate((px_lv1_res_transformed, py_lv1_res_transformed, pz_lv1_res_transformed), axis=None),
                        P_TangentX=optResult["SurfTangentsX"][0], P_TangentY=optResult["SurfTangentsY"][0], line_color=StepColor, LineType = 'solid', footlength = 0.22, footwidth = 0.12, ax=ax)
     # The shrinked footsize for defining contact points (smaller size)
-    ax = drawFootPatch(P=np.concatenate((px_lv1_res, py_lv1_res, pz_lv1_res), axis=None),
+    ax = drawFootPatch(P=np.concatenate((px_lv1_res_transformed, py_lv1_res_transformed, pz_lv1_res_transformed), axis=None),
                        P_TangentX=optResult["SurfTangentsX"][0], P_TangentY=optResult["SurfTangentsY"][0], line_color=StepColor, LineType = 'dashed', footlength = 0.2, footwidth = 0.1, ax=ax)
 
     # Draw the projected starting knot of the swing phase
-    ax.scatter(x_lv1_res[int((len(x_lv1_res)-1)/3)], y_lv1_res[int((len(x_lv1_res)-1)/3)], 0.0, c='black',
+    ax.scatter(x_lv1_res_transformed[int((len(x_lv1_res_transformed)-1)/3)], y_lv1_res_transformed[int((len(x_lv1_res_transformed)-1)/3)], 0.0, c='black',
                 marker='o', linewidth=5)
 
     # Draw the projected ending knot of the swing phase (starting knot of the double support phase)
-    ax.scatter(x_lv1_res[int((len(x_lv1_res)-1)/3*2)], y_lv1_res[int((len(x_lv1_res)-1)/3*2)], 0.0, c='black',
+    ax.scatter(x_lv1_res_transformed[int((len(x_lv1_res_transformed)-1)/3*2)], y_lv1_res_transformed[int((len(x_lv1_res_transformed)-1)/3*2)], 0.0, c='black',
                 marker='o', linewidth=5)
 
     # Process the Second Level
@@ -202,11 +269,25 @@ def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4):
         pz_lv2_res = np.array(
             x_opt_lv2[var_idx_lv2["pz"][0]:var_idx_lv2["pz"][1]+1])
 
+        #Apply transformation
+        #For CoM (2nd lebvel)
+        CoM_traj_2nd_transformed_temp = np.vstack((copy.deepcopy(x_lv2_res),copy.deepcopy(y_lv2_res),copy.deepcopy(z_lv2_res),np.ones(x_lv2_res.shape)))
+        CoM_traj_2nd_transformed_temp = HomoTran@CoM_traj_2nd_transformed_temp
+        x_lv2_res_transformed = CoM_traj_2nd_transformed_temp[0,:]
+        y_lv2_res_transformed = CoM_traj_2nd_transformed_temp[1,:]
+        z_lv2_res_transformed = CoM_traj_2nd_transformed_temp[2,:]
+        #For Contact Footstep (2nd level)
+        footstep_2nd_transformed_temp = np.vstack((copy.deepcopy(px_lv2_res),copy.deepcopy(py_lv2_res),copy.deepcopy(pz_lv2_res),np.ones(px_lv2_res.shape)))
+        footstep_2nd_transformed_temp = HomoTran@footstep_2nd_transformed_temp
+        px_lv2_res_transformed = footstep_2nd_transformed_temp[0,:]
+        py_lv2_res_transformed = footstep_2nd_transformed_temp[1,:]
+        pz_lv2_res_transformed = footstep_2nd_transformed_temp[2,:]
+
         # Plot CoM Traj
-        ax.plot3D(x_lv2_res, y_lv2_res, z_lv2_res, color='green',
+        ax.plot3D(x_lv2_res_transformed, y_lv2_res_transformed, z_lv2_res_transformed, color='green',
                   linestyle='dashed', linewidth=2, markersize=12)
         # Plot projected CoM Traj
-        ax.plot3D(x_lv2_res, y_lv2_res, np.zeros(z_lv2_res.shape), color='green',
+        ax.plot3D(x_lv2_res_transformed, y_lv2_res_transformed, np.zeros(z_lv2_res_transformed.shape), color='green',
                   linestyle='dashed', linewidth=2, markersize=12)
                   #plot where the com from swing phase (num of knots = (len(x_lv1_res)-1)/3)
 
@@ -217,43 +298,43 @@ def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4):
         # Plot Swing Foot
         if optResult["LeftSwingFlag"] == 1:
             StepColor = 'b'
-            ax.scatter(px_lv2_res[0::2], py_lv2_res[0::2], pz_lv2_res[0::2],
+            ax.scatter(px_lv2_res_transformed[0::2], py_lv2_res_transformed[0::2], pz_lv2_res_transformed[0::2],
                        c=StepColor, marker='o', linewidth=FootMarkerSize)
             StepColor = 'r'
-            ax.scatter(px_lv2_res[1::2], py_lv2_res[1::2], pz_lv2_res[1::2],
+            ax.scatter(px_lv2_res_transformed[1::2], py_lv2_res_transformed[1::2], pz_lv2_res_transformed[1::2],
                        c=StepColor, marker='o', linewidth=FootMarkerSize)
 
             # Get Contact location and parameters for left and right foot
-            px_lv2_right_foot = px_lv2_res[0::2]
-            py_lv2_right_foot = py_lv2_res[0::2]
-            pz_lv2_right_foot = pz_lv2_res[0::2]
+            px_lv2_right_foot = px_lv2_res_transformed[0::2]
+            py_lv2_right_foot = py_lv2_res_transformed[0::2]
+            pz_lv2_right_foot = pz_lv2_res_transformed[0::2]
             lv2_ContactTengentX_right_foot = lv2_ContactTengentX[0::2]
             lv2_ContactTengentY_right_foot = lv2_ContactTengentY[0::2]
 
-            px_lv2_left_foot = px_lv2_res[1::2]
-            py_lv2_left_foot = py_lv2_res[1::2]
-            pz_lv2_left_foot = pz_lv2_res[1::2]
+            px_lv2_left_foot = px_lv2_res_transformed[1::2]
+            py_lv2_left_foot = py_lv2_res_transformed[1::2]
+            pz_lv2_left_foot = pz_lv2_res_transformed[1::2]
             lv2_ContactTengentX_left_foot = lv2_ContactTengentX[1::2]
             lv2_ContactTengentY_left_foot = lv2_ContactTengentY[1::2]
 
         elif optResult["RightSwingFlag"] == 1:
             StepColor = 'r'
-            ax.scatter(px_lv2_res[0::2], py_lv2_res[0::2], pz_lv2_res[0::2],
+            ax.scatter(px_lv2_res_transformed[0::2], py_lv2_res_transformed[0::2], pz_lv2_res_transformed[0::2],
                        c=StepColor, marker='o', linewidth=FootMarkerSize)
             StepColor = 'b'
-            ax.scatter(px_lv2_res[1::2], py_lv2_res[1::2], pz_lv2_res[1::2],
+            ax.scatter(px_lv2_res_transformed[1::2], py_lv2_res_transformed[1::2], pz_lv2_res_transformed[1::2],
                        c=StepColor, marker='o', linewidth=FootMarkerSize)
 
             # Get Contact location and parameters for left and right foot
-            px_lv2_left_foot = px_lv2_res[0::2]
-            py_lv2_left_foot = py_lv2_res[0::2]
-            pz_lv2_left_foot = pz_lv2_res[0::2]
+            px_lv2_left_foot = px_lv2_res_transformed[0::2]
+            py_lv2_left_foot = py_lv2_res_transformed[0::2]
+            pz_lv2_left_foot = pz_lv2_res_transformed[0::2]
             lv2_ContactTengentX_left_foot = lv2_ContactTengentX[0::2]
             lv2_ContactTengentY_left_foot = lv2_ContactTengentY[0::2]
 
-            px_lv2_right_foot = px_lv2_res[1::2]
-            py_lv2_right_foot = py_lv2_res[1::2]
-            pz_lv2_right_foot = pz_lv2_res[1::2]
+            px_lv2_right_foot = px_lv2_res_transformed[1::2]
+            py_lv2_right_foot = py_lv2_res_transformed[1::2]
+            pz_lv2_right_foot = pz_lv2_res_transformed[1::2]
             lv2_ContactTengentX_right_foot = lv2_ContactTengentX[1::2]
             lv2_ContactTengentY_right_foot = lv2_ContactTengentY[1::2]
 
@@ -293,36 +374,57 @@ def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4):
 #   allOptTraj is the list of [Dict]SingleOptResult for all steps (each element is the input of the function "drawSingleOptTraj")
 
 
-def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize=4):
+def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize=4, 
+                            HomoTran = np.array([[1.0,0.0,0.0,0.0],
+                                                [0.0,1.0,0.0,0.0],
+                                                [0.0,0.0,1.0,0.0],
+                                                [0.0,0.0,0.0,1.0]])):
+
     # Get First Level Result
     # Get from the first elements info
     var_idx_lv1 = allOptResult[0]["var_idx"]["Level1_Var_Index"]
 
     # Draw Intial Footstep Location and contact patches
     # For the initial left
-    ax.scatter(allOptResult[0]["PLx_init"], allOptResult[0]["PLy_init"],
-               allOptResult[0]["PLz_init"], c='r', marker='o', linewidth=FootMarkerSize)
+    init_left_footstep_transformed_temp = np.array([[copy.deepcopy(allOptResult[0]["PLx_init"])], [copy.deepcopy(allOptResult[0]["PLy_init"])], 
+                                                    [copy.deepcopy(allOptResult[0]["PLz_init"])], [1.0]])
+    #Apply transformation
+    init_left_footstep_transformed_temp = HomoTran@init_left_footstep_transformed_temp
+    init_left_x_transformed = init_left_footstep_transformed_temp[0,:]
+    init_left_y_transformed = init_left_footstep_transformed_temp[1,:]
+    init_left_z_transformed = init_left_footstep_transformed_temp[2,:]
+
+    ax.scatter(init_left_x_transformed, init_left_y_transformed,
+               init_left_z_transformed, c='r', marker='o', linewidth=FootMarkerSize)
     # The actual footsize (larger size)
-    ax = drawFootPatch(P=np.array([allOptResult[0]["PLx_init"], allOptResult[0]["PLy_init"], allOptResult[0]["PLz_init"]]),
+    ax = drawFootPatch(P=np.array([init_left_x_transformed, init_left_y_transformed, init_left_z_transformed]),
                        P_TangentX=allOptResult[0]["PL_init_TangentX"], P_TangentY=allOptResult[0]["PL_init_TangentY"], line_color='r',
                        LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                        ax=ax)
     # The shrinked footsize for defining contact points (smaller size)
-    ax = drawFootPatch(P=np.array([allOptResult[0]["PLx_init"], allOptResult[0]["PLy_init"], allOptResult[0]["PLz_init"]]),
+    ax = drawFootPatch(P=np.array([init_left_x_transformed, init_left_y_transformed, init_left_z_transformed]),
                        P_TangentX=allOptResult[0]["PL_init_TangentX"], P_TangentY=allOptResult[0]["PL_init_TangentY"], line_color='r',
                        LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                        ax=ax)
 
     # For the initial right
-    ax.scatter(allOptResult[0]["PRx_init"], allOptResult[0]["PRy_init"],
-               allOptResult[0]["PRz_init"], c='b', marker='o', linewidth=FootMarkerSize)
+    init_right_footstep_transformed_temp = np.array([[copy.deepcopy(allOptResult[0]["PRx_init"])], [copy.deepcopy(allOptResult[0]["PRy_init"])], 
+                                                     [copy.deepcopy(allOptResult[0]["PRz_init"])], [1.0]])
+    #Apply transformation
+    init_right_footstep_transformed_temp = HomoTran@init_right_footstep_transformed_temp
+    init_right_x_transformed = init_right_footstep_transformed_temp[0,:]
+    init_right_y_transformed = init_right_footstep_transformed_temp[1,:]
+    init_right_z_transformed = init_right_footstep_transformed_temp[2,:]
+
+    ax.scatter(init_right_x_transformed, init_right_y_transformed,
+               init_right_z_transformed, c='b', marker='o', linewidth=FootMarkerSize)
     # The actual footsize (larger size)
-    ax = drawFootPatch(P=np.array([allOptResult[0]["PRx_init"], allOptResult[0]["PRy_init"], allOptResult[0]["PRz_init"]]),
+    ax = drawFootPatch(P=np.array([init_right_x_transformed, init_right_y_transformed, init_right_z_transformed]),
                        P_TangentX=allOptResult[0]["PR_init_TangentX"], P_TangentY=allOptResult[0]["PR_init_TangentY"], line_color='b',
                        LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                        ax=ax)
     # The shrinked footsize for defining contact points (smaller size)
-    ax = drawFootPatch(P=np.array([allOptResult[0]["PRx_init"], allOptResult[0]["PRy_init"], allOptResult[0]["PRz_init"]]),
+    ax = drawFootPatch(P=np.array([init_right_x_transformed, init_right_y_transformed, init_right_z_transformed]),
                     P_TangentX=allOptResult[0]["PR_init_TangentX"], P_TangentY=allOptResult[0]["PR_init_TangentY"], line_color='b',
                     LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                     ax=ax)
@@ -363,41 +465,55 @@ def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize
         x_lv1_res = np.array(x_opt[var_idx_lv1["x"][0]:var_idx_lv1["x"][1]+1])
         y_lv1_res = np.array(x_opt[var_idx_lv1["y"][0]:var_idx_lv1["y"][1]+1])
         z_lv1_res = np.array(x_opt[var_idx_lv1["z"][0]:var_idx_lv1["z"][1]+1])
+
+        #Apply transformation
+        CoM_lv1_transformed_temp = np.vstack((copy.deepcopy(x_lv1_res), copy.deepcopy(y_lv1_res), copy.deepcopy(z_lv1_res), np.ones(x_lv1_res.shape)))
+        CoM_lv1_transformed_temp = HomoTran@CoM_lv1_transformed_temp
+        x_lv1_res_transformed = CoM_lv1_transformed_temp[0,:]
+        y_lv1_res_transformed = CoM_lv1_transformed_temp[1,:]
+        z_lv1_res_transformed = CoM_lv1_transformed_temp[2,:]
+        
         # Get Contact Location
         px_lv1_res = np.array(
-            x_opt[var_idx_lv1["px"][0]:var_idx_lv1["px"][1]+1])
+            [x_opt[var_idx_lv1["px"][0]:var_idx_lv1["px"][1]+1]])
         py_lv1_res = np.array(
-            x_opt[var_idx_lv1["py"][0]:var_idx_lv1["py"][1]+1])
+            [x_opt[var_idx_lv1["py"][0]:var_idx_lv1["py"][1]+1]])
         pz_lv1_res = np.array(
-            x_opt[var_idx_lv1["pz"][0]:var_idx_lv1["pz"][1]+1])
+            [x_opt[var_idx_lv1["pz"][0]:var_idx_lv1["pz"][1]+1]])
+
+        footsteps_lv1_transformed_temp = np.vstack((copy.deepcopy(px_lv1_res), copy.deepcopy(py_lv1_res), copy.deepcopy(pz_lv1_res), np.ones(px_lv1_res.shape)))
+        footsteps_lv1_transformed_temp = HomoTran@footsteps_lv1_transformed_temp
+        px_lv1_res_transformed = footsteps_lv1_transformed_temp[0,:]
+        py_lv1_res_transformed = footsteps_lv1_transformed_temp[1,:]
+        pz_lv1_res_transformed = footsteps_lv1_transformed_temp[2,:]
 
         # Plot CoM
-        ax.plot3D(x_lv1_res, y_lv1_res, z_lv1_res, color=CoM_Color,
+        ax.plot3D(x_lv1_res_transformed, y_lv1_res_transformed, z_lv1_res_transformed, color=CoM_Color,
                   linestyle='dashed', linewidth=2, markersize=12)
 
         #plot com projection
-        ax.plot3D(x_lv1_res, y_lv1_res, np.zeros(z_lv1_res.shape), color=CoM_Color,
+        ax.plot3D(x_lv1_res_transformed, y_lv1_res_transformed, np.zeros(z_lv1_res_transformed.shape), color=CoM_Color,
                   linestyle='dashed', linewidth=2, markersize=12)
 
         #plot starting knot of the swing phase
-        ax.scatter(x_lv1_res[int((len(x_lv1_res)-1)/3)], y_lv1_res[int((len(x_lv1_res)-1)/3)], 0.0, c='black',
+        ax.scatter(x_lv1_res_transformed[int((len(x_lv1_res_transformed)-1)/3)], y_lv1_res_transformed[int((len(x_lv1_res_transformed)-1)/3)], 0.0, c='black',
                    marker='o', linewidth=5)
 
         #plot the ending knot of the swing pahse (the beginning of the post-landing phase)
-        ax.scatter(x_lv1_res[int((len(x_lv1_res)-1)/3*2)], y_lv1_res[int((len(x_lv1_res)-1)/3*2)], 0.0, c='black',
+        ax.scatter(x_lv1_res_transformed[int((len(x_lv1_res_transformed)-1)/3*2)], y_lv1_res_transformed[int((len(x_lv1_res_transformed)-1)/3*2)], 0.0, c='black',
                    marker='o', linewidth=5)
 
         # Plot Step Location
-        ax.scatter(px_lv1_res, py_lv1_res, pz_lv1_res, c=P_Color,
+        ax.scatter(px_lv1_res_transformed, py_lv1_res_transformed, pz_lv1_res_transformed, c=P_Color,
                    marker='o', linewidth=FootMarkerSize)
         # Draw Contact Patch
         # The actual footsize (larger size)
-        ax = drawFootPatch(P=np.concatenate((px_lv1_res, py_lv1_res, pz_lv1_res), axis=None),
+        ax = drawFootPatch(P=np.concatenate((px_lv1_res_transformed, py_lv1_res_transformed, pz_lv1_res_transformed), axis=None),
                            P_TangentX=Contact_TangentX, P_TangentY=Contact_TangentY, line_color=P_Color,
                            LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                            ax=ax)
         # The shrinked footsize for defining contact points (smaller size)
-        ax = drawFootPatch(P=np.concatenate((px_lv1_res, py_lv1_res, pz_lv1_res), axis=None),
+        ax = drawFootPatch(P=np.concatenate((px_lv1_res_transformed, py_lv1_res_transformed, pz_lv1_res_transformed), axis=None),
                            P_TangentX=Contact_TangentX, P_TangentY=Contact_TangentY, line_color=P_Color,
                            LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                            ax=ax)
@@ -519,12 +635,8 @@ def drawTerminalConfig(TerminalConfig=None, InitConfig=None, fig=None, ax=None, 
                        ax=ax)
     return ax
 
-# Top Level Display Function
-#   Operation Modes:
-#       1) TerrainModel = Something, SingleOptResult = None,      AllOptResult = None:      Show Terrain Only
-#       2) TerrainModel = Something, SingleOptResult = Something, AllOptResult = None:      Show Opimization Result of Current Round/Step (With the entire horizon)
-#       3) TerrainModel = Something, SingleOptResult = None,      AllOptResult = Something: Show Optimization Result of All Rounds/Steps
-def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
+#Display the Odom config (Usable for flat terrain but not applicable for uneven terrain)
+def DisplayOdomConfig(OdomConfig = None):
     # Open a draw space
     fig = plt.figure()
     ax = Axes3D(fig)
@@ -533,6 +645,98 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
     ax.set_zlabel('Z')
     ax.set_ylim3d(-1, 1)
 
+    # draw odom CoM
+    ax.scatter(OdomConfig["CoM_x"], OdomConfig["CoM_y"],
+               OdomConfig["CoM_z"], c='g', marker='o', linewidth=10)
+
+    #also plot project CoM
+    ax.scatter(OdomConfig["CoM_x"], OdomConfig["CoM_y"],
+                0.0, c='k', marker='o', LineWidth=10)
+
+    # draw odom Left contact location and patch
+    ax.scatter(OdomConfig["PLx"], OdomConfig["PLy"],
+               OdomConfig["PLz"], c='r', marker='o', linewidth=10)
+
+    # draw odom Right contact location and patch
+    ax.scatter(OdomConfig["PRx"], OdomConfig["PRy"],
+               OdomConfig["PRz"], c='b', marker='o', linewidth=10)
+
+    # The actual footsize (larger size)
+    ax = drawFootPatch(P=np.concatenate(([OdomConfig["PLx"], OdomConfig["PLy"], OdomConfig["PLz"]]), axis=None),
+                       P_TangentX=np.array([1,0,0]), P_TangentY=np.array([0,1,0]), line_color='r',
+                       LineType = 'solid', footlength = 0.22, footwidth = 0.12,
+                       ax=ax)
+    # The shrinked footsize for defining contact points (smaller size)
+    ax = drawFootPatch(P=np.concatenate(([OdomConfig["PRx"], OdomConfig["PRy"], OdomConfig["PRz"]]), axis=None),
+                       P_TangentX=np.array([1,0,0]), P_TangentY=np.array([0,1,0]), line_color='b',
+                       LineType = 'solid', footlength = 0.22, footwidth = 0.12,
+                       ax=ax)
+    ax.set_zlim([-0.01,1.0])
+    ax.set_xlim([OdomConfig["PLx"]-1.0, OdomConfig["PLx"]+1.0])
+    ax.set_ylim([OdomConfig["PLy"]-1.0, OdomConfig["PLy"]+1.0])
+
+    plt.show()
+
+#Display the init config when we run the robot exp
+def DisplayInitConfig(TerrainModel=None, InitConfig = None):
+    if (TerrainModel != None) and (InitConfig != None):
+        # Open a draw space
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+
+        drawInitConfig(InitConfig=InitConfig, fig=fig, ax=ax)
+
+        #also plot project CoM
+        ax.scatter(InitConfig["x_init"], InitConfig["y_init"],
+                   0.0, c='k', marker='o', LineWidth=10)
+
+        # Draw Terrain
+        ax = drawTerrain(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
+                         ContactSurfs=TerrainModel["ContactSurfsVertice"],
+                         printTerrainVertice=True, fig=fig, ax=ax)
+        # Label Terrain Patches
+        ax = labelSurface(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
+                          ContactSurfs=TerrainModel["ContactSurfsVertice"], fig=fig, ax=ax)
+        ax.set_zlim([-0.01,1.0])
+
+        #backward motion terrain
+        if TerrainModel["AllPatchesVertices"][-1][0][0] <= 0:
+            ax.set_xlim([InitConfig["PLx_init"]-1.0, InitConfig["PLx_init"]+1.0])
+        #forward motion
+        elif TerrainModel["AllPatchesVertices"][-1][0][0] >= 0:
+            ax.set_xlim([InitConfig["PLx_init"]-1.0, InitConfig["PLx_init"]+1.0])
+
+        ax.set_ylim([InitConfig["PLy_init"]-1.0, InitConfig["PLy_init"]+1.0])
+
+        plt.show()
+
+    return ax
+
+# Top Level Display Function
+#   Operation Modes:
+#       1) TerrainModel = Something, SingleOptResult = None,      AllOptResult = None:      Show Terrain Only
+#       2) TerrainModel = Something, SingleOptResult = Something, AllOptResult = None:      Show Opimization Result of Current Round/Step (With the entire horizon)
+#       3) TerrainModel = Something, SingleOptResult = None,      AllOptResult = Something: Show Optimization Result of All Rounds/Steps
+def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None,                 
+                   HomoTran = np.array([[1.0,0.0,0.0,0.0],
+                                        [0.0,1.0,0.0,0.0],
+                                        [0.0,0.0,1.0,0.0],
+                                        [0.0,0.0,0.0,1.0]])):
+    
+    # Open a draw space
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_ylim3d(-1, 1)
+
+    #Draw origin
+    ax.scatter(0.0, 0.0, 0.0, c='r', marker='x', linewidth=15)
+
     # Plot According to Different Modes
     #   Draw Terrain Only
     if (TerrainModel != None) and (SingleOptResult == None) and (AllOptResult == None):
@@ -540,7 +744,8 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
         print("Display Terrain Only")
         ax = drawTerrain(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
                          ContactSurfs=TerrainModel["ContactSurfsVertice"],
-                         printTerrainVertice=True, fig=fig, ax=ax)
+                         printTerrainVertice=True, fig=fig, ax=ax, 
+                         HomoTran = HomoTran)
         # Label Terrain Patches
         ax = labelSurface(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
                           ContactSurfs=TerrainModel["ContactSurfsVertice"], fig=fig, ax=ax)
@@ -561,8 +766,9 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
         # Draw Terrain First
         ax = drawTerrain(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
                          ContactSurfs=TerrainModel["ContactSurfsVertice"],
-                         printTerrainVertice=False, fig=fig, ax=ax)
-        ax = drawSingleOptTraj(optResult=SingleOptResult, fig=fig, ax=ax)
+                         printTerrainVertice=False, fig=fig, ax=ax,
+                         HomoTran = HomoTran)
+        ax = drawSingleOptTraj(optResult=SingleOptResult, fig=fig, ax=ax, HomoTran = HomoTran)
         ax = labelSurface(Sl0surf=SingleOptResult["LeftInitSurf"], Sr0surf=SingleOptResult["RightInitSurf"],
                           ContactSurfs=SingleOptResult["ContactSurfs"], fig=fig, ax=ax)
 
@@ -581,9 +787,10 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None):
             print("Display Execution Horizon (First Step Only) for All Round/Step")
             ax = drawTerrain(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
                              ContactSurfs=TerrainModel["ContactSurfsVertice"],
-                             printTerrainVertice=False, fig=fig, ax=ax)
+                             printTerrainVertice=False, fig=fig, ax=ax,
+                             HomoTran = HomoTran)
             ax = DrawAllExecutionHorizon(
-                allOptResult=AllOptResult, fig=fig, ax=ax)
+                allOptResult=AllOptResult, fig=fig, ax=ax, HomoTran = HomoTran)
             ax = labelSurface(Sl0surf=AllOptResult[0]["LeftInitSurf"], Sr0surf=AllOptResult[0]["RightInitSurf"],
                               ContactSurfs=TerrainModel["ContactSurfsVertice"], fig=fig, ax=ax)
 
@@ -898,3 +1105,5 @@ def viewLocalObj(InitConfig=None, LocalObj=None, CurrentOptResult=None,
     ax.set_xlim3d(InitConfig["x_init"]-0.2, InitConfig["x_init"]+0.5)
 
     plt.show()
+
+    

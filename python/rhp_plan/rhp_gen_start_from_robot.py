@@ -1,6 +1,7 @@
 #NOTE: !!!When planning from Unseen state, the swing leg flag is also important for the first initial state. (For unseen state, we may swing from left, but we may also swing from right) 
 
 import numpy as np
+from sympy import degree
 from multicontact_learning_local_objectives.python.ocp_build import *
 from multicontact_learning_local_objectives.python.terrain_create import *
 from multicontact_learning_local_objectives.python.rhp_plan.rhp_utils import *
@@ -13,10 +14,12 @@ import pickle
 import time
 import copy
 import os
+from scipy.spatial.transform import Rotation as R
 
 import rospy
 from std_msgs.msg import Float64MultiArray
-from centroidal_planning_msgs.msg import MotionPlanData, CoMStateFeedback, FootStateFeedback
+from nav_msgs.msg import Odometry
+from centroidal_planning_msgs.msg import MotionPlanData, CoMStateFeedback, FootStateFeedback, FrameTransformation
 
 #-------------------------------
 #Reseed the random generator
@@ -38,7 +41,7 @@ ExternalParameters = {"WorkingDirectory": None,
                       "ML_ModelPath": None, #"/home/jiayu/Desktop/MLP_DataSet/2stepsVsOthers/ML_Models/NN_Model_Valid",
                       "DataSetPath": None, #"/home/jiayu/Desktop/MLP_DataSet/Rubbles/DataSet", #None,
                       "NumLookAhead": 4,
-                      "NumofRounds":8,
+                      "NumofRounds":6,
                       "LargeSlopeAngle": 0,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
@@ -182,10 +185,53 @@ InitSeedType = "previous"
 rospy.init_node('listener', anonymous=True)
 msg_com = rospy.wait_for_message("/biped_walking_dcm_controller/com_states", CoMStateFeedback)
 msg_foot = rospy.wait_for_message("/biped_walking_dcm_controller/foot_poses", FootStateFeedback)
+msg_frame_transformation = rospy.wait_for_message("/biped_walking_dcm_controller/frame_transformation_odom_to_map", FrameTransformation)
+msg_base_odom = rospy.wait_for_message("/biped_walking_dcm_controller/odometry", Odometry)
+msg_base_map = rospy.wait_for_message("/biped_walking_dcm_controller/map", Odometry)
 
-print('Current CoM x pos in (Map) is ', msg_com.actual_com_pos_x_map, msg_com.actual_com_pos_y_map, msg_com.actual_com_pos_z_map)
+#get transformation from odom to map
+rotation_odom_to_map = np.empty([3,3])
+rotation_odom_to_map[0,:] = np.array([msg_frame_transformation.rot_matrix[0:3]])
+rotation_odom_to_map[1,:] = np.array([msg_frame_transformation.rot_matrix[3:6]])
+rotation_odom_to_map[2,:] = np.array([msg_frame_transformation.rot_matrix[6:]])
+
+translation_odom_to_map = np.array([msg_frame_transformation.translation_vector])
+
+#Homogeneouse tranformation fromn map to odom (note the math way)
+H_odom_to_map = np.hstack((rotation_odom_to_map, translation_odom_to_map.T))
+H_odom_to_map = np.vstack((H_odom_to_map,np.array([[0.,0.,0.,1.]])))
+
+H_map_to_odom = np.linalg.inv(H_odom_to_map)
+
+base_ori_map = R.from_quat(np.array([[float(msg_base_map.pose.pose.orientation.x), float(msg_base_map.pose.pose.orientation.y), float(msg_base_map.pose.pose.orientation.z), float(msg_base_map.pose.pose.orientation.w)]]))
+base_ori_odom = R.from_quat(np.array([[float(msg_base_odom.pose.pose.orientation.x), float(msg_base_odom.pose.pose.orientation.y), float(msg_base_odom.pose.pose.orientation.z), float(msg_base_odom.pose.pose.orientation.w)]]))
+
+print('Current CoM pos in (Map) is ', msg_com.actual_com_pos_x_map, msg_com.actual_com_pos_y_map, msg_com.actual_com_pos_z_map)
+print('Current Base pos in (Map) is ', msg_base_map.pose.pose.position.x, msg_base_map.pose.pose.position.y, msg_base_map.pose.pose.position.z)
+print('Current Base Orientation (Euler roll pitch yaw) in (Map) is (Degrees) ', base_ori_map.as_euler('xyz', degrees=True))
 print('Current Left Foot Step Location in (Map) is: ', msg_foot.actual_lf_pos_x_map, msg_foot.actual_lf_pos_y_map, msg_foot.actual_lf_pos_z_map)
 print('Current Right Foot Step Location in (Map) is: ', msg_foot.actual_rf_pos_x_map, msg_foot.actual_rf_pos_y_map, msg_foot.actual_rf_pos_z_map)
+
+print('Current CoM pos in (Odom) is ', msg_com.actual_com_pos_x_odom, msg_com.actual_com_pos_y_odom, msg_com.actual_com_pos_z_odom)
+print('Current Base pos in (Odom) is ', msg_base_odom.pose.pose.position.x, msg_base_odom.pose.pose.position.y, msg_base_odom.pose.pose.position.z)
+print('Current Base Orientation (Euler roll pitch yaw) in (Odom) is (Degrees) ', base_ori_odom.as_euler('xyz', degrees=True))
+print('Current Left Foot Step Location in (Odom) is: ', msg_foot.actual_lf_pos_x_odom, msg_foot.actual_lf_pos_y_odom, msg_foot.actual_lf_pos_z_odom)
+print('Current Right Foot Step Location in (Odom) is: ', msg_foot.actual_rf_pos_x_odom, msg_foot.actual_rf_pos_y_odom, msg_foot.actual_rf_pos_z_odom)
+
+print('Translation from Odom to Map: ', translation_odom_to_map)
+print('Rotation from Odom to Map: \n', rotation_odom_to_map)
+print('Rotation from Odom to Map (Euler roll pitch yaw) Degrees: ', (R.from_matrix(rotation_odom_to_map)).as_euler('xyz',degrees=True))
+print('Homogeneouse Transformation: \n', H_map_to_odom)
+
+OdomConfig = {}
+OdomConfig["CoM_x"] = msg_com.actual_com_pos_x_odom; OdomConfig["CoM_y"] = msg_com.actual_com_pos_y_odom; 
+OdomConfig["CoM_z"] = msg_com.actual_com_pos_z_odom
+
+OdomConfig["PLx"] = msg_foot.actual_lf_pos_x_odom; OdomConfig["PLy"] = msg_foot.actual_lf_pos_y_odom; 
+OdomConfig["PLz"] = msg_foot.actual_lf_pos_z_odom
+
+OdomConfig["PRx"] = msg_foot.actual_rf_pos_x_odom; OdomConfig["PRy"] = msg_foot.actual_rf_pos_y_odom; 
+OdomConfig["PRz"] = msg_foot.actual_rf_pos_z_odom
 
 #---------------------
 #Get Environment Model
@@ -199,7 +245,7 @@ x_offset = np.max((x_lf,x_rf))
 
 y_lf = msg_foot.actual_lf_pos_y_map #msg_foot.data[1]
 y_rf = msg_foot.actual_rf_pos_y_map #msg_foot.data[7]
-y_dist = np.abs(y_lf) + np.abs(y_rf)
+y_dist = y_lf - y_rf
 
 y_center = y_lf - y_dist/2.0 #+ 0.05
 
@@ -356,8 +402,11 @@ else:
     print("- No random horizontal move")
 
 print(" ")
-#   Display Terrain
+#   Display Terrain in the map frame
 viz.DisplayResults(TerrainModel = TerrainInfo, SingleOptResult = None, AllOptResult = None) if showResult == True else None
+
+#   Display Terrain in the odom frame
+viz.DisplayResults(TerrainModel = TerrainInfo, SingleOptResult = None, AllOptResult = None, HomoTran = H_map_to_odom) if showResult == True else None
 
 #-------------------------------------------
 #  Set Initial Condition (here for the first step) 
@@ -424,6 +473,12 @@ print("- Initial Left Foot: Tangent X = ", InitConfig["PL_init_TangentX"], ",  T
 print("- Initial Left Contact Surface Orientation: \n",  InitConfig["LeftInitSurfOrientation"])
 print("- Initial Right Foot: Tangent X = ", InitConfig["PR_init_TangentX"], ", Tangent Y = ", InitConfig["PR_init_TangentY"], ", Norm = ", InitConfig["PR_init_Norm"])
 print("- Initial Right Contact Surface Orientation: \n", InitConfig["RightInitSurfOrientation"])
+
+#Display Init config
+viz.DisplayInitConfig(TerrainModel=TerrainInfo, InitConfig = InitConfig)
+#Display Odom config
+viz.DisplayOdomConfig(OdomConfig = OdomConfig)
+
 #----------------------------------------------------------
 #   Set (Far) Terminal/Goal State
 #----------------------------------------------------------
@@ -791,8 +846,10 @@ for roundNum in range(Nrounds):
         
         #Draw Optimization Results
         if showResult == True:
-            # Show Optimization Result
+            # Show Optimization Result (In Map Frame)
             viz.DisplayResults(TerrainModel = TerrainInfo, SingleOptResult = SingleOptResult, AllOptResult = None)
+            # Show Optimization Result (In Odom Frame)
+            viz.DisplayResults(TerrainModel = TerrainInfo, SingleOptResult = SingleOptResult, AllOptResult = None, HomoTran = H_map_to_odom)
             # Show local obj tracking Result if we enable local obj tracking
             viz.viewLocalObj(InitConfig = InitConfig, LocalObj = LocalObj, CurrentOptResult = SingleOptResult, \
                               groundTruthTrajPath = LocalObjSettings["GroundTruthTraj"], \
@@ -831,7 +888,11 @@ for roundNum in range(Nrounds):
 #-----------------
 #   Show the Result for all the connected Execution Horizon
 if showResult == True:
+    #For the map frame
     viz.DisplayResults(TerrainModel = TerrainInfo, SingleOptResult = None, AllOptResult = AllOptResult)
+    #for the odom frame
+    viz.DisplayResults(TerrainModel = TerrainInfo, SingleOptResult = None, AllOptResult = AllOptResult, HomoTran = H_map_to_odom)
+    
 
 #--------------
 #NOTE: Compute Accumulated Cost?

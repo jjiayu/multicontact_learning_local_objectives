@@ -379,6 +379,10 @@ print("- Initial Left Foot: Tangent X = ", InitConfig["PL_init_TangentX"], ",  T
 print("- Initial Left Contact Surface Orientation: \n",  InitConfig["LeftInitSurfOrientation"])
 print("- Initial Right Foot: Tangent X = ", InitConfig["PR_init_TangentX"], ", Tangent Y = ", InitConfig["PR_init_TangentY"], ", Norm = ", InitConfig["PR_init_Norm"])
 print("- Initial Right Contact Surface Orientation: \n", InitConfig["RightInitSurfOrientation"])
+
+#Display init config
+viz.DisplayInitConfig(TerrainModel=TerrainInfo, InitConfig = InitConfig)
+
 #----------------------------------------------------------
 #   Set (Far) Terminal/Goal State
 #----------------------------------------------------------

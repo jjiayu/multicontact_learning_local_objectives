@@ -16,7 +16,8 @@ import os
 
 import rospy
 from std_msgs.msg import Float64MultiArray
-from centroidal_planning_msgs.msg import MotionPlanData, CoMStateFeedback, FootStateFeedback
+from nav_msgs.msg import Odometry
+from centroidal_planning_msgs.msg import MotionPlanData, CoMStateFeedback, FootStateFeedback, FrameTransformation
 
 #-------------------------------
 #Reseed the random generator
@@ -181,10 +182,40 @@ InitSeedType = "previous"
 rospy.init_node('listener', anonymous=True)
 msg_com = rospy.wait_for_message("/biped_walking_dcm_controller/com_states", CoMStateFeedback)
 msg_foot = rospy.wait_for_message("/biped_walking_dcm_controller/foot_poses", FootStateFeedback)
+msg_frame_transformation = rospy.wait_for_message("/biped_walking_dcm_controller/frame_transformation_odom_to_map", FrameTransformation)
+msg_base_odom = rospy.wait_for_message("/biped_walking_dcm_controller/odometry", Odometry)
+msg_base_map = rospy.wait_for_message("/biped_walking_dcm_controller/map", Odometry)
 
-print('Current CoM x pos in (Map) is ', msg_com.actual_com_pos_x_map, msg_com.actual_com_pos_y_map, msg_com.actual_com_pos_z_map)
+#get transformation from odom to map
+rotation_odom_to_map = np.empty([3,3])
+rotation_odom_to_map[0,:] = np.array([msg_frame_transformation.rot_matrix[0:3]])
+rotation_odom_to_map[1,:] = np.array([msg_frame_transformation.rot_matrix[3:6]])
+rotation_odom_to_map[2,:] = np.array([msg_frame_transformation.rot_matrix[6:]])
+
+translation_odom_to_map = np.array([msg_frame_transformation.translation_vector])
+
+print('Current CoM pos in (Map) is ', msg_com.actual_com_pos_x_map, msg_com.actual_com_pos_y_map, msg_com.actual_com_pos_z_map)
+print('Current Base pos in (Map) is ', msg_base_map.pose.pose.position.x, msg_base_map.pose.pose.position.y, msg_base_map.pose.pose.position.z)
 print('Current Left Foot Step Location in (Map) is: ', msg_foot.actual_lf_pos_x_map, msg_foot.actual_lf_pos_y_map, msg_foot.actual_lf_pos_z_map)
 print('Current Right Foot Step Location in (Map) is: ', msg_foot.actual_rf_pos_x_map, msg_foot.actual_rf_pos_y_map, msg_foot.actual_rf_pos_z_map)
+
+print('Current CoM pos in (Odom) is ', msg_com.actual_com_pos_x_odom, msg_com.actual_com_pos_y_odom, msg_com.actual_com_pos_z_odom)
+print('Current Base pos in (Odom) is ', msg_base_odom.pose.pose.position.x, msg_base_odom.pose.pose.position.y, msg_base_odom.pose.pose.position.z)
+print('Current Left Foot Step Location in (Odom) is: ', msg_foot.actual_lf_pos_x_odom, msg_foot.actual_lf_pos_y_odom, msg_foot.actual_lf_pos_z_odom)
+print('Current Right Foot Step Location in (Odom) is: ', msg_foot.actual_rf_pos_x_odom, msg_foot.actual_rf_pos_y_odom, msg_foot.actual_rf_pos_z_odom)
+
+print('Translation from Odom to Map: ', translation_odom_to_map)
+print('Rotation from Odom to Map: \n', rotation_odom_to_map)
+
+OdomConfig = {}
+OdomConfig["CoM_x"] = msg_com.actual_com_pos_x_odom; OdomConfig["CoM_y"] = msg_com.actual_com_pos_y_odom; 
+OdomConfig["CoM_z"] = msg_com.actual_com_pos_z_odom
+
+OdomConfig["PLx"] = msg_foot.actual_lf_pos_x_odom; OdomConfig["PLy"] = msg_foot.actual_lf_pos_y_odom; 
+OdomConfig["PLz"] = msg_foot.actual_lf_pos_z_odom
+
+OdomConfig["PRx"] = msg_foot.actual_rf_pos_x_odom; OdomConfig["PRy"] = msg_foot.actual_rf_pos_y_odom; 
+OdomConfig["PRz"] = msg_foot.actual_rf_pos_z_odom
 
 #---------------------
 #Get Environment Model
@@ -205,7 +236,7 @@ if TerrainModelPath == None:
     if SpecialTerrain == False:
         # # #-----------------------------------------
         # #For local Testing
-        TerrainSettings = {"terrain_type": "flat",#"antfarm_left",
+        TerrainSettings = {"terrain_type": "random",#"antfarm_left",
                            "backward_motion": False,
                            "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
                             "lab_blocks": True,
@@ -413,6 +444,12 @@ print("- Initial Left Foot: Tangent X = ", InitConfig["PL_init_TangentX"], ",  T
 print("- Initial Left Contact Surface Orientation: \n",  InitConfig["LeftInitSurfOrientation"])
 print("- Initial Right Foot: Tangent X = ", InitConfig["PR_init_TangentX"], ", Tangent Y = ", InitConfig["PR_init_TangentY"], ", Norm = ", InitConfig["PR_init_Norm"])
 print("- Initial Right Contact Surface Orientation: \n", InitConfig["RightInitSurfOrientation"])
+
+#Display Init config
+viz.DisplayInitConfig(TerrainModel=TerrainInfo, InitConfig = InitConfig)
+#Display Odom config
+viz.DisplayOdomConfig(OdomConfig = OdomConfig)
+
 #----------------------------------------------------------
 #   Set (Far) Terminal/Goal State
 #----------------------------------------------------------

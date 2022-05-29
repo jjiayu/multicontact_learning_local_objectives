@@ -345,7 +345,12 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
             surf=ContactSurfsVertice[ContactSurfNum], PatchType=current_direction, theta=current_inclination)
 
         ContactSurfsVertice[ContactSurfNum] = rotatedPatch
-        ContactSurfsInclinationsDegrees.append(current_inclination/np.pi*180)#save current inclination
+        
+        #save current inclination
+        if current_inclination != None and isinstance(current_inclination, float):
+            ContactSurfsInclinationsDegrees.append(current_inclination/np.pi*180)
+        elif current_inclination == None:
+            ContactSurfsInclinationsDegrees.append(current_inclination)
 
         print("Rotate Patch ", ContactSurfNum, " along the direction of ", current_direction,
               "with inclination of ", current_inclination, "(None means Random)")
@@ -826,9 +831,14 @@ def terrain_model_gen_lab(terrain_name=None,
         #rotate patches
         rotatedPatch = rotate_patch(
             surf=ContactSurfsVertice[ContactSurfNum], PatchType=current_direction, theta=current_inclination)
-
+        
         ContactSurfsVertice[ContactSurfNum] = rotatedPatch
-        ContactSurfsInclinationsDegrees.append(current_inclination/np.pi*180)#save current inclination
+        
+        #save current inclination
+        if current_inclination != None and isinstance(current_inclination, float):
+            ContactSurfsInclinationsDegrees.append(current_inclination/np.pi*180)
+        elif current_inclination == None:
+            ContactSurfsInclinationsDegrees.append(current_inclination)
 
         print("Rotate Patch ", ContactSurfNum, " along the direction of ", current_direction,
               "with inclination of ", current_inclination, "(None means Random)")
@@ -994,6 +1004,9 @@ def terrain_model_gen(terrain_name=None,
                       large_slope_X_shifts=[0.0], large_slope_Y_shifts=[0.0], large_slope_Z_shifts=[0.0],
                       y_center = 0.0,
                       x_offset = 0.0):
+
+    print("y_center: ",y_center)
+    print("x_offset: ",x_offset)
 
     # Check large slope parameters are in the same length
     if large_slope_flag == True:
