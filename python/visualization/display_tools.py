@@ -397,12 +397,12 @@ def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize
     ax.scatter(init_left_x_transformed, init_left_y_transformed,
                init_left_z_transformed, c='r', marker='o', linewidth=FootMarkerSize)
     # The actual footsize (larger size)
-    ax = drawFootPatch(P=np.array([init_left_x_transformed, init_left_y_transformed, init_left_z_transformed]),
+    ax = drawFootPatch(P=np.concatenate((init_left_x_transformed, init_left_y_transformed, init_left_z_transformed), axis = None),
                        P_TangentX=allOptResult[0]["PL_init_TangentX"], P_TangentY=allOptResult[0]["PL_init_TangentY"], line_color='r',
                        LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                        ax=ax)
     # The shrinked footsize for defining contact points (smaller size)
-    ax = drawFootPatch(P=np.array([init_left_x_transformed, init_left_y_transformed, init_left_z_transformed]),
+    ax = drawFootPatch(P=np.concatenate((init_left_x_transformed, init_left_y_transformed, init_left_z_transformed),axis=None),
                        P_TangentX=allOptResult[0]["PL_init_TangentX"], P_TangentY=allOptResult[0]["PL_init_TangentY"], line_color='r',
                        LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                        ax=ax)
@@ -419,12 +419,12 @@ def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize
     ax.scatter(init_right_x_transformed, init_right_y_transformed,
                init_right_z_transformed, c='b', marker='o', linewidth=FootMarkerSize)
     # The actual footsize (larger size)
-    ax = drawFootPatch(P=np.array([init_right_x_transformed, init_right_y_transformed, init_right_z_transformed]),
+    ax = drawFootPatch(P=np.concatenate((init_right_x_transformed, init_right_y_transformed, init_right_z_transformed),axis=None),
                        P_TangentX=allOptResult[0]["PR_init_TangentX"], P_TangentY=allOptResult[0]["PR_init_TangentY"], line_color='b',
                        LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                        ax=ax)
     # The shrinked footsize for defining contact points (smaller size)
-    ax = drawFootPatch(P=np.array([init_right_x_transformed, init_right_y_transformed, init_right_z_transformed]),
+    ax = drawFootPatch(P=np.concatenate((init_right_x_transformed, init_right_y_transformed, init_right_z_transformed), axis=None),
                     P_TangentX=allOptResult[0]["PR_init_TangentX"], P_TangentY=allOptResult[0]["PR_init_TangentY"], line_color='b',
                     LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                     ax=ax)
