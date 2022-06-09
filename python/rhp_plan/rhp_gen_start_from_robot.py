@@ -1,5 +1,6 @@
 #NOTE: !!!When planning from Unseen state, the swing leg flag is also important for the first initial state. (For unseen state, we may swing from left, but we may also swing from right) 
 
+from shutil import ExecError
 import numpy as np
 from sympy import degree
 from multicontact_learning_local_objectives.python.ocp_build import *
@@ -211,16 +212,52 @@ print('Current Base pos in (Map) is ', msg_base_map.pose.pose.position.x, msg_ba
 print('Current Base Orientation (Euler roll pitch yaw) in (Map) is (Degrees) ', base_ori_map.as_euler('xyz', degrees=True))
 print('Current Left Foot Step Location in (Map) is: ', msg_foot.actual_lf_pos_x_map, msg_foot.actual_lf_pos_y_map, msg_foot.actual_lf_pos_z_map)
 print('Current Right Foot Step Location in (Map) is: ', msg_foot.actual_rf_pos_x_map, msg_foot.actual_rf_pos_y_map, msg_foot.actual_rf_pos_z_map)
-
+print('--------------------')
 print('Current CoM pos in (Odom) is ', msg_com.actual_com_pos_x_odom, msg_com.actual_com_pos_y_odom, msg_com.actual_com_pos_z_odom)
 print('Current Base pos in (Odom) is ', msg_base_odom.pose.pose.position.x, msg_base_odom.pose.pose.position.y, msg_base_odom.pose.pose.position.z)
 print('Current Base Orientation (Euler roll pitch yaw) in (Odom) is (Degrees) ', base_ori_odom.as_euler('xyz', degrees=True))
 print('Current Left Foot Step Location in (Odom) is: ', msg_foot.actual_lf_pos_x_odom, msg_foot.actual_lf_pos_y_odom, msg_foot.actual_lf_pos_z_odom)
 print('Current Right Foot Step Location in (Odom) is: ', msg_foot.actual_rf_pos_x_odom, msg_foot.actual_rf_pos_y_odom, msg_foot.actual_rf_pos_z_odom)
-
+print('--------------------')
+print('Robot Config Diff: ')
+print('--------')
+print('Robot Config - CoM to Left Foot Dist (Map): ', np.sqrt((msg_com.actual_com_pos_x_map-msg_foot.actual_lf_pos_x_map)**2), np.sqrt((msg_com.actual_com_pos_y_map-msg_foot.actual_lf_pos_y_map)**2), np.sqrt((msg_com.actual_com_pos_z_map-msg_foot.actual_lf_pos_z_map)**2))
+print('Robot Config - CoM to Left Foot Dist (Odom): ', np.sqrt((msg_com.actual_com_pos_x_odom-msg_foot.actual_lf_pos_x_odom)**2), np.sqrt((msg_com.actual_com_pos_y_odom-msg_foot.actual_lf_pos_y_odom)**2), np.sqrt((msg_com.actual_com_pos_z_odom-msg_foot.actual_lf_pos_z_odom)**2))
+print('Diff: ', np.sqrt((np.sqrt((msg_com.actual_com_pos_x_map-msg_foot.actual_lf_pos_x_map)**2)-np.sqrt((msg_com.actual_com_pos_x_odom-msg_foot.actual_lf_pos_x_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_com.actual_com_pos_y_map-msg_foot.actual_lf_pos_y_map)**2)-np.sqrt((msg_com.actual_com_pos_y_odom-msg_foot.actual_lf_pos_y_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_com.actual_com_pos_z_map-msg_foot.actual_lf_pos_z_map)**2)-np.sqrt((msg_com.actual_com_pos_z_odom-msg_foot.actual_lf_pos_z_odom)**2))**2))
+print('--------')
+print('Robot Config - CoM to Right Foot Dist (Map): ', np.sqrt((msg_com.actual_com_pos_x_map-msg_foot.actual_rf_pos_x_map)**2), np.sqrt((msg_com.actual_com_pos_y_map-msg_foot.actual_rf_pos_y_map)**2), np.sqrt((msg_com.actual_com_pos_z_map-msg_foot.actual_rf_pos_z_map)**2))
+print('Robot Config - CoM to Right Foot Dist (Odom): ', np.sqrt((msg_com.actual_com_pos_x_odom-msg_foot.actual_rf_pos_x_odom)**2), np.sqrt((msg_com.actual_com_pos_y_odom-msg_foot.actual_rf_pos_y_odom)**2), np.sqrt((msg_com.actual_com_pos_z_odom-msg_foot.actual_rf_pos_z_odom)**2))
+print('Diff: ', np.sqrt((np.sqrt((msg_com.actual_com_pos_x_map-msg_foot.actual_rf_pos_x_map)**2)-np.sqrt((msg_com.actual_com_pos_x_odom-msg_foot.actual_rf_pos_x_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_com.actual_com_pos_y_map-msg_foot.actual_rf_pos_y_map)**2)-np.sqrt((msg_com.actual_com_pos_y_odom-msg_foot.actual_rf_pos_y_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_com.actual_com_pos_z_map-msg_foot.actual_rf_pos_z_map)**2)-np.sqrt((msg_com.actual_com_pos_z_odom-msg_foot.actual_rf_pos_z_odom)**2))**2))
+print('--------')
+print('Robot Config - Base to Left Foot Dist (Map): ', np.sqrt((msg_base_map.pose.pose.position.x-msg_foot.actual_lf_pos_x_map)**2), np.sqrt((msg_base_map.pose.pose.position.y-msg_foot.actual_lf_pos_y_map)**2), np.sqrt((msg_base_map.pose.pose.position.z-msg_foot.actual_lf_pos_z_map)**2))
+print('Robot Config - Base to Left Foot Dist (Odom): ', np.sqrt((msg_base_odom.pose.pose.position.x-msg_foot.actual_lf_pos_x_odom)**2), np.sqrt((msg_base_odom.pose.pose.position.y-msg_foot.actual_lf_pos_y_odom)**2), np.sqrt((msg_base_odom.pose.pose.position.z-msg_foot.actual_lf_pos_z_odom)**2))
+print('Diff: ', np.sqrt((np.sqrt((msg_base_map.pose.pose.position.x-msg_foot.actual_lf_pos_x_map)**2)-np.sqrt((msg_base_odom.pose.pose.position.x-msg_foot.actual_lf_pos_x_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_base_map.pose.pose.position.y-msg_foot.actual_lf_pos_y_map)**2)-np.sqrt((msg_base_odom.pose.pose.position.y-msg_foot.actual_lf_pos_y_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_base_map.pose.pose.position.z-msg_foot.actual_lf_pos_z_map)**2)-np.sqrt((msg_base_odom.pose.pose.position.z-msg_foot.actual_lf_pos_z_odom)**2))**2))
+print('--------')
+print('Robot Config - Base to Right Foot Dist (Map): ', np.sqrt((msg_base_map.pose.pose.position.x-msg_foot.actual_rf_pos_x_map)**2), np.sqrt((msg_base_map.pose.pose.position.y-msg_foot.actual_rf_pos_y_map)**2), np.sqrt((msg_base_map.pose.pose.position.z-msg_foot.actual_rf_pos_z_map)**2))
+print('Robot Config - Base to Right Foot Dist (Odom): ', np.sqrt((msg_base_odom.pose.pose.position.x-msg_foot.actual_rf_pos_x_odom)**2), np.sqrt((msg_base_odom.pose.pose.position.y-msg_foot.actual_rf_pos_y_odom)**2), np.sqrt((msg_base_odom.pose.pose.position.z-msg_foot.actual_rf_pos_z_odom)**2))
+print('Diff: ', np.sqrt((np.sqrt((msg_base_map.pose.pose.position.x-msg_foot.actual_rf_pos_x_map)**2)-np.sqrt((msg_base_odom.pose.pose.position.x-msg_foot.actual_rf_pos_x_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_base_map.pose.pose.position.y-msg_foot.actual_rf_pos_y_map)**2)-np.sqrt((msg_base_odom.pose.pose.position.y-msg_foot.actual_rf_pos_y_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_base_map.pose.pose.position.z-msg_foot.actual_rf_pos_z_map)**2)-np.sqrt((msg_base_odom.pose.pose.position.z-msg_foot.actual_rf_pos_z_odom)**2))**2))
+print('--------')
+print('Robot Config - Right Foot to Left Foot Dist (Map): ', np.sqrt((msg_foot.actual_rf_pos_x_map-msg_foot.actual_lf_pos_x_map)**2), np.sqrt((msg_foot.actual_rf_pos_y_map-msg_foot.actual_lf_pos_y_map)**2), np.sqrt((msg_foot.actual_rf_pos_z_map-msg_foot.actual_lf_pos_z_map)**2))
+print('Robot Config - Right Foot to Left Foot Dist (Odom): ', np.sqrt((msg_foot.actual_rf_pos_x_odom-msg_foot.actual_lf_pos_x_odom)**2), np.sqrt((msg_foot.actual_rf_pos_y_odom-msg_foot.actual_lf_pos_y_odom)**2), np.sqrt((msg_foot.actual_rf_pos_z_odom-msg_foot.actual_lf_pos_z_odom)**2))
+print('Diff: ', np.sqrt((np.sqrt((msg_foot.actual_rf_pos_x_map-msg_foot.actual_lf_pos_x_map)**2)-np.sqrt((msg_foot.actual_rf_pos_x_odom-msg_foot.actual_lf_pos_x_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_foot.actual_rf_pos_y_map-msg_foot.actual_lf_pos_y_map)**2)-np.sqrt((msg_foot.actual_rf_pos_y_odom-msg_foot.actual_lf_pos_y_odom)**2))**2),
+                np.sqrt((np.sqrt((msg_foot.actual_rf_pos_z_map-msg_foot.actual_lf_pos_z_map)**2)-np.sqrt((msg_foot.actual_rf_pos_z_odom-msg_foot.actual_lf_pos_z_odom)**2))**2))
+print('--------------------')
+print('Base Orientation Diff (between map and odom) (Roll Pitch Yaw): ', np.sqrt((base_ori_map.as_euler('xyz', degrees=True)[0][0]-base_ori_odom.as_euler('xyz', degrees=True)[0][0])**2),
+                                                                         np.sqrt((base_ori_map.as_euler('xyz', degrees=True)[0][1]-base_ori_odom.as_euler('xyz', degrees=True)[0][1])**2),
+                                                                         np.sqrt((base_ori_map.as_euler('xyz', degrees=True)[0][2]-base_ori_odom.as_euler('xyz', degrees=True)[0][2])**2))
+print('--------------------')
 print('Translation from Odom to Map: ', translation_odom_to_map)
 print('Rotation from Odom to Map: \n', rotation_odom_to_map)
-print('Rotation from Odom to Map (Euler roll pitch yaw) Degrees: ', (R.from_matrix(rotation_odom_to_map)).as_euler('xyz',degrees=True))
+print('Rotation from Odom to Map (Euler roll pitch yaw) Degrees: \n', (R.from_matrix(rotation_odom_to_map)).as_euler('xyz',degrees=True))
 print('Homogeneouse Transformation: \n', H_map_to_odom)
 
 OdomConfig = {}
@@ -473,6 +510,18 @@ print("- Initial Left Foot: Tangent X = ", InitConfig["PL_init_TangentX"], ",  T
 print("- Initial Left Contact Surface Orientation: \n",  InitConfig["LeftInitSurfOrientation"])
 print("- Initial Right Foot: Tangent X = ", InitConfig["PR_init_TangentX"], ", Tangent Y = ", InitConfig["PR_init_TangentY"], ", Norm = ", InitConfig["PR_init_Norm"])
 print("- Initial Right Contact Surface Orientation: \n", InitConfig["RightInitSurfOrientation"])
+
+#Check if we are on the front bar
+#check for left foot
+dist_lf_to_init_patch_border_x = np.abs(InitConfig["PLx_init"] + 0.11 -TerrainInfo["InitLeftSurfVertice"][0][0])
+#check for right foot
+dist_rf_to_init_patch_border_x = np.abs(InitConfig["PRx_init"] + 0.11 -TerrainInfo["InitRightSurfVertice"][0][0])
+
+print("dist_lf_to_init_patch_border_x", dist_lf_to_init_patch_border_x)
+print("dist_rf_to_init_patch_border_x", dist_rf_to_init_patch_border_x)
+
+if dist_lf_to_init_patch_border_x <= 0.02 or dist_rf_to_init_patch_border_x <=0.02:
+    raise Exception("Stepping on the front bar")
 
 #Display Init config
 viz.DisplayInitConfig(TerrainModel=TerrainInfo, InitConfig = InitConfig)

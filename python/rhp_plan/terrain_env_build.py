@@ -153,6 +153,18 @@ with open(world_file_path, 'x') as f:
     f.write('    </include>\n')
     f.write('\n')
 
+    # Write the front bar
+    f.write('    <!-- Place the front bar -->\n')
+    f.write('    <include>\n')
+    f.write('      <name>font_bar</name>\n')
+    f.write('      <static>'+ str(1) +'</static>\n')
+    init_surf_border_x = terrain_model["AllPatchesVertices"][0][0][0]-0.01
+    init_surf_border_y = terrain_model["AllPatchesVertices"][0][2][1]
+    f.write('      <uri>model://front_bar</uri>\n')
+    f.write('      <pose> ' + str(init_surf_border_x) + " " + str(init_surf_border_y) + " " + str(0.0) + ' 0.0 0.0 ' + str(0.0) + '</pose>\n')
+    f.write('    </include>\n')
+    f.write('\n')
+
 # # construct the gazebo world file, append terrain models
 with open(world_file_path, 'a') as f:
     for surf_idx in range(2,len(terrain_model["AllPatchesVertices"])):

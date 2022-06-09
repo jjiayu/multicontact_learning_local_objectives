@@ -365,9 +365,9 @@ def drawSingleOptTraj(optResult=None, fig=None, ax=None, FootMarkerSize=4,
                                ax=ax)
     # Set xlim
     if var_idx_lv2:
-        ax.set_xlim3d(x_lv1_res[0]-0.2, x_lv2_res[-1]+0.5)
+        ax.set_xlim3d(x_lv1_res_transformed[0]-0.2, x_lv2_res_transformed[-1]+0.5)
     else:
-        ax.set_xlim3d(x_lv1_res[0]-0.2, x_lv1_res[-1]+0.5)
+        ax.set_xlim3d(x_lv1_res_transformed[0]-0.2, x_lv1_res_transformed[-1]+0.5)
     return ax
 
 # Draw Optimization Result of All Rounds/Steps
@@ -518,8 +518,22 @@ def DrawAllExecutionHorizon(allOptResult=None, fig=None, ax=None, FootMarkerSize
                            LineType = 'dashed', footlength = 0.2, footwidth = 0.1,
                            ax=ax)
     # Set xlim
-    ax.set_xlim3d(allOptResult[0]["opt_res"][var_idx_lv1["x"][0]] -
-                  0.2, allOptResult[-1]["opt_res"][var_idx_lv1["x"][-1]]+0.5)
+    #ax.set_xlim3d(allOptResult[0]["opt_res"][var_idx_lv1["x"][0]] -
+    #              0.2, allOptResult[-1]["opt_res"][var_idx_lv1["x"][-1]]+0.5)
+    traj_start_transformed_temp = np.array([[allOptResult[0]["opt_res"][var_idx_lv1["x"][0]]],
+                                            [allOptResult[0]["opt_res"][var_idx_lv1["y"][0]]],
+                                            [allOptResult[0]["opt_res"][var_idx_lv1["z"][0]]],
+                                            [1.0]])
+    traj_start_transformed_temp = HomoTran@traj_start_transformed_temp
+
+    traj_end_transformed_temp = np.array([[allOptResult[-1]["opt_res"][var_idx_lv1["x"][-1]]],
+                                          [allOptResult[-1]["opt_res"][var_idx_lv1["y"][-1]]],
+                                          [allOptResult[-1]["opt_res"][var_idx_lv1["z"][-1]]],
+                                          [1.0]])
+    traj_end_transformed_temp = HomoTran@traj_end_transformed_temp
+
+    ax.set_xlim3d(traj_start_transformed_temp[0] - 0.2, traj_end_transformed_temp[0] + 0.5)
+
     return ax
 
 #   Draw Initial Configuration
@@ -735,7 +749,7 @@ def DisplayResults(TerrainModel=None, SingleOptResult=None, AllOptResult=None,
     ax.set_ylim3d(-1, 1)
 
     #Draw origin
-    ax.scatter(0.0, 0.0, 0.0, c='r', marker='x', linewidth=15)
+    ax.scatter(0.0, 0.0, 0.0, c='r', marker='+', linewidth=10)
 
     # Plot According to Different Modes
     #   Draw Terrain Only
