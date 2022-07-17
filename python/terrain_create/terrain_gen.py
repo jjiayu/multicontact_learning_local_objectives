@@ -23,6 +23,10 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
                       randomHorizontalMove=False,  # Need to add random Height Move for Normal Patches
                       randomElevationShift=False, min_elevation_shift=-0.075, max_elevation_shift=0.075,
                       randomMisAlignmentofFirstTwoPatches=False, MisAlignmentColumn=None, MisAlignmentAmount=0.25,
+                      Constant_Block_Z_Shift_Flag = False,
+                      Constant_Block_Z_Shift_Value = 0.0,
+                      gap_between_patches = False,
+                      x_gap = 0.0,
                       NumSteps=None, NumLookAhead=None,
                       large_slope_flag=False, large_slope_index=[],
                       large_slope_directions=[], large_slope_inclinations=[],
@@ -198,6 +202,11 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
             if randomMisAlignmentofFirstTwoPatches == True:  # if we randomly mis align the first two patches
                 # MisAlignmentAmount = np.random.uniform(0.0,MaxMisAllignmentAmount) #random choose a mis aligned amount
                 ref_x = ref_x + MisAlignmentAmount  # shift the x-ref of the selected patch
+
+        #Give gaps to the patches
+        if gap_between_patches == True:
+            if surfNum > 2: #we give gap starting from the 4th patch (right column)
+                ref_x = ref_x + x_gap
 
         # Build an initial flat surface
         surf_temp = flat_patch_gen(PatchColumn=SurfContactLeft, ref_x=ref_x,
@@ -410,6 +419,12 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
                 cur_surf[2,2] = cur_surf[2,2] + lab_block_z_shift
                 cur_surf[3,2] = cur_surf[3,2] + lab_block_z_shift
 
+                if Constant_Block_Z_Shift_Flag == True:
+                    cur_surf[0,2] = cur_surf[0,2] + Constant_Block_Z_Shift_Value
+                    cur_surf[1,2] = cur_surf[1,2] + Constant_Block_Z_Shift_Value
+                    cur_surf[2,2] = cur_surf[2,2] + Constant_Block_Z_Shift_Value
+                    cur_surf[3,2] = cur_surf[3,2] + Constant_Block_Z_Shift_Value
+
                 #Rebuild the contact patch array
                 AllPatches[surfNum] = cur_surf
                 ContactSurfsVertice[surfNum-2] = cur_surf
@@ -547,6 +562,8 @@ def terrain_model_gen_lab(terrain_name=None,
                       randomHorizontalMove=False,  # Need to add random Height Move for Normal Patches
                       randomElevationShift=False, min_elevation_shift=-0.075, max_elevation_shift=0.075,
                       randomMisAlignmentofFirstTwoPatches=False, MisAlignmentColumn=None, MisAlignmentAmount=0.25,
+                      gap_between_patches = False,
+                      x_gap = 0.0,
                       NumSteps=None, NumLookAhead=None,
                       large_slope_flag=False, large_slope_index=[],
                       large_slope_directions=[], large_slope_inclinations=[],
@@ -596,7 +613,7 @@ def terrain_model_gen_lab(terrain_name=None,
     # ---------------
     # Generate Initial Patches (Currently Define as flat patches)
     if randomInitSurfSize == False:
-        InitContactSurf_x_max = 0.13 + x_offset
+        InitContactSurf_x_max = 0.15 + x_offset
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:
@@ -715,6 +732,11 @@ def terrain_model_gen_lab(terrain_name=None,
             if randomMisAlignmentofFirstTwoPatches == True:  # if we randomly mis align the first two patches
                 # MisAlignmentAmount = np.random.uniform(0.0,MaxMisAllignmentAmount) #random choose a mis aligned amount
                 ref_x = ref_x + MisAlignmentAmount  # shift the x-ref of the selected patch
+
+        #Give gaps to the patches
+        if gap_between_patches == True:
+            if surfNum > 2: #we give gap starting from the 4th patch (right column)
+                ref_x = ref_x + x_gap
 
         # Build an initial flat surface
         surf_temp = flat_patch_gen(PatchColumn=SurfContactLeft, ref_x=ref_x,
@@ -998,6 +1020,8 @@ def terrain_model_gen(terrain_name=None,
                       randomHorizontalMove=False,  # Need to add random Height Move for Normal Patches
                       randomElevationShift=False, min_elevation_shift=-0.075, max_elevation_shift=0.075,
                       randomMisAlignmentofFirstTwoPatches=False, MisAlignmentColumn=None, MisAlignmentAmount=0.25,
+                      gap_between_patches = False,
+                      x_gap = 0.0,
                       NumSteps=None, NumLookAhead=None,
                       large_slope_flag=False, large_slope_index=[8],
                       large_slope_directions=["X_positive"], large_slope_inclinations=[18.0/180.0*np.pi],
@@ -1048,7 +1072,7 @@ def terrain_model_gen(terrain_name=None,
     # ---------------
     # Generate Initial Patches (Currently Define as flat patches)
     if randomInitSurfSize == False:
-        InitContactSurf_x_max = 0.15 + x_offset
+        InitContactSurf_x_max = 0.16 + x_offset  #0.15
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:
@@ -1112,14 +1136,14 @@ def terrain_model_gen(terrain_name=None,
 
         # Decide Coordinate of reference point
         if surfNum % 2 == 0:  # Even number of steps (Swing the Left)
-            # ----       #p2---------------------p1
-            #            |                      |
+            # ----        #p2---------------------p1
+            #             |                      |
             # Sn-2(Sl0) # |         Sn           |
-            # (L) #      |        (L)           |
+            # (L) #       |        (L)           |
             # ----      #p3 (ref_x, ref_y)-------p4
-            #            |                      |
+            #             |                      |
             # Sn-1(Sr0) # |                      |
-            # (R) #      |                      |
+            # (R) #       |                      |
 
             # Define which Contact foot is for the Surface
             SurfContactLeft = "left"
@@ -1132,16 +1156,16 @@ def terrain_model_gen(terrain_name=None,
             ref_z = 0.0
 
         elif surfNum % 2 == 1:  # Odd number of steps
-            # ---- #        ---------------------
-            #      |                      |
-            #      |         Sn-1         |
-            #      |          (L)         |
+            # ----       #        ---------------------
+            #             |                      |
+            #             |         Sn-1         |
+            #             |          (L)         |
             # ---- #      ---------------------
-            #     P2 (ref_x, ref_y)------P1
-            #      |                      |
+            #             P2 (ref_x, ref_y)------P1
+            #             |                      |
             # Sn-2(Sr0) # |         Sn           |
-            # (R) #      |        (R)           |
-            #    P3---------------------P4
+            # (R) #       |        (R)           |
+            #             P3---------------------P4
 
             # Define which Contact foot is for the Surface
             SurfContactLeft = "right"
@@ -1158,6 +1182,11 @@ def terrain_model_gen(terrain_name=None,
             if randomMisAlignmentofFirstTwoPatches == True:  # if we randomly mis align the first two patches
                 # MisAlignmentAmount = np.random.uniform(0.0,MaxMisAllignmentAmount) #random choose a mis aligned amount
                 ref_x = ref_x + MisAlignmentAmount  # shift the x-ref of the selected patch
+
+        #Give gaps to the patches
+        if gap_between_patches == True:
+            if surfNum > 2: #we give gap starting from the 4th patch (right column)
+                ref_x = ref_x + x_gap
 
         # Build an initial flat surface
         surf_temp = flat_patch_gen(PatchColumn=SurfContactLeft, ref_x=ref_x,

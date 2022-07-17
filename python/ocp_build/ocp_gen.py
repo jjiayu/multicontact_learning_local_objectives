@@ -41,7 +41,7 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     G = 9.80665  # kg/m^2
     # Friction Coefficient
     # Force Limits
-    F_bound = 400.0
+    F_bound = 400.0 #400
     Fxlb = -F_bound
     Fxub = F_bound
     Fylb = -F_bound
@@ -60,7 +60,7 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     z_highest = 5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65
-    CoM_z_to_Foot_max = 0.89  # 0.75
+    CoM_z_to_Foot_max = 0.88  # 0.75
     # Terrain Model
     # Flat Terrain
     #TerrainNorm = [0,0,1]
@@ -227,8 +227,7 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     # particular way of generating lists in python, [value]*number of elements
     xdot_ub = np.array([[1.5]*(xdot.shape[0]*xdot.shape[1])])
     ydot = ca.SX.sym('ydot', N_K)
-    ydot_lb = np.array([[-1.5]*(ydot.shape[0]*ydot.shape[1])])
-    # particular way of generating lists in python, [value]*number of elements
+    ydot_lb = np.array([[-1.5]*(ydot.shape[0]*ydot.shape[1])])# particular way of generating lists in python, [value]*number of elements
     ydot_ub = np.array([[1.5]*(ydot.shape[0]*ydot.shape[1])])
     zdot = ca.SX.sym('zdot', N_K)
     zdot_lb = np.array([[-1.5]*(zdot.shape[0]*zdot.shape[1])])
@@ -929,6 +928,10 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
                        FR1z[k]/m + FR2z[k]/m + FR3z[k]/m + FR4z[k]/m - G)**2
                 # with Angular Momentum
                 J = J + h*Lx[k]**2 + h*Ly[k]**2 + h*Lz[k]**2
+
+                # #with Velocity
+                # J = J + h*xdot[k]**2 + h*ydot[k]**2 + h*zdot[k]**2
+
                 # With Angular momentum rate
                 #J = J + h*Ldotx[k]**2 + h*Ldoty[k]**2 + h*Ldotz[k]**2
 
@@ -1123,7 +1126,7 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
     G = 9.80665  # kg/m^2
     # Friction Coefficient
     #   Force Limits
-    F_bound = 400.0
+    F_bound = 400.0 #400
     Fxlb = -F_bound
     Fxub = F_bound
     Fylb = -F_bound
@@ -1142,7 +1145,7 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
     z_highest = 5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65 #0.6
-    CoM_z_to_Foot_max = 0.89  # 0.75
+    CoM_z_to_Foot_max = 0.88  # 0.75
     #   Terrain Model
     #       Flat Terrain
     #TerrainNorm = [0,0,1]
@@ -1264,8 +1267,7 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
     # particular way of generating lists in python, [value]*number of elements
     xdot_ub = np.array([[1.5]*(xdot.shape[0]*xdot.shape[1])])
     ydot = ca.SX.sym('ydot', N_K)
-    ydot_lb = np.array([[-1.5]*(ydot.shape[0]*ydot.shape[1])])
-    # particular way of generating lists in python, [value]*number of elements
+    ydot_lb = np.array([[-1.5]*(ydot.shape[0]*ydot.shape[1])])# particular way of generating lists in python, [value]*number of elements
     ydot_ub = np.array([[1.5]*(ydot.shape[0]*ydot.shape[1])])
     zdot = ca.SX.sym('zdot', N_K)
     zdot_lb = np.array([[-1.5]*(zdot.shape[0]*zdot.shape[1])])
@@ -2690,6 +2692,10 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
                        FR1z[k]/m + FR2z[k]/m + FR3z[k]/m + FR4z[k]/m - G)**2
                 # with Angular Momentum
                 J = J + h*Lx[k]**2 + h*Ly[k]**2 + h*Lz[k]**2
+
+                # #with Velocity
+                # J = J + h*xdot[k]**2 + h*ydot[k]**2 + h*zdot[k]**2
+
                 # With Angular momentum rate
                 #J = J + h*Ldotx[k]**2 + h*Ldoty[k]**2 + h*Ldotz[k]**2
 

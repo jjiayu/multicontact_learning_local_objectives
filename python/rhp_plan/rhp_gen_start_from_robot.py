@@ -117,9 +117,21 @@ RobotMass= 100.0
 #i.e. DS upper limit 1.0, SS upper limit 1.5
 #phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 1.0, #1.5
 #                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.0}
-#The one we use
-phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5
+
+# #longer duration (it also works) ***** but close to joint limit
+# phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
+#                          "SingleSupport_Min": 1.5,  "SingleSupport_Max": 2.0}  #0.7 - 1.2 #1.0 - 1.5
+
+# # #   Always working ******
+phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
                          "SingleSupport_Min": 1.0,  "SingleSupport_Max": 1.5}  #0.7 - 1.2 #1.0 - 1.5
+
+# # #longer duration (also workd with 300 force)
+# phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
+#                          "SingleSupport_Min":2.0,  "SingleSupport_Max": 3.0}  #0.7 - 1.2 #1.0 - 1.5
+
+# phase_duration_limits = {"DoubleSupport_Min": 1.0, "DoubleSupport_Max": 1.5, #0.05 - 0.5; 1.0-1.5
+#                          "SingleSupport_Min": 1.5,  "SingleSupport_Max": 2.0}  #0.7 - 1.2 #1.0 - 1.5
 # phase_duration_limits = {"DoubleSupport_Min": 0.1, "DoubleSupport_Max": 0.1, #0.05 - 0.5
 #                          "SingleSupport_Min": 0.8,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
 #   Local Obj Tracking Type (for Single Step) can be None, cost, constraints
@@ -307,8 +319,11 @@ if TerrainModelPath == None:
                            "random_init_surf_size": False,
                            "random_surfsize_flag": False,
                            "random_Horizontal_Move": False,
-                           "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
-                           "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
+                           "MisMatch_Alignment_of_FirstTwoPatches": True, #bool(np.random.choice([True,False],1)), 
+                           "MisAligned_Column": "right", #can be "left", "right", None (choose randomly)
+                           "MisAligned_Amount": 0.0, #0.25
+                           "Gap_Between_Patches": True,
+                           "Gap_along_x": 0.0,
                            "Projected_Length": 0.3, "Projected_Width": 0.3,
                            "large_slope_flag":False,
                            "large_slope_index": [8],#[np.random.choice([16,17])],#select a patch from number 16 or 17
@@ -367,6 +382,9 @@ if TerrainModelPath == None:
                                         randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
                                         randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
                                         MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
+                                        MisAlignmentAmount = TerrainSettings["MisAligned_Amount"],
+                                        gap_between_patches = TerrainSettings["Gap_Between_Patches"],
+                                        x_gap = TerrainSettings["Gap_along_x"],
                                         Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
                                         NumSteps = Nrounds, NumLookAhead = 100,#Put NumLookAhead = 20 to give infinitely long terrains
                                         large_slope_flag = TerrainSettings["large_slope_flag"], 

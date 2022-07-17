@@ -114,9 +114,23 @@ RobotMass= 100.0
 #i.e. DS upper limit 1.0, SS upper limit 1.5
 #phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 1.0, #1.5
 #                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.0}
-#The one we use
-phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5  0.5 - 1.0
-                         "SingleSupport_Min": 1.0,  "SingleSupport_Max": 1.5}  #0.7 - 1.2
+
+# # #longer duration (it also works) ***** but it close to joint limit
+phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
+                         "SingleSupport_Min": 1.5,  "SingleSupport_Max": 2.0}  #0.7 - 1.2 #1.0 - 1.5
+
+# # #   Always working *****
+# phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
+#                          "SingleSupport_Min": 1.0,  "SingleSupport_Max": 1.5}  #0.7 - 1.2 #1.0 - 1.5
+
+# Trying
+# phase_duration_limits = {"DoubleSupport_Min": 1.5, "DoubleSupport_Max": 1.5, #0.05 - 0.5; 0.5-1.0
+#                          "SingleSupport_Min": 2.0,  "SingleSupport_Max": 4.0}  #0.7 - 1.2 #1.0 - 1.5
+
+# Previosly used
+# phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
+#                          "SingleSupport_Min": 1.0,  "SingleSupport_Max": 1.5}  #0.7 - 1.2 #1.0 - 1.5
+
 # phase_duration_limits = {"DoubleSupport_Min": 0.1, "DoubleSupport_Max": 0.1, #0.05 - 0.5
 #                          "SingleSupport_Min": 0.8,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
 #   Local Obj Tracking Type (for Single Step) can be None, cost, constraints

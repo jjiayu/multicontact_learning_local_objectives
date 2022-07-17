@@ -1,5 +1,6 @@
 #Scripts Building the environment model for optimization as well as the gazebo world file for simulation
 
+from ast import Constant
 import os
 
 from multicontact_learning_local_objectives.python.terrain_create import *
@@ -25,6 +26,8 @@ if logging == True:
 #-------------------------------------
 #For terrain generation
 #Make Terrain Setting
+
+doormat_height = 0.05
 
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
                    "twosteps_on_patch": False,
@@ -53,8 +56,11 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    "random_init_surf_size": False,
                    "random_surfsize_flag": False,
                    "random_Horizontal_Move": False,
-                   "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
-                   "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
+                   "MisMatch_Alignment_of_FirstTwoPatches": True, #bool(np.random.choice([True,False],1)), 
+                   "MisAligned_Column": "right", #can be "left", "right", None (choose randomly)
+                   "MisAligned_Amount": 0.0, #0.25
+                   "Gap_Between_Patches": True,
+                   "Gap_along_x": 0.0, #0.3
                    "Projected_Length": 0.3, "Projected_Width": 0.3, #0.55 and 1.0
                    "large_slope_flag":False,
                    "large_slope_index": [],#[np.random.choice([16,17])],#select a patch from number 16 or 17
@@ -65,6 +71,8 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    "large_slope_Z_shifts": [],#[np.random.uniform(-0.25,0.25)],
                    "y_center_offset": 0.0,
                    "x_offset": 0.0,
+                   "constant_block_z_shift_flag": True,
+                   "constant_block_z_shift_value": -doormat_height,
                     }
 
 if TerrainSettings["terrain_type"] == "customized":
@@ -86,6 +94,9 @@ terrain_model = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSett
                                       randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
                                       randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
                                       MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
+                                      MisAlignmentAmount = TerrainSettings["MisAligned_Amount"],
+                                      gap_between_patches = TerrainSettings["Gap_Between_Patches"],
+                                      x_gap = TerrainSettings["Gap_along_x"],
                                       Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
                                       NumSteps = TerrainSettings["num_of_steps"], 
                                       NumLookAhead = 10,#Put NumLookAhead = 20 to give infinitely long terrains
@@ -97,7 +108,9 @@ terrain_model = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSett
                                       large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
                                       y_center = TerrainSettings["y_center_offset"],
                                       x_offset = TerrainSettings["x_offset"],
-                                      twosteps_on_patch = TerrainSettings["twosteps_on_patch"]) 
+                                      twosteps_on_patch = TerrainSettings["twosteps_on_patch"],
+                                      Constant_Block_Z_Shift_Flag = TerrainSettings["constant_block_z_shift_flag"],
+                                      Constant_Block_Z_Shift_Value = TerrainSettings["constant_block_z_shift_value"]) 
 
 viz.DisplayResults(TerrainModel=terrain_model, SingleOptResult=None, AllOptResult=None)
 
@@ -171,6 +184,8 @@ with open(world_file_path, 'a') as f:
         #temp_type = terrain_model["AllPatchesVertices"][surf_idx]
         temp_surf = terrain_model["AllPatchesVertices"][surf_idx]
         temp_center_x, temp_center_y, temp_center_z = getCenter(temp_surf)
+        #get min z of the patch
+        cur_patch_min_z = np.min([temp_surf[0,2], temp_surf[1,2], temp_surf[2,2], temp_surf[3,2]])
         temp_type = getSurfaceType(temp_surf)
         temp_surf_inclination = abs(getTerrainRotationAngle(temp_surf))#terrain_model["ContactSurfsInclinationsDegrees"][surf_idx]
         if temp_type != "flat": #if NOT flat add the terrain blocks
@@ -211,7 +226,7 @@ with open(world_file_path, 'a') as f:
                     f.write('      <uri>model://diag_Y_positive_' + str(int(temp_surf_inclination)) + '_lifted_size_30</uri>\n')
             else:
                 raise Exception("Unknown terrain type")
-            f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(0.0) + ' 0.0 0.0 ' + str(yaw_rot_angle) + '</pose>\n')
+            f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(cur_patch_min_z) + ' 0.0 0.0 ' + str(yaw_rot_angle) + '</pose>\n')
             f.write('    </include>\n')
             f.write('\n')
 
