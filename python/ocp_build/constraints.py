@@ -106,6 +106,10 @@ def Relative_Foot_Kinematics(SwingLegIndicator=None, p_next=None, p_cur=None, Q_
 
     return g, glb, gub
 
+
+# Constaint on putting CoM in the inner part of the stance foot (swing phase)
+
+
 # Footstep location Constraint
 
 
