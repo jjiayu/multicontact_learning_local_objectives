@@ -40,12 +40,15 @@ ExternalParameters = {"WorkingDirectory": None,
                       "ML_ModelPath": None, #"/home/jiayu/Desktop/MLP_DataSet/2stepsVsOthers/ML_Models/NN_Model_Valid",
                       "DataSetPath": None, #"/home/jiayu/Desktop/MLP_DataSet/Rubbles/DataSet", #None,
                       "NumLookAhead": 4,
-                      "NumofRounds":5,
+                      "NumofRounds":6,
                       "LargeSlopeAngle": 0,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
                       "VisualizationFlag": "Yes",
-                      "TrackTiming": "No"
+                      "TrackTiming": "No",
+                      "ForceLimitSmall": 300,
+                      "ForceLimitLarge": 300,
+                      "TerrainMoveToOdom": "Yes",
                       }
 
 #   Update External Parameters
@@ -117,7 +120,7 @@ RobotMass= 100.0
 
 # # #longer duration (it also works) ***** but it close to joint limit
 phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
-                         "SingleSupport_Min": 1.5,  "SingleSupport_Max": 2.0}  #0.7 - 1.2 #1.0 - 1.5
+                         "SingleSupport_Min": 1.0,  "SingleSupport_Max": 1.5}  #0.7 - 1.2 #1.0 - 1.5
 
 # # #   Always working *****
 # phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
@@ -285,6 +288,17 @@ OdomConfig["PRz"] = msg_foot.actual_rf_pos_z_odom
 #Get Environment Model
 #---------------------
 
+#compute y_center(central y of terrains), x_offset (to align the terrain to the robot)
+x_lf = msg_foot.actual_lf_pos_x_map #msg_foot.data[0]
+x_rf = msg_foot.actual_rf_pos_x_map #msg_foot.data[6]
+x_offset = np.max((x_lf,x_rf))
+
+y_lf = msg_foot.actual_lf_pos_y_map #msg_foot.data[1]
+y_rf = msg_foot.actual_rf_pos_y_map #msg_foot.data[7]
+y_dist = y_lf - y_rf
+
+y_center = y_lf - y_dist/2.0 #+ 0.05
+
 #Define if we load terrain from file NOTE: None means no, then we generate terrain from code, depends on if we update external parameters
 TerrainModelPath = None
 if ExternalParameters["InitConditionType"]=="fromFile" or ExternalParameters["InitConditionType"]=="fromFirstRoundTraj":
@@ -301,24 +315,24 @@ if TerrainModelPath == None:
         # # #-----------------------------------------
         # #For local Testing
         TerrainSettings = {"terrain_type": "random",#"antfarm_left",
-                           "backward_motion": False,
-                           "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
-                            "lab_blocks": True,
-                            "lab_block_z_shift": 0.006,
-                           "random_init_surf_size": False,
-                           "random_surfsize_flag": False,
-                           "random_Horizontal_Move": False,
-                           "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
-                           "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-                           "Projected_Length": 0.4, "Projected_Width": 0.4, #0.55 and 1.0
-                           "large_slope_flag":False,
-                           "large_slope_index": [],#[np.random.choice([16,17])],#select a patch from number 16 or 17
-                           "large_slope_directions": [],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
-                           "large_slope_inclinations": [],#[23/180*np.pi],#[np.round(np.random.uniform(17.0/180*np.pi,25.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
-                           "large_slope_X_shifts": [],#[0.0], 
-                           "large_slope_Y_shifts": [],#[0.0], 
-                           "large_slope_Z_shifts": [],#[np.random.uniform(-0.25,0.25)],
-                           }
+                        "backward_motion": False,
+                        "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
+                        "lab_blocks": True,
+                        "lab_block_z_shift": 0.006,
+                        "random_init_surf_size": False,
+                        "random_surfsize_flag": False,
+                        "random_Horizontal_Move": False,
+                        "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
+                        "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
+                        "Projected_Length": 0.4, "Projected_Width": 0.4, #0.55 and 1.0
+                        "large_slope_flag":False,
+                        "large_slope_index": [],#[np.random.choice([16,17])],#select a patch from number 16 or 17
+                        "large_slope_directions": [],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
+                        "large_slope_inclinations": [],#[23/180*np.pi],#[np.round(np.random.uniform(17.0/180*np.pi,25.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
+                        "large_slope_X_shifts": [],#[0.0], 
+                        "large_slope_Y_shifts": [],#[0.0], 
+                        "large_slope_Z_shifts": [],#[np.random.uniform(-0.25,0.25)],
+                        }
 
         # #--------------------------------------
         # #For Generating Data Point On Uni Server
@@ -376,7 +390,10 @@ if TerrainModelPath == None:
                                             large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
                                             large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
                                             large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
-                                            large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"]) 
+                                            large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
+                                            y_center = y_center,
+                                            x_offset = x_offset) 
+
     elif SpecialTerrain == True:
         #Terrain with Specific Patterns (flat/darpa)
         TerrainSettings = {"terrain_type": "darpa_left",#"single_large_slope_far",
@@ -393,6 +410,38 @@ else:
             LoadTerrainModel= pickle.load(f)
     TerrainInfo = LoadTerrainModel["TerrainInfo"]
     TerrainSettings = LoadTerrainModel["TerrainSettings"]
+
+    if ExternalParameters["TerrainMoveToOdom"] == "Yes":
+        TerrainInfo = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
+                                        customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
+                                        fixed_inclination = TerrainSettings["fixed_inclination"], 
+                                        backward_motion=TerrainSettings["backward_motion"],
+                                        lab_blocks = TerrainSettings["lab_blocks"],
+                                        lab_block_z_shift = TerrainSettings["lab_block_z_shift"],
+                                        inner_block_length=TerrainSettings["inner_block_length"],
+                                        inner_blocks=TerrainSettings["inner_blocks"],
+                                        randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
+                                        random_surfsize = TerrainSettings["random_surfsize_flag"],
+                                        randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
+                                        randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
+                                        MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
+                                        MisAlignmentAmount = TerrainSettings["MisAligned_Amount"],
+                                        gap_between_patches = TerrainSettings["Gap_Between_Patches"],
+                                        x_gap = TerrainSettings["Gap_along_x"],
+                                        Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
+                                        NumSteps = TerrainSettings["num_of_steps"], 
+                                        NumLookAhead = 10,#Put NumLookAhead = 20 to give infinitely long terrains
+                                        large_slope_flag = TerrainSettings["large_slope_flag"], 
+                                        large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
+                                        large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
+                                        large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
+                                        large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
+                                        large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
+                                        twosteps_on_patch = TerrainSettings["twosteps_on_patch"],
+                                        Constant_Block_Z_Shift_Flag = TerrainSettings["constant_block_z_shift_flag"],
+                                        Constant_Block_Z_Shift_Value = TerrainSettings["constant_block_z_shift_value"],
+                                        y_center = y_center,
+                                        x_offset = x_offset)
 
 #---------------------------------------
 #   print a summary for Problem Setups
@@ -521,8 +570,8 @@ dist_rf_to_init_patch_border_x = np.abs(InitConfig["PRx_init"] + 0.11 -TerrainIn
 print("dist_lf_to_init_patch_border_x", dist_lf_to_init_patch_border_x)
 print("dist_rf_to_init_patch_border_x", dist_rf_to_init_patch_border_x)
 
-if dist_lf_to_init_patch_border_x <= 0.02 or dist_rf_to_init_patch_border_x <=0.02:
-    raise Exception("Stepping on the front bar")
+# if dist_lf_to_init_patch_border_x <= 0.02 or dist_rf_to_init_patch_border_x <=0.02:
+#     raise Exception("Stepping on the front bar")
 
 #Display Init config
 viz.DisplayInitConfig(TerrainModel=TerrainInfo, InitConfig = InitConfig)
@@ -546,18 +595,48 @@ print("Terminal/Goal CoM Position: x = ", str(GoalState["x_end"]), " y = ", str(
 #-----------------
 #Build Solver
 if NumLookAhead == 1: #Single Step NLP
-    solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
+    solver_small_force, DecisionVars_lb_small_force, DecisionVars_ub_small_force, glb_small_force, gub_small_force, var_index_small_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
                                                                                      LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
                                                                                      N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
                                                                                      PhaseDurationLimits=phase_duration_limits,
                                                                                      backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                     TrackingTiming = ExternalParameters["TrackTiming"])
+                                                                                     TrackingTiming = ExternalParameters["TrackTiming"],
+                                                                                     Force_Bounds = ExternalParameters["ForceLimitSmall"])
+
+    solver_large_force, DecisionVars_lb_large_force, DecisionVars_ub_large_force, glb_large_force, gub_large_force, var_index_large_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
+                                                                                     LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
+                                                                                     N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
+                                                                                     PhaseDurationLimits=phase_duration_limits,
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                     TrackingTiming = ExternalParameters["TrackTiming"],
+                                                                                     Force_Bounds = ExternalParameters["ForceLimitLarge"])
+
+    # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
+    #                                                                                  LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
+    #                                                                                  N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
+    #                                                                                  PhaseDurationLimits=phase_duration_limits,
+    #                                                                                  backward_motion_flag=TerrainSettings["backward_motion"],
+    #                                                                                  TrackingTiming = ExternalParameters["TrackTiming"])
 elif NumLookAhead > 1: #Multiple Steps NLP
-    solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
+    solver_small_force, DecisionVars_lb_small_force, DecisionVars_ub_small_force, glb_small_force, gub_small_force, var_index_small_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
                                                                                      TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
                                                                                      N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
                                                                                      PhaseDurationLimits=phase_duration_limits,
-                                                                                     backward_motion_flag=TerrainSettings["backward_motion"])
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                     Force_Bounds = ExternalParameters["ForceLimitSmall"])
+
+    solver_large_force, DecisionVars_lb_large_force, DecisionVars_ub_large_force, glb_large_force, gub_large_force, var_index_large_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
+                                                                                     TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
+                                                                                     N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
+                                                                                     PhaseDurationLimits=phase_duration_limits,
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                     Force_Bounds = ExternalParameters["ForceLimitLarge"])
+
+    # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
+    #                                                                                  TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
+    #                                                                                  N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
+    #                                                                                  PhaseDurationLimits=phase_duration_limits,
+    #                                                                                  backward_motion_flag=TerrainSettings["backward_motion"])
 
     # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "Ponton_SinglePoint", \
     #                                                                                  TotalNumSteps = NumLookAhead, LocalObjTrackingType = None,
@@ -567,11 +646,11 @@ elif NumLookAhead > 1: #Multiple Steps NLP
 #Start Computing Trajectories
 #Make Intial Seed Container first
 #   Get DecisionVar Shape #Remake the code
-DecisionVarsShape = DecisionVars_lb.shape
+DecisionVarsShape = DecisionVars_lb_small_force.shape
 #   Make a random initial seed
 #   Generate Random Seed from scratch
 np.random.seed()
-vars_init = DecisionVars_lb + np.multiply(np.random.rand(DecisionVarsShape[0],).flatten(),(DecisionVars_ub - DecisionVars_lb))#   Fixed Value Initial Guess
+vars_init = DecisionVars_lb_small_force + np.multiply(np.random.rand(DecisionVarsShape[0],).flatten(),(DecisionVars_ub_small_force - DecisionVars_lb_small_force))#   Fixed Value Initial Guess
 #   Build an initial seed container; except round/step 0 and 1, container[0] for used when calling the current solver, afterwards container[1] move to container[0] current opt result become container[1]
 DecisionVars_init_list = [vars_init, vars_init]
 
@@ -605,7 +684,7 @@ for roundNum in range(Nrounds):
 
     #   Update Initial Condition (only for round/step larger than 0 - start from the second level)
     if roundNum > 0: 
-        var_idx_lv1 = var_index["Level1_Var_Index"]
+        var_idx_lv1 = var_index_small_force["Level1_Var_Index"]
         #CoM x, y, z
         InitConfig["x_init"] = x_opt[var_idx_lv1["x"][0]:var_idx_lv1["x"][1]+1][-1]              
         InitConfig["y_init"] = x_opt[var_idx_lv1["y"][0]:var_idx_lv1["y"][1]+1][-1]
@@ -838,7 +917,16 @@ for roundNum in range(Nrounds):
     #----------
     #Call solver
     start_time = time.time()
-    res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb, ubx = DecisionVars_ub, lbg = glb, ubg = gub)
+
+    #first two steps we use small force
+    if roundNum == 0: #or roundNum == 1:
+        solver = solver_small_force
+        res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_small_force, ubx = DecisionVars_ub_small_force, lbg = glb_small_force, ubg = gub_small_force)
+    #afterwards, we use large force
+    else:
+        solver = solver_large_force
+        res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_large_force, ubx = DecisionVars_ub_large_force, lbg = glb_large_force, ubg = gub_large_force)
+    
     end_time = time.time()
     time_diff = end_time-start_time
     #get result vector
@@ -848,7 +936,7 @@ for roundNum in range(Nrounds):
     #Update Initial seed
     if InitSeedType == "random":    #Option 1) random initial seed
         np.random.seed()
-        vars_init = DecisionVars_lb + np.multiply(np.random.rand(DecisionVarsShape[0],).flatten(),(DecisionVars_ub - DecisionVars_lb))#   Fixed Value Initial Guess
+        vars_init = DecisionVars_lb_small_force + np.multiply(np.random.rand(DecisionVarsShape[0],).flatten(),(DecisionVars_ub_small_force - DecisionVars_lb_small_force))#   Fixed Value Initial Guess
         DecisionVars_init_list = [vars_init, vars_init]
     elif InitSeedType == "previous": #Option 2) With Initial Seed of Previous Type
     #   Except the 0 and 1 round/step, Everytime we use DecisionVar_init_list[0] as the initial seed,
@@ -866,7 +954,7 @@ for roundNum in range(Nrounds):
     if solver.stats()["success"] == True:
         print("Round ", roundNum, solver.stats()["success"])
         #Save result/parameters/input(environment) for the current optimization round
-        SingleOptResult = {"var_idx":var_index,
+        SingleOptResult = {"var_idx":var_index_small_force,
                            "opt_res":x_opt,
                            "LeftSwingFlag":InitConfig["LeftSwingFlag"],   "RightSwingFlag":InitConfig["RightSwingFlag"],
                            "x_init": InitConfig["x_init"],   "y_init": InitConfig["y_init"], "z_init": InitConfig["z_init"],
@@ -912,7 +1000,7 @@ for roundNum in range(Nrounds):
         print("Computation time from Python: ",time_diff)
 
         #Save Failure info, basically just save initial conditions
-        FailedRoundInfo = {"var_idx":var_index,
+        FailedRoundInfo = {"var_idx":var_index_small_force,
                            "opt_res":x_opt,
                            "Failed_RoundIdx": roundNum,
                            "LeftSwingFlag":InitConfig["LeftSwingFlag"],   "RightSwingFlag":InitConfig["RightSwingFlag"],
@@ -954,7 +1042,7 @@ DumpedResults = {"ExternalParameters": ExternalParameters, #External Parameters 
                  "TerrainSettings":TerrainSettings, #parameter for Terrain Generation Functions
                  "TerrainModelPath":TerrainModelPath,#If get Terrain Model from file, what is the path
                  "LocalObjSettings":LocalObjSettings,
-                 "VarIdx_of_All_Levels": var_index,
+                 "VarIdx_of_All_Levels": var_index_small_force,
                  "Trajectory_of_All_Rounds":AllTraj, #all collected x_opt (ptimization result vector)
                  "SingleOptResultSavings":AllOptResult,
                  "SwingLeftFirst":SwingLeftFirst,    #indicator of which foot will swing first for the first step

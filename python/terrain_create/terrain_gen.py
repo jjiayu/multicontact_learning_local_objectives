@@ -81,9 +81,9 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
     if randomInitSurfSize == False:
         
         if backward_motion == True: #simulator footstep initialization is negative, put it a bit further for backward motion
-            InitContactSurf_x_max = 0.17 + x_offset
+            InitContactSurf_x_max = 0.11 + 0.02 + x_offset #0.11 the half foot size 0.02 the front bar
         elif backward_motion == False: #for forward motion is ok
-            InitContactSurf_x_max = 0.16 + x_offset
+            InitContactSurf_x_max = 0.11 + 0.02 + x_offset #0.16 + x_offset
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:
@@ -1072,7 +1072,7 @@ def terrain_model_gen(terrain_name=None,
     # ---------------
     # Generate Initial Patches (Currently Define as flat patches)
     if randomInitSurfSize == False:
-        InitContactSurf_x_max = 0.16 + x_offset  #0.15
+        InitContactSurf_x_max = 0.15 + x_offset  #0.15
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:

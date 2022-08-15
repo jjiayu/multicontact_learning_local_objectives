@@ -108,7 +108,16 @@ def Relative_Foot_Kinematics(SwingLegIndicator=None, p_next=None, p_cur=None, Q_
 
 
 # Constaint on putting CoM in the inner part of the stance foot (swing phase)
+# Only put constraint on y axis
+def Single_Support_CoM_to_Stance_Center_Limit(SwingLegIndicator=None, CoM_k = None, P_stance = None, min_dist = 0.01, g = None, glb = None, gub = None):
+    #we only apply this contraints for y axis for now
+    SwingLegIndicator = None
+    if not (SwingLegIndicator == None): #if not None, then we apply the constraints, otherwise we do nothing
+        g.append(ca.if_else(SwingLegIndicator, ca.fabs(CoM_k[1] - P_stance[1]) - min_dist, np.array([1])))
+        glb.append(np.array([0]))
+        gub.append(np.array([np.inf]))
 
+    return g, glb, gub
 
 # Footstep location Constraint
 

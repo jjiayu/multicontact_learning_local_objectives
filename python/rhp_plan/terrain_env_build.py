@@ -27,7 +27,7 @@ if logging == True:
 #For terrain generation
 #Make Terrain Setting
 
-doormat_height = 0.05
+doormat_height = 0.043 #0.05
 
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
                    "twosteps_on_patch": False,
@@ -42,7 +42,19 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    #"customized_terrain_pattern": ["X_positive",  "X_negative",    "Y_positive",   "Y_negative"], #straight example
                    # almost flat
                    #"customized_terrain_pattern": ["Y_negative",  "DiagX_negative",    "Y_positive",   "DiagY_positive",   "DiagY_negative",   "Y_negative",   "Y_positive",   "Y_positive", "Y_negative",   "Y_negative"], #mixed
-                   "customized_terrain_pattern": ["Y_negative",  "Y_negative",    "DiagX_positive",   "Y_positive",   "Y_negative",   "DiagX_negative",   "Y_positive",   "DiagY_positive"], #mixed
+                   
+                   #Very cutomized
+                   #"customized_terrain_pattern": ["Y_negative",  "Y_negative",    "DiagX_positive",   "Y_positive",   "Y_negative",   "DiagX_negative",   "Y_positive",   "DiagY_positive"], #mixed
+                   
+                   #V-shape innner
+                   ##"customized_terrain_pattern": ["X_positive",  "X_negative",    "X_positive",   "X_negative",   "X_positive",   "X_negative"], #mixed
+                   # "customized_terrain_pattern": ["X_positive",  "X_negative",    "X_positive",   "X_negative"], #mixed
+
+                   #V-shape outter (Robot Slips)
+                   #"customized_terrain_pattern": ["X_negative",  "X_positive",    "X_negative",   "X_positive"], #mixed
+                   
+                   #Up and down hill
+                   "customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive"], #mixed
                    #---------
                    #backword motions
                    #almost flat
@@ -174,7 +186,7 @@ with open(world_file_path, 'x') as f:
     init_surf_border_x = terrain_model["AllPatchesVertices"][0][0][0]-0.01
     init_surf_border_y = terrain_model["AllPatchesVertices"][0][2][1]
     f.write('      <uri>model://front_bar</uri>\n')
-    f.write('      <pose> ' + str(init_surf_border_x) + " " + str(init_surf_border_y) + " " + str(0.0) + ' 0.0 0.0 ' + str(0.0) + '</pose>\n')
+    f.write('      <pose> ' + str(init_surf_border_x) + " " + str(init_surf_border_y) + " " + str(-doormat_height) + ' 0.0 0.0 ' + str(0.0) + '</pose>\n')
     f.write('    </include>\n')
     f.write('\n')
 
@@ -226,7 +238,7 @@ with open(world_file_path, 'a') as f:
                     f.write('      <uri>model://diag_Y_positive_' + str(int(temp_surf_inclination)) + '_lifted_size_30</uri>\n')
             else:
                 raise Exception("Unknown terrain type")
-            f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(cur_patch_min_z) + ' 0.0 0.0 ' + str(yaw_rot_angle) + '</pose>\n')
+            f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(cur_patch_min_z - TerrainSettings["lab_block_z_shift"]) + ' 0.0 0.0 ' + str(yaw_rot_angle) + '</pose>\n')
             f.write('    </include>\n')
             f.write('\n')
 

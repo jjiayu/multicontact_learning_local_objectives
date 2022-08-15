@@ -47,9 +47,7 @@ ExternalParameters = {"WorkingDirectory": None,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
                       "VisualizationFlag": "Yes",
-                      "TrackTiming": "No",
-                      "ForceLimitSmall": 300,
-                      "ForceLimitLarge": 300
+                      "TrackTiming": "No"
                       }
 
 #   Update External Parameters
@@ -566,20 +564,20 @@ print("Terminal/Goal CoM Position: x = ", str(GoalState["x_end"]), " y = ", str(
 #Build Solver
 if NumLookAhead == 1: #Single Step NLP
     solver_small_force, DecisionVars_lb_small_force, DecisionVars_ub_small_force, glb_small_force, gub_small_force, var_index_small_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
-                                                                                            LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
-                                                                                            N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
-                                                                                            PhaseDurationLimits=phase_duration_limits,
-                                                                                            backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                            TrackingTiming = ExternalParameters["TrackTiming"],
-                                                                                            Force_Bounds = ExternalParameters["ForceLimitSmall"])
+                                                                                                                                                            LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
+                                                                                                                                                            N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
+                                                                                                                                                            PhaseDurationLimits=phase_duration_limits,
+                                                                                                                                                            backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                                                                                            TrackingTiming = ExternalParameters["TrackTiming"],
+                                                                                                                                                            Force_Bounds = 300.0)
 
     solver_large_force, DecisionVars_lb_large_force, DecisionVars_ub_large_force, glb_large_force, gub_large_force, var_index_large_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
-                                                                                            LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
-                                                                                            N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
-                                                                                            PhaseDurationLimits=phase_duration_limits,
-                                                                                            backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                            TrackingTiming = ExternalParameters["TrackTiming"],
-                                                                                            Force_Bounds = ExternalParameters["ForceLimitLarge"])
+                                                                                                                                                            LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
+                                                                                                                                                            N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
+                                                                                                                                                            PhaseDurationLimits=phase_duration_limits,
+                                                                                                                                                            backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                                                                                            TrackingTiming = ExternalParameters["TrackTiming"],
+                                                                                                                                                            Force_Bounds = 400.0)
 
     # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
     #                                                                                  LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
@@ -593,14 +591,14 @@ elif NumLookAhead > 1: #Multiple Steps NLP
                                                                                      N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
                                                                                      PhaseDurationLimits=phase_duration_limits,
                                                                                      backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                     Force_Bounds = ExternalParameters["ForceLimitSmall"])
+                                                                                     Force_Bounds = 300.0)
 
     solver_large_force, DecisionVars_lb_large_force, DecisionVars_ub_large_force, glb_large_force, gub_large_force, var_index_large_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
                                                                                     TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
                                                                                     N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
                                                                                     PhaseDurationLimits=phase_duration_limits,
                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                    Force_Bounds = ExternalParameters["ForceLimitLarge"])
+                                                                                    Force_Bounds = 400.0)
 
     # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "Ponton_SinglePoint", \
     #                                                                                  TotalNumSteps = NumLookAhead, LocalObjTrackingType = None,
@@ -881,12 +879,10 @@ for roundNum in range(Nrounds):
     #----------
     #Call solver
     start_time = time.time()
-    
-    #first two steps we use small force
+
     if roundNum == 0 or roundNum == 1:
         solver = solver_small_force
         res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_small_force, ubx = DecisionVars_ub_small_force, lbg = glb_small_force, ubg = gub_small_force)
-    #afterwards, we use large force
     else:
         solver = solver_large_force
         res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_large_force, ubx = DecisionVars_ub_large_force, lbg = glb_large_force, ubg = gub_large_force)

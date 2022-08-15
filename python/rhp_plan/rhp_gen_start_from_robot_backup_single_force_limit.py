@@ -47,9 +47,7 @@ ExternalParameters = {"WorkingDirectory": None,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
                       "VisualizationFlag": "Yes",
-                      "TrackTiming": "No",
-                      "ForceLimitSmall": 300,
-                      "ForceLimitLarge": 300
+                      "TrackTiming": "No"
                       }
 
 #   Update External Parameters
@@ -565,42 +563,18 @@ print("Terminal/Goal CoM Position: x = ", str(GoalState["x_end"]), " y = ", str(
 #-----------------
 #Build Solver
 if NumLookAhead == 1: #Single Step NLP
-    solver_small_force, DecisionVars_lb_small_force, DecisionVars_ub_small_force, glb_small_force, gub_small_force, var_index_small_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
-                                                                                            LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
-                                                                                            N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
-                                                                                            PhaseDurationLimits=phase_duration_limits,
-                                                                                            backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                            TrackingTiming = ExternalParameters["TrackTiming"],
-                                                                                            Force_Bounds = ExternalParameters["ForceLimitSmall"])
-
-    solver_large_force, DecisionVars_lb_large_force, DecisionVars_ub_large_force, glb_large_force, gub_large_force, var_index_large_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
-                                                                                            LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
-                                                                                            N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
-                                                                                            PhaseDurationLimits=phase_duration_limits,
-                                                                                            backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                            TrackingTiming = ExternalParameters["TrackTiming"],
-                                                                                            Force_Bounds = ExternalParameters["ForceLimitLarge"])
-
-    # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
-    #                                                                                  LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
-    #                                                                                  N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
-    #                                                                                  PhaseDurationLimits=phase_duration_limits,
-    #                                                                                  backward_motion_flag=TerrainSettings["backward_motion"],
-    #                                                                                  TrackingTiming = ExternalParameters["TrackTiming"])
+    solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
+                                                                                     LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
+                                                                                     N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
+                                                                                     PhaseDurationLimits=phase_duration_limits,
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                     TrackingTiming = ExternalParameters["TrackTiming"])
 elif NumLookAhead > 1: #Multiple Steps NLP
-    solver_small_force, DecisionVars_lb_small_force, DecisionVars_ub_small_force, glb_small_force, gub_small_force, var_index_small_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
+    solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
                                                                                      TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
                                                                                      N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
                                                                                      PhaseDurationLimits=phase_duration_limits,
-                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                     Force_Bounds = ExternalParameters["ForceLimitSmall"])
-
-    solver_large_force, DecisionVars_lb_large_force, DecisionVars_ub_large_force, glb_large_force, gub_large_force, var_index_large_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
-                                                                                    TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
-                                                                                    N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
-                                                                                    PhaseDurationLimits=phase_duration_limits,
-                                                                                    backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                    Force_Bounds = ExternalParameters["ForceLimitLarge"])
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"])
 
     # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "Ponton_SinglePoint", \
     #                                                                                  TotalNumSteps = NumLookAhead, LocalObjTrackingType = None,
@@ -610,11 +584,11 @@ elif NumLookAhead > 1: #Multiple Steps NLP
 #Start Computing Trajectories
 #Make Intial Seed Container first
 #   Get DecisionVar Shape #Remake the code
-DecisionVarsShape = DecisionVars_lb_small_force.shape
+DecisionVarsShape = DecisionVars_lb.shape
 #   Make a random initial seed
 #   Generate Random Seed from scratch
 np.random.seed()
-vars_init = DecisionVars_lb_small_force + np.multiply(np.random.rand(DecisionVarsShape[0],).flatten(),(DecisionVars_ub_small_force - DecisionVars_lb_small_force))#   Fixed Value Initial Guess
+vars_init = DecisionVars_lb + np.multiply(np.random.rand(DecisionVarsShape[0],).flatten(),(DecisionVars_ub - DecisionVars_lb))#   Fixed Value Initial Guess
 #   Build an initial seed container; except round/step 0 and 1, container[0] for used when calling the current solver, afterwards container[1] move to container[0] current opt result become container[1]
 DecisionVars_init_list = [vars_init, vars_init]
 
@@ -648,7 +622,7 @@ for roundNum in range(Nrounds):
 
     #   Update Initial Condition (only for round/step larger than 0 - start from the second level)
     if roundNum > 0: 
-        var_idx_lv1 = var_index_large_force["Level1_Var_Index"]
+        var_idx_lv1 = var_index["Level1_Var_Index"]
         #CoM x, y, z
         InitConfig["x_init"] = x_opt[var_idx_lv1["x"][0]:var_idx_lv1["x"][1]+1][-1]              
         InitConfig["y_init"] = x_opt[var_idx_lv1["y"][0]:var_idx_lv1["y"][1]+1][-1]
@@ -881,16 +855,7 @@ for roundNum in range(Nrounds):
     #----------
     #Call solver
     start_time = time.time()
-    
-    #first two steps we use small force
-    if roundNum == 0 or roundNum == 1:
-        solver = solver_small_force
-        res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_small_force, ubx = DecisionVars_ub_small_force, lbg = glb_small_force, ubg = gub_small_force)
-    #afterwards, we use large force
-    else:
-        solver = solver_large_force
-        res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_large_force, ubx = DecisionVars_ub_large_force, lbg = glb_large_force, ubg = gub_large_force)
-    
+    res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb, ubx = DecisionVars_ub, lbg = glb, ubg = gub)
     end_time = time.time()
     time_diff = end_time-start_time
     #get result vector
@@ -900,7 +865,7 @@ for roundNum in range(Nrounds):
     #Update Initial seed
     if InitSeedType == "random":    #Option 1) random initial seed
         np.random.seed()
-        vars_init = DecisionVars_lb_small_force + np.multiply(np.random.rand(DecisionVarsShape[0],).flatten(),(DecisionVars_ub_small_force - DecisionVars_lb_small_force))#   Fixed Value Initial Guess
+        vars_init = DecisionVars_lb + np.multiply(np.random.rand(DecisionVarsShape[0],).flatten(),(DecisionVars_ub - DecisionVars_lb))#   Fixed Value Initial Guess
         DecisionVars_init_list = [vars_init, vars_init]
     elif InitSeedType == "previous": #Option 2) With Initial Seed of Previous Type
     #   Except the 0 and 1 round/step, Everytime we use DecisionVar_init_list[0] as the initial seed,
@@ -918,7 +883,7 @@ for roundNum in range(Nrounds):
     if solver.stats()["success"] == True:
         print("Round ", roundNum, solver.stats()["success"])
         #Save result/parameters/input(environment) for the current optimization round
-        SingleOptResult = {"var_idx":var_index_small_force,
+        SingleOptResult = {"var_idx":var_index,
                            "opt_res":x_opt,
                            "LeftSwingFlag":InitConfig["LeftSwingFlag"],   "RightSwingFlag":InitConfig["RightSwingFlag"],
                            "x_init": InitConfig["x_init"],   "y_init": InitConfig["y_init"], "z_init": InitConfig["z_init"],
@@ -964,7 +929,7 @@ for roundNum in range(Nrounds):
         print("Computation time from Python: ",time_diff)
 
         #Save Failure info, basically just save initial conditions
-        FailedRoundInfo = {"var_idx":var_index_small_force,
+        FailedRoundInfo = {"var_idx":var_index,
                            "opt_res":x_opt,
                            "Failed_RoundIdx": roundNum,
                            "LeftSwingFlag":InitConfig["LeftSwingFlag"],   "RightSwingFlag":InitConfig["RightSwingFlag"],
@@ -1008,7 +973,7 @@ DumpedResults = {"ExternalParameters": ExternalParameters, #External Parameters 
                  "TerrainSettings":TerrainSettings, #parameter for Terrain Generation Functions
                  "TerrainModelPath":TerrainModelPath,#If get Terrain Model from file, what is the path
                  "LocalObjSettings":LocalObjSettings,
-                 "VarIdx_of_All_Levels": var_index_small_force,
+                 "VarIdx_of_All_Levels": var_index,
                  "Trajectory_of_All_Rounds":AllTraj, #all collected x_opt (ptimization result vector)
                  "SingleOptResultSavings":AllOptResult,
                  "SwingLeftFirst":SwingLeftFirst,    #indicator of which foot will swing first for the first step

@@ -34,14 +34,14 @@ from sl1m.stand_alone_scenarios.constraints import *
 # Function to build the first level
 
 
-def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3, LocalObjTimingTracking=False, backward_motion = False):
+def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3, LocalObjTimingTracking=False, backward_motion = False, Force_Limit = 300.0):
     # -----------------------------------------------------------------------------------------------------------------------
     # Define Constant Parameters
     # Parameters
     G = 9.80665  # kg/m^2
     # Friction Coefficient
     # Force Limits
-    F_bound = 400.0 #400
+    F_bound = Force_Limit #400
     Fxlb = -F_bound
     Fxub = F_bound
     Fylb = -F_bound
@@ -56,8 +56,8 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     Ldotlb = -Ldot_bound
     Ldotub = Ldot_bound
     # CoM z heights limit in the world frame
-    z_lowest = -5.0
-    z_highest = 5.0
+    z_lowest = 0.85#-5.0
+    z_highest = 0.88#5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65
     CoM_z_to_Foot_max = 0.88  # 0.75
@@ -627,6 +627,9 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
                                                        ContactFrameOrientation=PR_init_Orientation,
                                                        g=g, glb=glb, gub=gub)
 
+                # CoM to the Stance Foot Constraint
+                g, glb, gub = Single_Support_CoM_to_Stance_Center_Limit(SwingLegIndicator=SwingLegFlag, CoM_k = CoM_k, P_stance = PR_init, g = g, glb = glb, gub = gub)
+                
                 # #Angular Dynamics (Right Support)
                 if AngularDynamics == True:
                     if k < N_K-1:
@@ -681,6 +684,9 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
                 g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator=SwingLegFlag, CoM_k=CoM_k, P=PL_init, h_min=CoM_z_to_Foot_min, h_max=CoM_z_to_Foot_max,
                                                        ContactFrameOrientation=PL_init_Orientation,
                                                        g=g, glb=glb, gub=gub)
+
+                # CoM to the Stance Foot Constraint
+                g, glb, gub = Single_Support_CoM_to_Stance_Center_Limit(SwingLegIndicator=SwingLegFlag, CoM_k = CoM_k, P_stance = PL_init, g = g, glb = glb, gub = gub)
 
                 # #Angular Dynamics (Left Support)
                 if AngularDynamics == True:
@@ -1120,13 +1126,13 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
 # Nsteps: Number of steps in the second level, = Total Number of Steps of the Entire Lookahead Horizon - 1
 
 
-def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3, backward_motion = False):
+def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, ParameterList=None, PhaseDuration_Limits=None, miu=0.3, backward_motion = False, Force_Limit = 300.0):
     # -----------------------------------------------------------------------------------------------------------------------
     # Define Constant Parameters
     G = 9.80665  # kg/m^2
     # Friction Coefficient
     #   Force Limits
-    F_bound = 400.0 #400
+    F_bound = Force_Limit #400
     Fxlb = -F_bound
     Fxub = F_bound
     Fylb = -F_bound
@@ -1141,8 +1147,8 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
     Ldotlb = -Ldot_bound
     Ldotub = Ldot_bound
     # Lowest Z
-    z_lowest = -5.0
-    z_highest = 5.0
+    z_lowest = 0.85#-5.0
+    z_highest = 0.88#5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65 #0.6
     CoM_z_to_Foot_max = 0.88  # 0.75
@@ -2096,6 +2102,10 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
                     g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator=SwingLegFlag, CoM_k=CoM_k, P=p_stance, h_min=CoM_z_to_Foot_min, h_max=CoM_z_to_Foot_max,
                                                            ContactFrameOrientation=p_stance_Orientation,
                                                            g=g, glb=glb, gub=gub)
+
+                    # CoM to the Stance Foot Constraint
+                    g, glb, gub = Single_Support_CoM_to_Stance_Center_Limit(SwingLegIndicator=SwingLegFlag, CoM_k = CoM_k, P_stance = p_stance, g = g, glb = glb, gub = gub)
+
                     # Angular Dynamics (Left Stance)
                     if AngularDynamics == True:
                         if k < N_K-1:
@@ -2148,6 +2158,10 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
                     g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator=SwingLegFlag, CoM_k=CoM_k, P=p_stance, h_min=CoM_z_to_Foot_min, h_max=CoM_z_to_Foot_max,
                                                            ContactFrameOrientation=p_stance_Orientation,
                                                            g=g, glb=glb, gub=gub)
+
+                    # CoM to the Stance Foot Constraint
+                    g, glb, gub = Single_Support_CoM_to_Stance_Center_Limit(SwingLegIndicator=SwingLegFlag, CoM_k = CoM_k, P_stance = p_stance, g = g, glb = glb, gub = gub)
+                    
                     # Angular Dynamics (Right Stance)
                     if AngularDynamics == True:
                         if k < N_K-1:
@@ -2202,6 +2216,9 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
                                                            ContactFrameOrientation=p_stance_Orientation,
                                                            g=g, glb=glb, gub=gub)
 
+                    # CoM to the Stance Foot Constraint
+                    g, glb, gub = Single_Support_CoM_to_Stance_Center_Limit(SwingLegIndicator=SwingLegFlag, CoM_k = CoM_k, P_stance = p_stance, g = g, glb = glb, gub = gub)
+
                     # Angular Dynamics (Right Stance)
                     if AngularDynamics == True:
                         if k < N_K-1:
@@ -2254,6 +2271,9 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
                     g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator=SwingLegFlag, CoM_k=CoM_k, P=p_stance, h_min=CoM_z_to_Foot_min, h_max=CoM_z_to_Foot_max,
                                                            ContactFrameOrientation=p_stance_Orientation,
                                                            g=g, glb=glb, gub=gub)
+
+                    # CoM to the Stance Foot Constraint
+                    g, glb, gub = Single_Support_CoM_to_Stance_Center_Limit(SwingLegIndicator=SwingLegFlag, CoM_k = CoM_k, P_stance = p_stance, g = g, glb = glb, gub = gub)
 
                     # Angular Dynamics (Left Stance)
                     if AngularDynamics == True:
@@ -6822,7 +6842,7 @@ def Ponton_SinglePoint(m=100.0, Nk_Local=7, Nsteps=1, ParameterList=None, Ponton
 #      None:           means we reach the far goal, which is will fail for sure
 
 
-def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, LocalObjTrackingType=None, N_knots_local=7, robot_mass=100.0, PhaseDurationLimits=None, miu=0.3, max_compute_time=1000.0, backward_motion_flag = False, TrackingTiming = False):
+def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, LocalObjTrackingType=None, N_knots_local=7, robot_mass=100.0, PhaseDurationLimits=None, miu=0.3, max_compute_time=1000.0, backward_motion_flag = False, TrackingTiming = False, Force_Bounds = 300.0):
     
     print("Constructing the Solver")
 
@@ -6990,10 +7010,10 @@ def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, Loca
         if TotalNumSteps == 1:  # Local obj mode
             # make the first level
             var_lv1, var_lb_lv1, var_ub_lv1, J_lv1, g_lv1, glb_lv1, gub_lv1, var_idx_lv1 = NLP_SingleStep(
-                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjTimingTracking=TrackingTiming, backward_motion=backward_motion_flag)
+                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjTimingTracking=TrackingTiming, backward_motion=backward_motion_flag, Force_Limit = Force_Bounds)
         else:
             var_lv1, var_lb_lv1, var_ub_lv1, J_lv1, g_lv1, glb_lv1, gub_lv1, var_idx_lv1 = NLP_SingleStep(
-                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjTimingTracking=TrackingTiming, backward_motion= backward_motion_flag)
+                ParameterList=ParaList, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, LocalObjTimingTracking=TrackingTiming, backward_motion= backward_motion_flag, Force_Limit = Force_Bounds)
     else:
         raise Exception("Unknown First Level Name")
     # ----------
@@ -7010,7 +7030,7 @@ def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, Loca
     elif TotalNumSteps > 1:
         if SecondLevel == "NLP_SecondLevel":  # Number of Step = Total Number of Step - 1 as the first step is included in the first level
             var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = NLP_SecondLevel(
-                ParameterList=ParaList, Nsteps=TotalNumSteps-1, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, backward_motion=backward_motion_flag)
+                ParameterList=ParaList, Nsteps=TotalNumSteps-1, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, miu=miu, backward_motion=backward_motion_flag, Force_Limit = Force_Bounds)
         elif SecondLevel == "Ponton_FourPoints":
             var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = Ponton_FourPoints(
                 ParameterList=ParaList, Nsteps=TotalNumSteps-1, Nk_Local=N_knots_local, m=robot_mass, PhaseDuration_Limits=PhaseDurationLimits, backward_motion=backward_motion_flag)

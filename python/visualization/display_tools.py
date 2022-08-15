@@ -685,6 +685,10 @@ def DisplayOdomConfig(OdomConfig = None):
                        P_TangentX=np.array([1,0,0]), P_TangentY=np.array([0,1,0]), line_color='b',
                        LineType = 'solid', footlength = 0.22, footwidth = 0.12,
                        ax=ax)
+
+    #Draw origin
+    ax.scatter(0.0, 0.0, 0.0, c='r', marker='+', linewidth=50)
+
     ax.set_zlim([-0.01,1.0])
     ax.set_xlim([OdomConfig["PLx"]-1.0, OdomConfig["PLx"]+1.0])
     ax.set_ylim([OdomConfig["PLy"]-1.0, OdomConfig["PLy"]+1.0])
@@ -711,6 +715,10 @@ def DisplayInitConfig(TerrainModel=None, InitConfig = None):
         ax = drawTerrain(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
                          ContactSurfs=TerrainModel["ContactSurfsVertice"],
                          printTerrainVertice=True, fig=fig, ax=ax)
+
+        #Draw origin
+        ax.scatter(0.0, 0.0, 0.0, c='r', marker='+', linewidth=50)
+
         # Label Terrain Patches
         ax = labelSurface(Sl0surf=TerrainModel["InitLeftSurfVertice"], Sr0surf=TerrainModel["InitRightSurfVertice"],
                           ContactSurfs=TerrainModel["ContactSurfsVertice"], fig=fig, ax=ax)
