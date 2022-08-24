@@ -1026,6 +1026,13 @@ def terrain_model_gen(terrain_name=None,
                       large_slope_flag=False, large_slope_index=[8],
                       large_slope_directions=["X_positive"], large_slope_inclinations=[18.0/180.0*np.pi],
                       large_slope_X_shifts=[0.0], large_slope_Y_shifts=[0.0], large_slope_Z_shifts=[0.0],
+                      row_gap_block_index = [],
+                      row_gap_distance = 0.0,
+                      modify_terrain_border = False,
+                      border_modify_idx_list = None,
+                      border_modify_direction_list = None,
+                      border_modify_border_idx_list = None,
+                      border_modify_distance_list = None,
                       y_center = 0.0,
                       x_offset = 0.0):
 
@@ -1072,7 +1079,7 @@ def terrain_model_gen(terrain_name=None,
     # ---------------
     # Generate Initial Patches (Currently Define as flat patches)
     if randomInitSurfSize == False:
-        InitContactSurf_x_max = 0.15 + x_offset  #0.15
+        InitContactSurf_x_max = 0.11 + x_offset  #or 0.13 or 0.15 (old)
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:
@@ -1148,7 +1155,10 @@ def terrain_model_gen(terrain_name=None,
             # Define which Contact foot is for the Surface
             SurfContactLeft = "left"
             # ref_x decided by the P1_x of Sn-2 (-2 in index)
-            ref_x = AllPatches[-2][0][0]
+            if (surfNum-2) in row_gap_block_index:
+                ref_x = AllPatches[-2][0][0] + row_gap_distance
+            else:
+                ref_x = AllPatches[-2][0][0]
             # ref_y decided by the P1_y of Sn-1 (-1 in index)
             ref_y = AllPatches[-1][0][1]
             #center = getCenter(AllPatches[-1])
@@ -1169,7 +1179,10 @@ def terrain_model_gen(terrain_name=None,
 
             # Define which Contact foot is for the Surface
             SurfContactLeft = "right"
-            ref_x = AllPatches[-2][0][0]  # ref_x decided by the P1_x of Sn-2
+            if (surfNum-2) in row_gap_block_index:
+                ref_x = AllPatches[-2][0][0] + row_gap_distance# ref_x decided by the P1_x of Sn-2
+            else:
+                ref_x = AllPatches[-2][0][0]
             # ref_y decided by the P3_y of Sn-1 (ContactSurfsVertice[-1])
             ref_y = AllPatches[-1][2][1]
             #center = getCenter(AllPatches[-1])
@@ -1212,6 +1225,22 @@ def terrain_model_gen(terrain_name=None,
                 surf=ContactSurfsVertice[ContactSurfNum], shrinkFactor=shrinkFactor, Proj_Length=Proj_Length, Proj_Width=Proj_Width)
             print("Shrink (Smaller) Contact Factor of Patch ",
                   ContactSurfNum, "with Factor of ", shrinkFactor)
+
+    # Update AllPatches with newly genreated ContactSurfVertices
+    AllPatches = [Sl0, Sr0] + ContactSurfsVertice
+
+    # ----------------------------------------
+    # Modify the border of the terrain
+    if modify_terrain_border == True:
+        for modifying_idx in range(len(border_modify_idx_list)):
+            surf_to_modify_idx = border_modify_idx_list[modifying_idx]
+            surf_modify_direction = border_modify_direction_list[modifying_idx]
+            surf_border_to_modify = border_modify_border_idx_list[modifying_idx]
+            surf_modify_distance = border_modify_distance_list[modifying_idx]
+            ContactSurfsVertice[surf_to_modify_idx] = flat_patch_border_modify(surf=ContactSurfsVertice[surf_to_modify_idx], 
+                                                                                patchNum = surf_to_modify_idx, 
+                                                                                direction = surf_modify_direction, 
+                                                                                border_idx = surf_border_to_modify, distance = surf_modify_distance)
 
     # Update AllPatches with newly genreated ContactSurfVertices
     AllPatches = [Sl0, Sr0] + ContactSurfsVertice
@@ -1413,6 +1442,43 @@ def flat_patch_shrink(surf=None, shrinkFactor=1.0, Proj_Length=None, Proj_Width=
                                   [-length_shrink/2.0,  width_shrink/2.0, 0.0]])
 
     return shrinksurf
+
+def flat_patch_border_modify(surf=None, patchNum = None, direction = None, border_idx = None, distance = 0.0):
+    # patch vertices
+    # p2---------------------p1
+    # |                      |
+    # |                      |
+    # |                      |
+    # p3---------------------p4
+    
+    if patchNum == None:
+        raise Exception("Did not specify Patch Number")
+
+    if direction == "X":
+        if border_idx == "front": 
+            surf[0][0] = surf[0][0] + distance
+            surf[3][0] = surf[3][0] + distance
+        elif border_idx == "back":
+            surf[1][0] = surf[1][0] + distance
+            surf[2][0] = surf[2][0] + distance
+    elif direction == "Y":
+        if patchNum%2 == 0: #left patches
+            if border_idx == "inner": 
+                surf[2][0] = surf[2][0] + distance
+                surf[3][0] = surf[3][0] + distance
+            elif border_idx == "outter":
+                surf[0][0] = surf[0][0] + distance
+                surf[1][0] = surf[1][0] + distance
+        if patchNum%2 == 1: #right patches
+            if border_idx == "inner": 
+                surf[0][0] = surf[0][0] + distance
+                surf[1][0] = surf[1][0] + distance
+            elif border_idx == "outter":
+                surf[2][0] = surf[2][0] + distance
+                surf[3][0] = surf[3][0] + distance
+
+    return surf
+
 
 # Move flat patches horizontally while consider not overshooting the adjacent up/down, left and right patches
 # moving portion is defined as percentage of the margin to the left/right, up/down patc borders

@@ -1,8 +1,6 @@
 #NOTE: !!!When planning from Unseen state, the swing leg flag is also important for the first initial state. (For unseen state, we may swing from left, but we may also swing from right) 
 
-from shutil import ExecError
 import numpy as np
-from sympy import degree
 from multicontact_learning_local_objectives.python.ocp_build import *
 from multicontact_learning_local_objectives.python.terrain_create import *
 from multicontact_learning_local_objectives.python.rhp_plan.rhp_utils import *
@@ -49,7 +47,10 @@ ExternalParameters = {"WorkingDirectory": None,
                       "VisualizationFlag": "Yes",
                       "TrackTiming": "No",
                       "ForceLimitSmall": 300,
-                      "ForceLimitLarge": 300
+                      "ForceLimitLarge": 300,
+                      "TerrainMoveToOdom": "Yes",
+                      "Changing_Env_Flag": "Yes",
+                      "TerrainChangeCyleIndex": 1
                       }
 
 #   Update External Parameters
@@ -71,7 +72,6 @@ else:
 #-------------------------------
 #Log File and Save Data
 saveData = True
-LogCMDLine = True
 #Decide save path and name
 #   No external parameters
 if ExternalParameters["WorkingDirectory"] == None: 
@@ -87,7 +87,7 @@ else:
 if not (os.path.isdir(rolloutDirectory)):
     os.mkdir(rolloutDirectory)
 #Logging command line output
-stdoutOrigin=sys.stdout; sys.stdout = open(rolloutDirectory + '/' + Filename + ".txt", "w") if LogCMDLine == True else None
+stdoutOrigin=sys.stdout; sys.stdout = open(rolloutDirectory + '/' + Filename + ".txt", "w") if saveData == True else None
 
 #---------------------
 #   Some Global Settings
@@ -120,20 +120,22 @@ RobotMass= 100.0
 #phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 1.0, #1.5
 #                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.0}
 
-# #longer duration (it also works) ***** but close to joint limit
-# phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
-#                          "SingleSupport_Min": 1.5,  "SingleSupport_Max": 2.0}  #0.7 - 1.2 #1.0 - 1.5
-
-# # #   Always working ******
+# # #longer duration (it also works) ***** but it close to joint limit
 phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
                          "SingleSupport_Min": 1.0,  "SingleSupport_Max": 1.5}  #0.7 - 1.2 #1.0 - 1.5
 
-# # #longer duration (also workd with 300 force)
+# # #   Always working *****
 # phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
-#                          "SingleSupport_Min":2.0,  "SingleSupport_Max": 3.0}  #0.7 - 1.2 #1.0 - 1.5
+#                          "SingleSupport_Min": 1.0,  "SingleSupport_Max": 1.5}  #0.7 - 1.2 #1.0 - 1.5
 
-# phase_duration_limits = {"DoubleSupport_Min": 1.0, "DoubleSupport_Max": 1.5, #0.05 - 0.5; 1.0-1.5
-#                          "SingleSupport_Min": 1.5,  "SingleSupport_Max": 2.0}  #0.7 - 1.2 #1.0 - 1.5
+# Trying
+# phase_duration_limits = {"DoubleSupport_Min": 1.5, "DoubleSupport_Max": 1.5, #0.05 - 0.5; 0.5-1.0
+#                          "SingleSupport_Min": 2.0,  "SingleSupport_Max": 4.0}  #0.7 - 1.2 #1.0 - 1.5
+
+# Previosly used
+# phase_duration_limits = {"DoubleSupport_Min": 0.5, "DoubleSupport_Max": 1.0, #0.05 - 0.5; 0.5-1.0
+#                          "SingleSupport_Min": 1.0,  "SingleSupport_Max": 1.5}  #0.7 - 1.2 #1.0 - 1.5
+
 # phase_duration_limits = {"DoubleSupport_Min": 0.1, "DoubleSupport_Max": 0.1, #0.05 - 0.5
 #                          "SingleSupport_Min": 0.8,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
 #   Local Obj Tracking Type (for Single Step) can be None, cost, constraints
@@ -293,7 +295,6 @@ x_lf = msg_foot.actual_lf_pos_x_map #msg_foot.data[0]
 x_rf = msg_foot.actual_rf_pos_x_map #msg_foot.data[6]
 x_offset = np.max((x_lf,x_rf))
 
-
 y_lf = msg_foot.actual_lf_pos_y_map #msg_foot.data[1]
 y_rf = msg_foot.actual_rf_pos_y_map #msg_foot.data[7]
 y_dist = y_lf - y_rf
@@ -315,26 +316,25 @@ if TerrainModelPath == None:
     if SpecialTerrain == False:
         # # #-----------------------------------------
         # #For local Testing
-        TerrainSettings = {"terrain_type": "flat",#"antfarm_left",
-                           "backward_motion": False,
-                           "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
-                           "random_init_surf_size": False,
-                           "random_surfsize_flag": False,
-                           "random_Horizontal_Move": False,
-                           "MisMatch_Alignment_of_FirstTwoPatches": True, #bool(np.random.choice([True,False],1)), 
-                           "MisAligned_Column": "right", #can be "left", "right", None (choose randomly)
-                           "MisAligned_Amount": 0.0, #0.25
-                           "Gap_Between_Patches": True,
-                           "Gap_along_x": 0.0,
-                           "Projected_Length": 0.3, "Projected_Width": 0.3,
-                           "large_slope_flag":False,
-                           "large_slope_index": [8],#[np.random.choice([16,17])],#select a patch from number 16 or 17
-                           "large_slope_directions": ["X_positive"],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
-                           "large_slope_inclinations": [float(ExternalParameters["LargeSlopeAngle"])/180*np.pi],#[23/180*np.pi],#[np.round(np.random.uniform(17.0/180*np.pi,25.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
-                           "large_slope_X_shifts": [0.0],#[0.0], 
-                           "large_slope_Y_shifts": [0.0],#[0.0], 
-                           "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
-                           }
+        TerrainSettings = {"terrain_type": "random",#"antfarm_left",
+                        "backward_motion": False,
+                        "fixed_inclination": None,#0.0/180*np.pi, #radius, None means random inclination
+                        "lab_blocks": True,
+                        "lab_block_z_shift": 0.006,
+                        "random_init_surf_size": False,
+                        "random_surfsize_flag": False,
+                        "random_Horizontal_Move": False,
+                        "MisMatch_Alignment_of_FirstTwoPatches": False, #bool(np.random.choice([True,False],1)), 
+                        "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
+                        "Projected_Length": 0.4, "Projected_Width": 0.4, #0.55 and 1.0
+                        "large_slope_flag":False,
+                        "large_slope_index": [],#[np.random.choice([16,17])],#select a patch from number 16 or 17
+                        "large_slope_directions": [],#[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
+                        "large_slope_inclinations": [],#[23/180*np.pi],#[np.round(np.random.uniform(17.0/180*np.pi,25.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
+                        "large_slope_X_shifts": [],#[0.0], 
+                        "large_slope_Y_shifts": [],#[0.0], 
+                        "large_slope_Z_shifts": [],#[np.random.uniform(-0.25,0.25)],
+                        }
 
         # #--------------------------------------
         # #For Generating Data Point On Uni Server
@@ -377,33 +377,25 @@ if TerrainModelPath == None:
         #                 }
 
         #Generate Terrain
-        TerrainInfo = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],
-                                        fixed_inclination = TerrainSettings["fixed_inclination"], 
-                                        randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
-                                        random_surfsize = TerrainSettings["random_surfsize_flag"],
-                                        randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
-                                        randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
-                                        MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
-                                        MisAlignmentAmount = TerrainSettings["MisAligned_Amount"],
-                                        gap_between_patches = TerrainSettings["Gap_Between_Patches"],
-                                        x_gap = TerrainSettings["Gap_along_x"],
-                                        Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
-                                        NumSteps = Nrounds, NumLookAhead = 100,#Put NumLookAhead = 20 to give infinitely long terrains
-                                        large_slope_flag = TerrainSettings["large_slope_flag"], 
-                                        large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
-                                        large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
-                                        large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
-                                        large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
-                                        large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
-                                        # row_gap_block_index = [2,3],#give gaps into the rows of the blocks
-                                        # row_gap_distance = 0.05,
-                                        modify_terrain_border = False,
-                                        border_modify_idx_list = [2],
-                                        border_modify_direction_list = ["X"], #X or Y
-                                        border_modify_border_idx_list = ["back"], # front back inner outter
-                                        border_modify_distance_list = [0.04],
-                                        y_center = y_center,
-                                        x_offset = x_offset)
+        TerrainInfo = terrain_model_gen_lab(terrain_name    = TerrainSettings["terrain_type"],          fixed_inclination = TerrainSettings["fixed_inclination"], 
+                                            lab_blocks = TerrainSettings["lab_blocks"],
+                                            lab_block_z_shift = TerrainSettings["lab_block_z_shift"],
+                                            randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
+                                            random_surfsize = TerrainSettings["random_surfsize_flag"],
+                                            randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
+                                            randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
+                                            MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
+                                            Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
+                                            NumSteps = Nrounds, NumLookAhead = 100,#Put NumLookAhead = 20 to give infinitely long terrains
+                                            large_slope_flag = TerrainSettings["large_slope_flag"], 
+                                            large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
+                                            large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
+                                            large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
+                                            large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
+                                            large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
+                                            y_center = y_center,
+                                            x_offset = x_offset) 
+
     elif SpecialTerrain == True:
         #Terrain with Specific Patterns (flat/darpa)
         TerrainSettings = {"terrain_type": "darpa_left",#"single_large_slope_far",
@@ -420,6 +412,116 @@ else:
             LoadTerrainModel= pickle.load(f)
     TerrainInfo = LoadTerrainModel["TerrainInfo"]
     TerrainSettings = LoadTerrainModel["TerrainSettings"]
+
+    if ExternalParameters["TerrainMoveToOdom"] == "Yes":
+        if ExternalParameters["Changing_Env_Flag"] == "No":
+            TerrainInfo = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
+                                            customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
+                                            fixed_inclination = TerrainSettings["fixed_inclination"], 
+                                            backward_motion=TerrainSettings["backward_motion"],
+                                            lab_blocks = TerrainSettings["lab_blocks"],
+                                            lab_block_z_shift = TerrainSettings["lab_block_z_shift"],
+                                            inner_block_length=TerrainSettings["inner_block_length"],
+                                            inner_blocks=TerrainSettings["inner_blocks"],
+                                            randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
+                                            random_surfsize = TerrainSettings["random_surfsize_flag"],
+                                            randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
+                                            randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
+                                            MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
+                                            MisAlignmentAmount = TerrainSettings["MisAligned_Amount"],
+                                            gap_between_patches = TerrainSettings["Gap_Between_Patches"],
+                                            x_gap = TerrainSettings["Gap_along_x"],
+                                            Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
+                                            NumSteps = TerrainSettings["num_of_steps"], 
+                                            NumLookAhead = 10,#Put NumLookAhead = 20 to give infinitely long terrains
+                                            large_slope_flag = TerrainSettings["large_slope_flag"], 
+                                            large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
+                                            large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
+                                            large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
+                                            large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
+                                            large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
+                                            twosteps_on_patch = TerrainSettings["twosteps_on_patch"],
+                                            Constant_Block_Z_Shift_Flag = TerrainSettings["constant_block_z_shift_flag"],
+                                            Constant_Block_Z_Shift_Value = TerrainSettings["constant_block_z_shift_value"],
+                                            y_center = y_center,
+                                            x_offset = x_offset)
+        elif ExternalParameters["Changing_Env_Flag"] == "Yes":
+            #Make copys of terrian setting
+            TerrainSettings_before_change = copy.deepcopy(LoadTerrainModel["TerrainSettings"])
+            TerrainSettings_after_change  = copy.deepcopy(LoadTerrainModel["TerrainSettings"])
+            #Intial terrian 
+            TerrainSettings_before_change["customized_terrain_pattern"] = TerrainSettings_before_change["customized_terrain_pattern"][0:ExternalParameters["TerrainChangeCyleIndex"]+1]
+            TerrainSettings = TerrainSettings_before_change
+
+            TerrainInfo_before_change = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
+                                            customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
+                                            fixed_inclination = TerrainSettings["fixed_inclination"], 
+                                            backward_motion=TerrainSettings["backward_motion"],
+                                            lab_blocks = TerrainSettings["lab_blocks"],
+                                            lab_block_z_shift = TerrainSettings["lab_block_z_shift"],
+                                            inner_block_length=TerrainSettings["inner_block_length"],
+                                            inner_blocks=TerrainSettings["inner_blocks"],
+                                            randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
+                                            random_surfsize = TerrainSettings["random_surfsize_flag"],
+                                            randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
+                                            randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
+                                            MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
+                                            MisAlignmentAmount = TerrainSettings["MisAligned_Amount"],
+                                            gap_between_patches = TerrainSettings["Gap_Between_Patches"],
+                                            x_gap = TerrainSettings["Gap_along_x"],
+                                            Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
+                                            NumSteps = TerrainSettings["num_of_steps"], 
+                                            NumLookAhead = 12,#Put NumLookAhead = 20 to give infinitely long terrains
+                                            large_slope_flag = TerrainSettings["large_slope_flag"], 
+                                            large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
+                                            large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
+                                            large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
+                                            large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
+                                            large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
+                                            twosteps_on_patch = TerrainSettings["twosteps_on_patch"],
+                                            Constant_Block_Z_Shift_Flag = TerrainSettings["constant_block_z_shift_flag"],
+                                            Constant_Block_Z_Shift_Value = TerrainSettings["constant_block_z_shift_value"],
+                                            y_center = y_center,
+                                            x_offset = x_offset)
+            #changed terrain
+            TerrainSettings_after_change = LoadTerrainModel["TerrainSettings"]
+            TerrainSettings = TerrainSettings_after_change
+
+            TerrainInfo_after_change = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
+                                            customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
+                                            fixed_inclination = TerrainSettings["fixed_inclination"], 
+                                            backward_motion=TerrainSettings["backward_motion"],
+                                            lab_blocks = TerrainSettings["lab_blocks"],
+                                            lab_block_z_shift = TerrainSettings["lab_block_z_shift"],
+                                            inner_block_length=TerrainSettings["inner_block_length"],
+                                            inner_blocks=TerrainSettings["inner_blocks"],
+                                            randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
+                                            random_surfsize = TerrainSettings["random_surfsize_flag"],
+                                            randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
+                                            randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
+                                            MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
+                                            MisAlignmentAmount = TerrainSettings["MisAligned_Amount"],
+                                            gap_between_patches = TerrainSettings["Gap_Between_Patches"],
+                                            x_gap = TerrainSettings["Gap_along_x"],
+                                            Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
+                                            NumSteps = TerrainSettings["num_of_steps"], 
+                                            NumLookAhead = 10,#Put NumLookAhead = 20 to give infinitely long terrains
+                                            large_slope_flag = TerrainSettings["large_slope_flag"], 
+                                            large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
+                                            large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
+                                            large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
+                                            large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
+                                            large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
+                                            twosteps_on_patch = TerrainSettings["twosteps_on_patch"],
+                                            Constant_Block_Z_Shift_Flag = TerrainSettings["constant_block_z_shift_flag"],
+                                            Constant_Block_Z_Shift_Value = TerrainSettings["constant_block_z_shift_value"],
+                                            y_center = y_center,
+                                            x_offset = x_offset)
+
+
+#Switch terrain info
+if ExternalParameters["Changing_Env_Flag"] == "Yes":
+    TerrainInfo = TerrainInfo_before_change
 
 #---------------------------------------
 #   print a summary for Problem Setups
@@ -456,6 +558,7 @@ if TerrainSettings["fixed_inclination"] != None:
     print("- Fixed Surf Incliation (radius): ", TerrainSettings["fixed_inclination"])
 else:
     print("- Random Surf Inclination")
+
 if TerrainSettings["random_surfsize_flag"] == True:
     print("- Random Shrink the (Projected) Surf Size")
 else:
@@ -560,7 +663,7 @@ viz.DisplayOdomConfig(OdomConfig = OdomConfig)
 #----------------------------------------------------------
 GoalState = {}
 #   Goal/Terminal CoM x, y, z
-GoalState["x_end"] = 30.0;           GoalState["y_end"] = 0.0;       GoalState["z_end"] = 0.85
+GoalState["x_end"] = 30.0;           GoalState["y_end"] = 0.0;       GoalState["z_end"] = 0.88
 #flip target x if we turn on backward motion
 if TerrainSettings["backward_motion"] == True:
     GoalState["x_end"] = -GoalState["x_end"]
@@ -573,20 +676,20 @@ print("Terminal/Goal CoM Position: x = ", str(GoalState["x_end"]), " y = ", str(
 #Build Solver
 if NumLookAhead == 1: #Single Step NLP
     solver_small_force, DecisionVars_lb_small_force, DecisionVars_ub_small_force, glb_small_force, gub_small_force, var_index_small_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
-                                                                                            LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
-                                                                                            N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
-                                                                                            PhaseDurationLimits=phase_duration_limits,
-                                                                                            backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                            TrackingTiming = ExternalParameters["TrackTiming"],
-                                                                                            Force_Bounds = ExternalParameters["ForceLimitSmall"])
+                                                                                     LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
+                                                                                     N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
+                                                                                     PhaseDurationLimits=phase_duration_limits,
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                     TrackingTiming = ExternalParameters["TrackTiming"],
+                                                                                     Force_Bounds = ExternalParameters["ForceLimitSmall"])
 
     solver_large_force, DecisionVars_lb_large_force, DecisionVars_ub_large_force, glb_large_force, gub_large_force, var_index_large_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
-                                                                                            LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
-                                                                                            N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
-                                                                                            PhaseDurationLimits=phase_duration_limits,
-                                                                                            backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                            TrackingTiming = ExternalParameters["TrackTiming"],
-                                                                                            Force_Bounds = ExternalParameters["ForceLimitLarge"])
+                                                                                     LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
+                                                                                     N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
+                                                                                     PhaseDurationLimits=phase_duration_limits,
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                     TrackingTiming = ExternalParameters["TrackTiming"],
+                                                                                     Force_Bounds = ExternalParameters["ForceLimitLarge"])
 
     # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = None, TotalNumSteps = NumLookAhead, \
     #                                                                                  LocalObjTrackingType = LocalObjSettings["local_obj_tracking_type"], \
@@ -603,15 +706,21 @@ elif NumLookAhead > 1: #Multiple Steps NLP
                                                                                      Force_Bounds = ExternalParameters["ForceLimitSmall"])
 
     solver_large_force, DecisionVars_lb_large_force, DecisionVars_ub_large_force, glb_large_force, gub_large_force, var_index_large_force = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
-                                                                                    TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
-                                                                                    N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
-                                                                                    PhaseDurationLimits=phase_duration_limits,
-                                                                                    backward_motion_flag=TerrainSettings["backward_motion"],
-                                                                                    Force_Bounds = ExternalParameters["ForceLimitLarge"])
+                                                                                     TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
+                                                                                     N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
+                                                                                     PhaseDurationLimits=phase_duration_limits,
+                                                                                     backward_motion_flag=TerrainSettings["backward_motion"],
+                                                                                     Force_Bounds = ExternalParameters["ForceLimitLarge"])
+
+    # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
+    #                                                                                  TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
+    #                                                                                  N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
+    #                                                                                  PhaseDurationLimits=phase_duration_limits,
+    #                                                                                  backward_motion_flag=TerrainSettings["backward_motion"])
 
     # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "Ponton_SinglePoint", \
     #                                                                                  TotalNumSteps = NumLookAhead, LocalObjTrackingType = None,
-    #                                                                                  backward_motion_flag=TerrainSettings["backward_motion"])
+    #                                                                                  backward_motion_flag=TerrainSettings["backward_motion"]))
 
 #----------------------------------------
 #Start Computing Trajectories
@@ -635,6 +744,14 @@ CasadiParas = []  #List of casadi parameters
 
 #Computing Trajectories
 for roundNum in range(Nrounds):
+
+    #decide terrain info assumed in the planning
+    if ExternalParameters["Changing_Env_Flag"] == "Yes":
+        if roundNum <= ExternalParameters["TerrainChangeCyleIndex"]:
+            TerrainInfo = TerrainInfo_before_change
+        else:
+            TerrainInfo = TerrainInfo_after_change
+
     print("---------------------------------------")
     print("For The ", roundNum, "Round/Step: ")
     print("---------------------------------------")
@@ -655,7 +772,7 @@ for roundNum in range(Nrounds):
 
     #   Update Initial Condition (only for round/step larger than 0 - start from the second level)
     if roundNum > 0: 
-        var_idx_lv1 = var_index_large_force["Level1_Var_Index"]
+        var_idx_lv1 = var_index_small_force["Level1_Var_Index"]
         #CoM x, y, z
         InitConfig["x_init"] = x_opt[var_idx_lv1["x"][0]:var_idx_lv1["x"][1]+1][-1]              
         InitConfig["y_init"] = x_opt[var_idx_lv1["y"][0]:var_idx_lv1["y"][1]+1][-1]
@@ -888,9 +1005,9 @@ for roundNum in range(Nrounds):
     #----------
     #Call solver
     start_time = time.time()
-    
+
     #first two steps we use small force
-    if roundNum == 0 or roundNum == 1:
+    if roundNum == 0: #or roundNum == 1:
         solver = solver_small_force
         res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_small_force, ubx = DecisionVars_ub_small_force, lbg = glb_small_force, ubg = gub_small_force)
     #afterwards, we use large force
@@ -1001,8 +1118,6 @@ if showResult == True:
     viz.DisplayResults(TerrainModel = TerrainInfo, SingleOptResult = None, AllOptResult = AllOptResult)
     #for the odom frame
     viz.DisplayResults(TerrainModel = TerrainInfo, SingleOptResult = None, AllOptResult = AllOptResult, HomoTran = H_map_to_odom)
-    
-
 #--------------
 #NOTE: Compute Accumulated Cost?
 
@@ -1020,8 +1135,16 @@ DumpedResults = {"ExternalParameters": ExternalParameters, #External Parameters 
                  "SingleOptResultSavings":AllOptResult,
                  "SwingLeftFirst":SwingLeftFirst,    #indicator of which foot will swing first for the first step
                  "SwingRightFirst":SwingRightFirst,  #indicator of which foot will swing first for the first step
-                 "CasadiParameters":CasadiParas,
-                 }
+                 "CasadiParameters":CasadiParas}
+
+#for changing envs
+if ExternalParameters["Changing_Env_Flag"] == "Yes":
+    DumpedResults["TerrainModel_before_change"] = TerrainInfo_before_change["AllPatchesVertices"]
+    DumpedResults["TerrainInfo_before_change"] = TerrainInfo_before_change
+    DumpedResults["TerrainSettings_before_change"] = TerrainSettings_before_change
+    DumpedResults["TerrainModel_after_change"] = TerrainInfo_after_change["AllPatchesVertices"]
+    DumpedResults["TerrainInfo_after_change"] = TerrainInfo_after_change
+    DumpedResults["TerrainSettings_after_change"] = TerrainSettings_after_change
 
 #Save Info For the Failed Round
 DumpedResults["FailedRoundInfo"] = FailedRoundInfo if not (len(AllOptResult) == Nrounds) else None 
@@ -1029,7 +1152,5 @@ DumpedResults["FailedRoundInfo"] = FailedRoundInfo if not (len(AllOptResult) == 
 #print("Single-opt Result x_init (after dumping): ",DumpedResults["SingleOptResultSavings"][0]["InitConfig"]["x_init"])
 
 if saveData == True:
-    #pickle.dump(DumpedResults, open(rolloutDirectory + '/' + Filename+".p", "wb"))    #Save Data
-    pickle.dump(DumpedResults, open("/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/flat_temp.p", "wb"))    #Save Data
-if LogCMDLine == True:
+    pickle.dump(DumpedResults, open("/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/uneven_plan.p", "wb"))    #Save Data
     sys.stdout.close();   sys.stdout=stdoutOrigin                       #Close logging

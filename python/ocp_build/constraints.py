@@ -121,8 +121,8 @@ def Single_Support_CoM_to_Stance_Center_Limit(SwingLegIndicator=None, CoM_k = No
 
 # Footstep location Constraint
 
-
-def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=None, eq_E=None, eq_e=None, footlength = 0.22, footwidth = 0.12, margin = 0.02, g=None, glb=None, gub=None):
+#margin for uneven terrain is 0.02
+def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=None, eq_E=None, eq_e=None, footlength = 0.22, footwidth = 0.12, margin = 0.0, g=None, glb=None, gub=None): 
     # FootStep Location Constraint (On the Patch)
     # Enumperation of each contact point
     # P3----------------P1

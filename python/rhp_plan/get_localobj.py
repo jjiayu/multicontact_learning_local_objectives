@@ -152,7 +152,7 @@ def getLocalobj(Mode=None, refTrajFile=None, roundNum=None,
         from tensorflow.keras.models import load_model
 
         # Load NN Model
-        NNmodel = load_model(MLModelPath, compile=False)
+        NNmodel = load_model(MLModelPath + "/NN_Model.h5", compile=False)
         # Load DataSet Settings
         DataSetSettingsPath = MLModelPath + "/" + "datasetSettings.p"
         DataSetSettings = pickle.load(open(DataSetSettingsPath, "rb"))

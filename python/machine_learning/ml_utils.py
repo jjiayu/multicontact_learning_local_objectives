@@ -8,7 +8,7 @@ from multicontact_learning_local_objectives.python.utils import *
 #   ContactRepresentationType = 1) 3DPoints 2) ConvexCombination
 
 
-def getDataPoints(SingleOptRes=None, Shift_World_Frame=None, ContactRepresentationType=None, VectorScaleFactor=1):
+def getDataPoints(SingleOptRes=None, Shift_World_Frame=None, ContactRepresentationType=None, VectorScaleFactor=1, Phase_Duration_in_Data = False):
 
     # Get Init State
     InitConfig, TerminalConfig = getInitTerminalConfig(
@@ -116,18 +116,19 @@ def getDataPoints(SingleOptRes=None, Shift_World_Frame=None, ContactRepresentati
 
     # -------------------------------
     # Add Contact Timing
-    # Get Phase Duration
-    var_Idx_lv1 = SingleOptRes["var_idx"]["Level1_Var_Index"]
-    opt_res = SingleOptRes["opt_res"]
+    if Phase_Duration_in_Data == True:
+        # Get Phase Duration
+        var_Idx_lv1 = SingleOptRes["var_idx"]["Level1_Var_Index"]
+        opt_res = SingleOptRes["opt_res"]
 
-    Ts_vec = opt_res[var_Idx_lv1["Ts"][0]:var_Idx_lv1["Ts"][1]+1]
+        Ts_vec = opt_res[var_Idx_lv1["Ts"][0]:var_Idx_lv1["Ts"][1]+1]
 
-    InitDS_Dur = Ts_vec[-3]
-    SS_Dur = Ts_vec[-2] - Ts_vec[-3]
-    DS_Dur = Ts_vec[-1] - Ts_vec[-2]
+        InitDS_Dur = Ts_vec[-3]
+        SS_Dur = Ts_vec[-2] - Ts_vec[-3]
+        DS_Dur = Ts_vec[-1] - Ts_vec[-2]
 
-    # Add to y vector
-    y = np.concatenate((y, InitDS_Dur, SS_Dur, DS_Dur), axis=None)
+        # Add to y vector
+        y = np.concatenate((y, InitDS_Dur, SS_Dur, DS_Dur), axis=None)
 
     # --------------------------
     # Scale Vectors

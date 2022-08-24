@@ -22,6 +22,9 @@ import shutil
 import sys
 from sklearn import preprocessing
 
+#Define if we need time prediction
+time_prediciton_flag = False
+
 # Get Working Directory and dataset type
 workingDirectory = sys.argv[1]
 RollOutFoldername = sys.argv[2]
@@ -127,7 +130,7 @@ for filename in filenames:
 
                 # Get data point
                 xtemp, ytemp = getDataPoints(SingleOptRes=singleOptResult, Shift_World_Frame=Shift_World_Frame_Type,
-                                             ContactRepresentationType=Contact_Representation_Type, VectorScaleFactor=ScaleFactor)  # InitCoM; InitSurfBorder
+                                             ContactRepresentationType=Contact_Representation_Type, VectorScaleFactor=ScaleFactor, Phase_Duration_in_Data = time_prediciton_flag)  # InitCoM; InitSurfBorder
 
                 # Save datapoints
                 x_all.append(xtemp)

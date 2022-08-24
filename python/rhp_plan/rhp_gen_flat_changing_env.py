@@ -49,7 +49,9 @@ ExternalParameters = {"WorkingDirectory": None,
                       "VisualizationFlag": "Yes",
                       "TrackTiming": "No",
                       "ForceLimitSmall": 300,
-                      "ForceLimitLarge": 300
+                      "ForceLimitLarge": 300,
+                      "Changing_Env_Flag": "Yes",
+                      "TerrainChangeCyleIndex": 1 #the last cycle before the terrain changes
                       }
 
 #   Update External Parameters
@@ -334,50 +336,27 @@ if TerrainModelPath == None:
                            "large_slope_X_shifts": [0.0],#[0.0], 
                            "large_slope_Y_shifts": [0.0],#[0.0], 
                            "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
+                           "modify_terrain_border": False,                                        
+                           "border_modify_idx_list": [],
+                           "border_modify_direction_list": [], #X or Y
+                           "border_modify_border_idx_list": [], # front back inner outter
+                           "border_modify_distance_list": [],
                            }
+        
+        if ExternalParameters["Changing_Env_Flag"] == "Yes":
+            #Make copys of terrian setting
+            TerrainSettings_before_change = copy.deepcopy(TerrainSettings)
+            TerrainSettings_after_change  = copy.deepcopy(TerrainSettings)
+            #modify terrain setting after changes
+            TerrainSettings_after_change["modify_terrain_border"] = True
+            TerrainSettings_after_change["border_modify_idx_list"] = [ExternalParameters["TerrainChangeCyleIndex"] + 1]#TerrainChangeCyleIndex is the cycle before change, + 1 is the cycle that is actually changed
+            TerrainSettings_after_change["border_modify_direction_list"] = ["X"]
+            TerrainSettings_after_change["border_modify_border_idx_list"] = ["back"]
+            TerrainSettings_after_change["border_modify_distance_list"] = [0.08]
 
-        # #--------------------------------------
-        # #For Generating Data Point On Uni Server
-        # #NOTE: To close large slope, make lists to become [], currently the large slope flat is not functioning
-        # TerrainSettings = {"terrain_type": "random",#"antfarm_left",
-        #                   "fixed_inclination": None, #0.0/180*np.pi, #radius, None means random inclination
-        #                   "random_init_surf_size": False,
-        #                   "random_surfsize_flag": False,
-        #                   "random_Horizontal_Move": False,
-        #                   "MisMatch_Alignment_of_FirstTwoPatches": False,#bool(np.random.choice([True,False],1)), 
-        #                   "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-        #                   "Projected_Length": 0.575, "Projected_Width": 1.0,  #length 0.6 with misalignment maybe betters
-        #                   "large_slope_flag":False,
-        #                   "large_slope_index": [], #[np.random.choice([8,9])],#select a patch from number 16 or 17
-        #                   "large_slope_directions": [], #[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
-        #                   "large_slope_inclinations": [], #[np.round(np.random.uniform(21.0/180*np.pi,30.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
-        #                   "large_slope_X_shifts": [0.0], 
-        #                   "large_slope_Y_shifts": [0.0], 
-        #                   "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
-        #                 }
-
-        # #--------------------------------------
-        # #For Generating Data Point On Uni Server
-        # #NOTE: To close large slope, make lists to become [], currently the large slope flat is not functioning
-        # TerrainSettings = {"terrain_type": "random",#"antfarm_left",
-        #                   "fixed_inclination": None, #0.0/180*np.pi, #radius, None means random inclination
-        #                   "random_init_surf_size": False,
-        #                   "random_surfsize_flag": False,
-        #                   "random_Horizontal_Move": False,
-        #                   "MisMatch_Alignment_of_FirstTwoPatches": False,#bool(np.random.choice([True,False],1)), 
-        #                   "MisAligned_Column": None, #can be "left", "right", None (choose randomly)
-        #                   "Projected_Length": 0.575, "Projected_Width": 1.0,  #length 0.6 with misalignment maybe betters
-        #                   "large_slope_flag":False,
-        #                   "large_slope_index": [8], #[np.random.choice([8,9])],#select a patch from number 16 or 17
-        #                   "large_slope_directions": ['Y_positive'], #[np.random.choice(["X_positive", "X_negative", "Y_positive", "Y_negative"])], 
-        #                   "large_slope_inclinations": [25.0/180*np.pi], #[np.round(np.random.uniform(21.0/180*np.pi,30.0/180*np.pi),3)], #if no elevation change, 22 degress is the limit
-        #                   "large_slope_X_shifts": [0.0], 
-        #                   "large_slope_Y_shifts": [0.0], 
-        #                   "large_slope_Z_shifts": [0.0],#[np.random.uniform(-0.25,0.25)],
-        #                 }
-
-        #Generate Terrain
-        TerrainInfo = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],
+            #Generate Terrain (before change)
+            TerrainSettings = TerrainSettings_before_change
+            TerrainInfo_before_change = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],
                                         fixed_inclination = TerrainSettings["fixed_inclination"], 
                                         randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
                                         random_surfsize = TerrainSettings["random_surfsize_flag"],
@@ -397,13 +376,44 @@ if TerrainModelPath == None:
                                         large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
                                         # row_gap_block_index = [2,3],#give gaps into the rows of the blocks
                                         # row_gap_distance = 0.05,
-                                        modify_terrain_border = False,
-                                        border_modify_idx_list = [2],
-                                        border_modify_direction_list = ["X"], #X or Y
-                                        border_modify_border_idx_list = ["back"], # front back inner outter
-                                        border_modify_distance_list = [0.04],
+                                        modify_terrain_border = TerrainSettings["modify_terrain_border"],
+                                        border_modify_idx_list = TerrainSettings["border_modify_idx_list"],
+                                        border_modify_direction_list = TerrainSettings["border_modify_direction_list"], #X or Y
+                                        border_modify_border_idx_list = TerrainSettings["border_modify_border_idx_list"], # front back inner outter
+                                        border_modify_distance_list = TerrainSettings["border_modify_distance_list"],
                                         y_center = y_center,
                                         x_offset = x_offset)
+
+            #Generate Terrain (after change)
+            TerrainSettings = TerrainSettings_after_change
+            TerrainInfo_after_change = terrain_model_gen(terrain_name    = TerrainSettings["terrain_type"],
+                                        fixed_inclination = TerrainSettings["fixed_inclination"], 
+                                        randomInitSurfSize = TerrainSettings["random_init_surf_size"], #False,
+                                        random_surfsize = TerrainSettings["random_surfsize_flag"],
+                                        randomHorizontalMove = TerrainSettings["random_Horizontal_Move"],
+                                        randomMisAlignmentofFirstTwoPatches = TerrainSettings["MisMatch_Alignment_of_FirstTwoPatches"], 
+                                        MisAlignmentColumn = TerrainSettings["MisAligned_Column"], 
+                                        MisAlignmentAmount = TerrainSettings["MisAligned_Amount"],
+                                        gap_between_patches = TerrainSettings["Gap_Between_Patches"],
+                                        x_gap = TerrainSettings["Gap_along_x"],
+                                        Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
+                                        NumSteps = Nrounds, NumLookAhead = 100,#Put NumLookAhead = 20 to give infinitely long terrains
+                                        large_slope_flag = TerrainSettings["large_slope_flag"], 
+                                        large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
+                                        large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
+                                        large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
+                                        large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
+                                        large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
+                                        # row_gap_block_index = [2,3],#give gaps into the rows of the blocks
+                                        # row_gap_distance = 0.05,
+                                        modify_terrain_border = TerrainSettings["modify_terrain_border"],
+                                        border_modify_idx_list = TerrainSettings["border_modify_idx_list"],
+                                        border_modify_direction_list = TerrainSettings["border_modify_direction_list"], #X or Y
+                                        border_modify_border_idx_list = TerrainSettings["border_modify_border_idx_list"], # front back inner outter
+                                        border_modify_distance_list = TerrainSettings["border_modify_distance_list"],
+                                        y_center = y_center,
+                                        x_offset = x_offset)
+        
     elif SpecialTerrain == True:
         #Terrain with Specific Patterns (flat/darpa)
         TerrainSettings = {"terrain_type": "darpa_left",#"single_large_slope_far",
@@ -420,6 +430,10 @@ else:
             LoadTerrainModel= pickle.load(f)
     TerrainInfo = LoadTerrainModel["TerrainInfo"]
     TerrainSettings = LoadTerrainModel["TerrainSettings"]
+
+#Switch terrain info
+if ExternalParameters["Changing_Env_Flag"] == "Yes":
+    TerrainInfo = TerrainInfo_before_change
 
 #---------------------------------------
 #   print a summary for Problem Setups
@@ -638,6 +652,13 @@ for roundNum in range(Nrounds):
     print("---------------------------------------")
     print("For The ", roundNum, "Round/Step: ")
     print("---------------------------------------")
+
+    #decide terrain info assumed in the planning
+    if ExternalParameters["Changing_Env_Flag"] == "Yes":
+        if roundNum < ExternalParameters["TerrainChangeCyleIndex"]:
+            TerrainInfo = TerrainInfo_before_change
+        else:
+            TerrainInfo = TerrainInfo_after_change
 
     #----------
     #Constructing Casadi Parameters Based on Previous Result or For the First Round
@@ -1022,6 +1043,16 @@ DumpedResults = {"ExternalParameters": ExternalParameters, #External Parameters 
                  "SwingRightFirst":SwingRightFirst,  #indicator of which foot will swing first for the first step
                  "CasadiParameters":CasadiParas,
                  }
+
+#for changing envs
+if ExternalParameters["Changing_Env_Flag"] == "Yes":
+    DumpedResults["TerrainModel_before_change"] = TerrainInfo_before_change["AllPatchesVertices"]
+    DumpedResults["TerrainInfo_before_change"] = TerrainInfo_before_change
+    DumpedResults["TerrainSettings_before_change"] = TerrainSettings_before_change
+    DumpedResults["TerrainModel_after_change"] = TerrainInfo_after_change["AllPatchesVertices"]
+    DumpedResults["TerrainInfo_after_change"] = TerrainInfo_after_change
+    DumpedResults["TerrainSettings_after_change"] = TerrainSettings_after_change
+
 
 #Save Info For the Failed Round
 DumpedResults["FailedRoundInfo"] = FailedRoundInfo if not (len(AllOptResult) == Nrounds) else None 

@@ -395,13 +395,6 @@ if TerrainModelPath == None:
                                         large_slope_X_shifts = TerrainSettings["large_slope_X_shifts"], 
                                         large_slope_Y_shifts = TerrainSettings["large_slope_Y_shifts"],
                                         large_slope_Z_shifts = TerrainSettings["large_slope_Z_shifts"],
-                                        # row_gap_block_index = [2,3],#give gaps into the rows of the blocks
-                                        # row_gap_distance = 0.05,
-                                        modify_terrain_border = False,
-                                        border_modify_idx_list = [2],
-                                        border_modify_direction_list = ["X"], #X or Y
-                                        border_modify_border_idx_list = ["back"], # front back inner outter
-                                        border_modify_distance_list = [0.04],
                                         y_center = y_center,
                                         x_offset = x_offset)
     elif SpecialTerrain == True:
@@ -547,8 +540,8 @@ dist_rf_to_init_patch_border_x = np.abs(InitConfig["PRx_init"] + 0.11 -TerrainIn
 print("dist_lf_to_init_patch_border_x", dist_lf_to_init_patch_border_x)
 print("dist_rf_to_init_patch_border_x", dist_rf_to_init_patch_border_x)
 
-# if dist_lf_to_init_patch_border_x <= 0.02 or dist_rf_to_init_patch_border_x <=0.02:
-#     raise Exception("Stepping on the front bar")
+if dist_lf_to_init_patch_border_x <= 0.02 or dist_rf_to_init_patch_border_x <=0.02:
+    raise Exception("Stepping on the front bar")
 
 #Display Init config
 viz.DisplayInitConfig(TerrainModel=TerrainInfo, InitConfig = InitConfig)

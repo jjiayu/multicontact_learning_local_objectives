@@ -22,7 +22,7 @@ from multicontact_learning_local_objectives.python.utils import *
 fig=plt.figure();   ax = Axes3D(fig)  
 
 #recompute_traj = "/home/jiayu/Desktop/MLP_DataSet/Testing_Largeslope_TimeTrack_Angle_17_26/NN_TrackTestAll_LargeSlope/Group1_temp1642014142.3924603.p"
-recompute_traj = "/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/uneven_plan.p"#"/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/flat_temp_short_duration.p"
+recompute_traj = "/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/uneven_plan_changing_env.p"#"/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/flat_temp_short_duration.p"
 TrackingExp_Path = recompute_traj
 
 datatemp = pickle.load((open(recompute_traj,"rb")))
@@ -45,7 +45,9 @@ datatemp = pickle.load((open(recompute_traj,"rb")))
 # GroundTruthPath = "/media/jiayu/Seagate/"+NLP_traj_Path[idxTemp:]
 
 #GroundTruthPath = "/home/jiayu/Desktop/MLP_DataSet/Testing_Largeslope_TimeTrack_Angle_17_26/CleanValidationRollOut/Group1_temp1639666706.7087774_Y_positive_angle_24.7.p"
-GroundTruthPath = "/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/uneven_plan.p"#"/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/flat_temp_long_phase.p"
+#GroundTruthPath = "/home/jiayu/Desktop/MLP_DataSet/rhp_motion_plans/rhp_plan.p"#"/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/flat_temp_long_phase.p"
+
+GroundTruthPath = "/home/jiayu/Desktop/MLP_DataSet/GroundTruthTraj/uneven_plan_unchanged.p"
 
 #Result_file_1_path = "/home/jiayu/Desktop/MLP_DataSet/Rubbles/CleanTrainingSetRollOuts_InitialSet/Group1_temp1632242201.9463773.p"
 TrackingExp_data = pickle.load(open(TrackingExp_Path,"rb"))
