@@ -33,12 +33,13 @@ ExternalParameters = {"WorkingDirectory": None,
                       "LocalObj_from":"NeuralNetwork",
                       "ML_ModelPath": None, #"/home/jiayu/Desktop/MLP_DataSet/2stepsVsOthers/ML_Models/NN_Model_Valid",
                       "DataSetPath": None, #"/home/jiayu/Desktop/MLP_DataSet/Rubbles/DataSet", #None,
-                      "NumLookAhead": 4,
-                      "NumofRounds":15,
+                      "NumLookAhead": 3,
+                      "NumofRounds":30,
                       "LargeSlopeAngle": 24.0,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
                       "VisualizationFlag": "Yes",
+                      "PontonSecondLevel": "Ponton_SinglePoint"#"Ponton_SinglePoint", #None #Ponton_FourPoints #Ponton_SinglePoint
                       }
 
 #   Update External Parameters
@@ -102,6 +103,11 @@ RobotMass= 95.0
 #The one we use
 phase_duration_limits = {"DoubleSupport_Min": 0.05, "DoubleSupport_Max": 0.5, #0.05 - 0.5
                          "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.2}  #0.7 - 1.2
+
+if ExternalParameters["PontonSecondLevel"] != None:
+    phase_duration_limits = {"DoubleSupport_Min": 0.3, "DoubleSupport_Max": 0.5, #0.05 - 0.5
+                         "SingleSupport_Min": 0.7,  "SingleSupport_Max": 1.2}  #0.7 - 1.2
+
 # phase_duration_limits = {"DoubleSupport_Min": 0.1, "DoubleSupport_Max": 0.1, #0.05 - 0.5
 #                          "SingleSupport_Min": 0.8,  "SingleSupport_Max": 0.8}  #0.7 - 1.2
 #   Local Obj Tracking Type (for Single Step) can be None, cost, constraints
@@ -202,7 +208,7 @@ if TerrainModelPath == None:
         #For Generating Data Point On Uni Server
         #NOTE: To close large slope, make lists to become [], currently the large slope flat is not functioning
         TerrainSettings = {"terrain_type": "random",#"antfarm_left",
-                          "fixed_inclination": None, #0.0/180*np.pi, #radius, None means random inclination
+                          "fixed_inclination": None, #None, #0.0/180*np.pi, #radius, None means random inclination
                           "random_init_surf_size": False,
                           "random_surfsize_flag": False,
                           "random_Horizontal_Move": False,
@@ -359,10 +365,21 @@ if NumLookAhead == 1: #Single Step NLP
                                                                                      N_knots_local = N_knots_per_phase, robot_mass = RobotMass, \
                                                                                      PhaseDurationLimits=phase_duration_limits)
 elif NumLookAhead > 1: #Multiple Steps NLP
-    solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
-                                                                                     TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
-                                                                                     N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
-                                                                                     PhaseDurationLimits=phase_duration_limits)
+    if ExternalParameters["PontonSecondLevel"] == None:
+        solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "NLP_SecondLevel", \
+                                                                                        TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
+                                                                                        N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
+                                                                                        PhaseDurationLimits=phase_duration_limits)
+    elif ExternalParameters["PontonSecondLevel"] == "Ponton_FourPoints":
+        solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "Ponton_FourPoints", \
+                                                                                        TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
+                                                                                        N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
+                                                                                        PhaseDurationLimits=phase_duration_limits)
+    elif ExternalParameters["PontonSecondLevel"] == "Ponton_SinglePoint":
+        solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "Ponton_SinglePoint", \
+                                                                                        TotalNumSteps = NumLookAhead, LocalObjTrackingType = None, \
+                                                                                        N_knots_local = N_knots_per_phase, robot_mass = RobotMass,
+                                                                                        PhaseDurationLimits=phase_duration_limits)
 
     # solver, DecisionVars_lb, DecisionVars_ub, glb, gub, var_index = ocp_solver_build(FirstLevel = "NLP_SingleStep", SecondLevel = "Ponton_SinglePoint", \
     #                                                                                  TotalNumSteps = NumLookAhead, LocalObjTrackingType = None)

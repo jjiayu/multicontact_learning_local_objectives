@@ -2122,13 +2122,13 @@ def NLP_SecondLevel(m = 95.0, Nk_Local = 7, Nsteps = 1, AngularDynamics=True, Pa
 
 
 #NOTE: Ponton Methods do not have rotated kinematics polytopes
-def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, PontonTerm_bounds = 0.55):
+def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, PontonTerm_bounds = 0.5 , miu= 0.3):
     #-------------------------------------------
     #Define Constant Parameters
     #   Gravitational Acceleration
     G = 9.80665 #kg/m^2
     #   Friciton Coefficient 
-    miu = 0.3
+    #miu = 0.3
     #   Force Limits
     F_bound = 400.0
     Fxlb = -F_bound;   Fxub = F_bound
@@ -2141,13 +2141,13 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
     z_lowest = -5.0
     z_highest = 5.0
     #   CoM Height with respect to Footstep Location
-    CoM_z_to_Foot_min = 0.65 #0.6
-    CoM_z_to_Foot_max = 0.75
+    CoM_z_to_Foot_min = 0.6 #0.65 #0.6
+    CoM_z_to_Foot_max = 0.8 #0.75
     #   Ponton Term Bounds
     p_lb = -PontonTerm_bounds;     p_ub = PontonTerm_bounds
     q_lb = -PontonTerm_bounds;     q_ub = PontonTerm_bounds
     #   Leg Length (Normalisation) for Ponton
-    max_leg_length = 1.5 #can be 1.45
+    max_leg_length = 1.7 #can be 1.45 original 1.5, 1.6 is also good 1.7 also good
     #---------------------------------------------
     #Define Parameters
     #   Gait Pattern, Each action is followed up by a double support phase
@@ -2158,8 +2158,10 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
     N_K = Nk_Local*Nphase + 1 #+1 the last knots to finalize the plan
     #   Phase Duration Vector; NOTE: Mannually defined
     #PhaseDurationVec = [0.3, 0.8, 0.3]*(Nsteps) + [0.3, 0.8, 0.3]*(Nsteps-1)
+    # PhaseDurationVec = [0.2, 0.9, 0.2]*(Nsteps) + [0.2, 0.9, 0.2]*(Nsteps-1)
+    # PhaseDurationVec = [0.2, 0.7, 0.2]*(Nsteps) + [0.2, 0.7, 0.2]*(Nsteps-1)
+    # PhaseDurationVec = [0.3, 0.8, 0.3]*(Nsteps) + [0.3, 0.8, 0.3]*(Nsteps-1)
     PhaseDurationVec = [0.2, 0.5, 0.2]*(Nsteps) + [0.2, 0.5, 0.2]*(Nsteps-1)
-
     #-----------------------------------------------------------------------------------------------------------------------
     # #Load kinematics Polytope
     # #   Not local than server
@@ -2221,6 +2223,13 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
     SurfNorms = ParameterList["SurfNorms"]                
     SurfTangentsX = ParameterList["SurfTangentsX"]
     SurfTangentsY = ParameterList["SurfTangentsY"]
+
+    #Surface Orientations
+    #Initial Contact Surface Orientations
+    PL_init_Orientation = ParameterList["PL_init_Orientation"];  PL_init_Orientation = ca.reshape(PL_init_Orientation,3,3).T
+    PR_init_Orientation = ParameterList["PR_init_Orientation"];  PR_init_Orientation = ca.reshape(PR_init_Orientation,3,3).T
+    #
+    SurfOriens = ParameterList["SurfOrientations"]
 
     #-----------------------------------------------------------------------------------------------------------------------
     #Define Variables and Bounds, Parameters
@@ -2468,22 +2477,35 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                     p_init_TangentX = SurfTangentsX[0:3]
                     p_init_TangentY = SurfTangentsY[0:3]
                     p_init_Norm = SurfNorms[0:3]
+                    p_init_Orientation = ca.reshape(SurfOriens[0:9],3,3).T
 
                     #-----------
                     #Case 1
                     #If First Level Swing the Left, the the 0 phase (InitDouble) has p_init as the left support, PR_init as the right support
                     #(same as the double support phase of the first step)-> Left foot Moved (p_init), Right Foot stay stationary (PR_init)
                     SwingLegFlag = ParaLeftSwingFlag #Indicator of which leg is swinging
+                    
                     #Kinematics Constraint
                     #CoM in Left (p_init)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_init, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_init_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in Right (PR_init)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PR_init, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = PR_init, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = PR_init_Orientation,
+                                                 g = g, glb = glb, gub = gub)
+                
                     #CoM Height Constraint (Left p_init foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max,
+                                                           ContactFrameOrientation = p_init_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #CoM Height Constraint (Right foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PR_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PR_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = PR_init_Orientation,
+                                                           g = g, glb = glb, gub = gub)
+
 
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
@@ -2579,14 +2601,24 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                     SwingLegFlag = ParaRightSwingFlag #Indicator of which leg is swinging
                     #Kinematics Constraint
                     #CoM in Left (PL_init)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PL_init, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = PL_init, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = PL_init_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in Right (p_init)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_init, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_init_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                 
                     #CoM Height Constraint (Left PL_init foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PL_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PL_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = PL_init_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #CoM Height Constraint (Right p_init foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_init_Orientation,
+                                                           g = g, glb = glb, gub = gub)
 
                     #Angular Dynamics
                     if k<N_K-1:
@@ -2679,6 +2711,7 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                         p_previous = ca.vertcat(px_init,py_init,pz_init)
                         p_previous_TangentX = SurfTangentsX[0:3];   p_previous_TangentY = SurfTangentsY[0:3]
                         p_previous_Norm = SurfNorms[0:3]
+                        p_previous_Orientation = ca.reshape(SurfOriens[0:9],3,3).T
 
                         #Current Step
                         #In second level, Surfaces index is Step Vector Index (for px, py, pz, here is StepCnt-1) + 1
@@ -2687,6 +2720,7 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                         p_current = ca.vertcat(px[StepCnt-1],py[StepCnt-1],pz[StepCnt-1])
                         p_current_TangentX = SurfTangentsX[StepCnt*3:StepCnt*3+3];   p_current_TangentY = SurfTangentsY[StepCnt*3:StepCnt*3+3] 
                         p_current_Norm = SurfNorms[StepCnt*3:StepCnt*3+3]
+                        p_current_Orientation = ca.reshape(SurfOriens[StepCnt*9:StepCnt*9+9],3,3).T
 
                     else: #Like Step 2, 3, 4 .....
                         #For Intial Double Support, previous step is StepNum - 2, current step is StepNum - 1
@@ -2696,10 +2730,12 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                         p_previous = ca.vertcat(px[StepCnt-2],py[StepCnt-2],pz[StepCnt-2])
                         p_previous_TangentX = SurfTangentsX[(StepCnt-1)*3:(StepCnt-1)*3+3];   p_previous_TangentY = SurfTangentsY[(StepCnt-1)*3:(StepCnt-1)*3+3]
                         p_previous_Norm = SurfNorms[(StepCnt-1)*3:(StepCnt-1)*3+3]
+                        p_previous_Orientation = ca.reshape(SurfOriens[(StepCnt-1)*9:(StepCnt-1)*9+9],3,3).T
 
                         p_current = ca.vertcat(px[StepCnt-1],py[StepCnt-1],pz[StepCnt-1])
                         p_current_TangentX = SurfTangentsX[StepCnt*3:StepCnt*3+3];   p_current_TangentY = SurfTangentsY[StepCnt*3:StepCnt*3+3]
                         p_current_Norm = SurfNorms[StepCnt*3:StepCnt*3+3]
+                        p_current_Orientation = ca.reshape(SurfOriens[StepCnt*9:StepCnt*9+9],3,3).T
 
                     #Give Constraint according to even and odd steps
                     if StepCnt%2 == 0: #Even Numbers of Footsteps
@@ -2709,13 +2745,23 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                         #(same as the double support phase of the first step)->Left foot Moved (p_current), Right Foot stay stationary p_previous)
                         SwingLegFlag = ParaLeftSwingFlag #Indicator of which leg is swinging
                         #CoM in the Left (p_current)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                     ContactFrameOrientation = p_current_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #CoM in the Right (p_previous)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                     ContactFrameOrientation = p_previous_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Left p_current foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_current_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Right p_previous foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_previous_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #Angular Dynamics (Ponton)
                         if k<N_K-1: #double check the knot number is valid
                             #------------------------------
@@ -2805,13 +2851,23 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                         #(same as the double support phase of the first step) -> Right Moved (p_current), Left stationary (p_previous)
                         SwingLegFlag = ParaRightSwingFlag #Indicator of which leg is swinging
                         #CoM in the Left (p_previous)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                     ContactFrameOrientation = p_previous_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #CoM in the Right (p_current)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                     ContactFrameOrientation = p_current_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Left p_previous foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_previous_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Right p_current foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_current_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #Angular Dynamics (Ponton)
                         if k<N_K-1: #double check the knot number is valid
                             #------------------------------
@@ -2901,13 +2957,23 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                         #(same as the double support phase of the first step) -> Right Moved (p_current), Left Stay Fixed (p_previous)
                         SwingLegFlag = ParaLeftSwingFlag #Indicator of which leg is swinging
                         #CoM in the Left (p_previous)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                     ContactFrameOrientation = p_previous_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #CoM in the Right (p_current)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                     ContactFrameOrientation = p_current_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Left p_previous foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_previous_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Right p_current foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_current_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #Angular Dynamics (Ponton)
                         if k<N_K-1: #double check the knot number is valid
                             #------------------------------
@@ -2997,13 +3063,23 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                         #(same as the double support phase of the first step) -> Left Moved (p_current), Right stationary (p_previous)
                         SwingLegFlag = ParaRightSwingFlag #Indicator of which leg is swinging
                         #CoM in the Left (p_current)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                     ContactFrameOrientation = p_current_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #CoM in the Right (p_previous)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                     ContactFrameOrientation = p_previous_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Left p_current foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_current_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Right p_previous foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_previous_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #Angular Dynamics (Ponton)
                         if k<N_K-1: #double check the knot number is valid
                             #------------------------------
@@ -3096,12 +3172,14 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                     p_stance_TangentX = SurfTangentsX[0:3]
                     p_stance_TangentY = SurfTangentsY[0:3]
                     p_stance_Norm = SurfNorms[0:3]
+                    p_stance_Orientation = ca.reshape(SurfOriens[0:9],3,3).T
 
                 else: #For other Steps, indexed as 1,2,3,4
                     p_stance = ca.vertcat(px[StepCnt-1],py[StepCnt-1],pz[StepCnt-1])
                     p_stance_TangentX = SurfTangentsX[StepCnt*3:StepCnt*3+3]
                     p_stance_TangentY = SurfTangentsY[StepCnt*3:StepCnt*3+3]
                     p_stance_Norm = SurfNorms[StepCnt*3:StepCnt*3+3]
+                    p_stance_Orientation = ca.reshape(SurfOriens[StepCnt*9:StepCnt*9+9],3,3).T
 
                 #Give Constraint according to even and odd steps
                 if StepCnt%2 == 0: #Even Number of Steps
@@ -3113,9 +3191,15 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
 
                     #Kinematics Constraint
                     #CoM in the Left (p_stance)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM Height Constraint (Left p_stance foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stance_Orientation,
+                                                           g = g, glb = glb, gub = gub)
+
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -3181,9 +3265,15 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
 
                     #Kinematics Constraint
                     #CoM in the Right (p_stance)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM Height Constraint (Right p_stance foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
+
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -3250,10 +3340,14 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
 
                     #Kinematics Constraint
                     #CoM in the Right (p_stance)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_stance foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stance_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -3319,10 +3413,14 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
 
                     #Kinematics Constraint
                     #CoM in the Left (p_stance)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Left p_stance foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stance_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -3389,11 +3487,13 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                     p_stationary_TangentX = SurfTangentsX[0:3]
                     p_stationary_TangentY = SurfTangentsY[0:3]
                     p_stationary_Norm = SurfNorms[0:3]
+                    p_stationary_Orientation = ca.reshape(SurfOriens[0:9],3,3).T
 
                     p_land = ca.vertcat(px[StepCnt],py[StepCnt],pz[StepCnt])
                     p_land_TangentX = SurfTangentsX[(StepCnt+1)*3:(StepCnt+1)*3+3]
                     p_land_TangentY = SurfTangentsY[(StepCnt+1)*3:(StepCnt+1)*3+3]
                     p_land_Norm = SurfNorms[(StepCnt+1)*3:(StepCnt+1)*3+3]
+                    p_land_Orientation = ca.reshape(SurfOriens[(StepCnt+1)*9:(StepCnt+1)*9+9],3,3).T
             
                 else: #For other steps, indexed as 1,2,3,4
                     #In the Double Support Phase, the p_stationary is the foot is the un-moved foot during StepNum (in second level), \
@@ -3404,11 +3504,13 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
                     p_stationary_TangentX = SurfTangentsX[StepCnt*3:StepCnt*3+3]
                     p_stationary_TangentY = SurfTangentsY[StepCnt*3:StepCnt*3+3]
                     p_stationary_Norm = SurfNorms[StepCnt*3:StepCnt*3+3]
+                    p_stationary_Orientation = ca.reshape(SurfOriens[StepCnt*9:StepCnt*9+9],3,3).T
 
                     p_land = ca.vertcat(px[StepCnt],py[StepCnt],pz[StepCnt])
                     p_land_TangentX = SurfTangentsX[(StepCnt+1)*3:(StepCnt+1)*3+3]
                     p_land_TangentY = SurfTangentsY[(StepCnt+1)*3:(StepCnt+1)*3+3]
                     p_land_Norm = SurfNorms[(StepCnt+1)*3:(StepCnt+1)*3+3]
+                    p_land_Orientation = ca.reshape(SurfOriens[(StepCnt+1)*9:(StepCnt+1)*9+9],3,3).T
 
                 #Give Constraint according to even and odd steps
                 if StepCnt%2 == 0: #Even Number of Steps
@@ -3421,15 +3523,24 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
 
                     #Kinemactics Constraint
                     #CoM in the Left (p_stationary)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_stationary_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in the Right (p_land)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_land_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     
                     #   CoM Height Constraint (Left p_stationary foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stationary_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_land foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_land_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -3522,14 +3633,24 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
 
                     #Kinemactics Constraint
                     #CoM in the Left (p_land)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_land_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in the Right (p_stationary)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_stationary_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     
                     #   CoM Height Constraint (Left p_land foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_land_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_stationary foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stationary_Orientation,
+                                                           g = g, glb = glb, gub = gub)
 
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
@@ -3624,13 +3745,23 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
 
                     #Kinemactics Constraint
                     #CoM in the Left (p_land)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_land_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in the Right (p_stationary)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_stationary_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Left p_land foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_land_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_stationary foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stationary_Orientation,
+                                                           g = g, glb = glb, gub = gub)
 
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
@@ -3724,13 +3855,23 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
 
                     #Kinematics Constraint
                     #CoM in the Left (p_stationary)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_stationary_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in the Right (p_land)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_land_Orientation, 
+                                                 g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Left p_stationary foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stationary_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_land foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_land_Orientation,
+                                                           g = g, glb = glb, gub = gub)
 
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
@@ -4044,14 +4185,14 @@ def Ponton_FourPoints(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, 
     return DecisionVars, DecisionVars_lb, DecisionVars_ub, J, g, glb, gub, var_index
 
 #NOTE: Ponton Methods do not have rotated kinematics polytopes
-def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, PontonTerm_bounds = 0.55):
+def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None, PontonTerm_bounds = 0.5, miu=0.3):
 
     #-------------------------------------------
     #Define Constant Parameters
     #   Gravitational Acceleration
     G = 9.80665 #kg/m^2
     #   Friciton Coefficient 
-    miu = 0.3
+    #miu = 0.3
     #   Force Limits
     F_bound = 400.0 * 4.0
     Fxlb = -F_bound;   Fxub = F_bound
@@ -4064,24 +4205,27 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
     z_lowest = -5.0
     z_highest = 5.0
     #   CoM Height with respect to Footstep Location
-    CoM_z_to_Foot_min = 0.65
-    CoM_z_to_Foot_max = 0.75
+    CoM_z_to_Foot_min = 0.6 #0.65
+    CoM_z_to_Foot_max = 0.8 #0.75
     #   Ponton Term Bounds
     p_lb = -PontonTerm_bounds;     p_ub = PontonTerm_bounds
     q_lb = -PontonTerm_bounds;     q_ub = PontonTerm_bounds
     #   Leg Length (Normalisation) for Ponton
-    max_leg_length = 1.5 #can be 1.45
+    max_leg_length = 1.7 #can be 1.45 original 1.5, 1.6 1.7 is also good
     #---------------------------------------------
     #Define Parameters
     #   Gait Pattern, Each action is followed up by a double support phase
-    GaitPattern = ["InitialDouble","Swing","DoubleSupport"] + ["InitialDouble", "Swing","DoubleSupport"]*(Nsteps-1) #,'RightSupport','DoubleSupport','LeftSupport','DoubleSupport'
+    GaitPattern = ["InitialDouble","Swing", "DoubleSupport"] + ["InitialDouble", "Swing", "DoubleSupport"]*(Nsteps-1) #,'RightSupport','DoubleSupport','LeftSupport','DoubleSupport'
     #   Number of Phases
     Nphase = len(GaitPattern)
     #   Compute Number of Total knots/ticks, but the enumeration start from 0 to N_K-1
     N_K = Nk_Local*Nphase + 1 #+1 the last knots to finalize the plan
     #   Phase Duration Vector; NOTE: Mannually defined
     #PhaseDurationVec = [0.3, 0.8, 0.3]*(Nsteps) + [0.3, 0.8, 0.3]*(Nsteps-1)
+    # PhaseDurationVec = [0.2, 0.9, 0.2]*(Nsteps) + [0.2, 0.9, 0.2]*(Nsteps-1)
     PhaseDurationVec = [0.2, 0.5, 0.2]*(Nsteps) + [0.2, 0.5, 0.2]*(Nsteps-1)
+
+    #PhaseDurationVec = [0.2, 0.5, 0.2]*(Nsteps) + [0.2, 0.5, 0.2]*(Nsteps-1)
 
     #-----------------------------------------------------------------------------------------------------------------------
     #Load kinematics Polytope
@@ -4146,6 +4290,13 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
     SurfNorms = ParameterList["SurfNorms"]                
     SurfTangentsX = ParameterList["SurfTangentsX"]
     SurfTangentsY = ParameterList["SurfTangentsY"]
+
+    #Surface Orientations
+    #Initial Contact Surface Orientations
+    PL_init_Orientation = ParameterList["PL_init_Orientation"];  PL_init_Orientation = ca.reshape(PL_init_Orientation,3,3).T
+    PR_init_Orientation = ParameterList["PR_init_Orientation"];  PR_init_Orientation = ca.reshape(PR_init_Orientation,3,3).T
+    #
+    SurfOriens = ParameterList["SurfOrientations"]
 
     #-----------------------------------------------------------------------------------------------------------------------
     #Define Variables and Bounds, Parameters
@@ -4289,6 +4440,7 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                     p_init_TangentX = SurfTangentsX[0:3]
                     p_init_TangentY = SurfTangentsY[0:3]
                     p_init_Norm = SurfNorms[0:3]
+                    p_init_Orientation = ca.reshape(SurfOriens[0:9],3,3).T
 
                     #-----------
                     #Case 1
@@ -4297,15 +4449,24 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                     SwingLegFlag = ParaLeftSwingFlag #Indicator of which leg is swinging
                     #Kinematics Constraint
                     #CoM in Left (p_init)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_init, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_init_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in Right (PR_init)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PR_init, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = PR_init, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = PR_init_Orientation,
+                                                 g = g, glb = glb, gub = gub)
+                
                     #CoM Height Constraint (Left p_init foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max,
+                                                           ContactFrameOrientation = p_init_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #CoM Height Constraint (Right foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PR_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PR_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = PR_init_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -4347,15 +4508,24 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                     SwingLegFlag = ParaRightSwingFlag #Indicator of which leg is swinging
                     #Kinematics Constraint
                     #CoM in Left (PL_init)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PL_init, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = PL_init, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = PL_init_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in Right (p_init)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_init, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_init_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                 
                     #CoM Height Constraint (Left PL_init foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PL_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = PL_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = PL_init_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #CoM Height Constraint (Right p_init foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_init, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_init_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics
                     if k<N_K-1:
                         #------------------------------
@@ -4394,6 +4564,7 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                         p_previous = ca.vertcat(px_init,py_init,pz_init)
                         p_previous_TangentX = SurfTangentsX[0:3];   p_previous_TangentY = SurfTangentsY[0:3]
                         p_previous_Norm = SurfNorms[0:3]
+                        p_previous_Orientation = ca.reshape(SurfOriens[0:9],3,3).T
 
                         #Current Step
                         #In second level, Surfaces index is Step Vector Index (for px, py, pz, here is StepCnt-1) + 1
@@ -4402,6 +4573,7 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                         p_current = ca.vertcat(px[StepCnt-1],py[StepCnt-1],pz[StepCnt-1])
                         p_current_TangentX = SurfTangentsX[StepCnt*3:StepCnt*3+3];   p_current_TangentY = SurfTangentsY[StepCnt*3:StepCnt*3+3] 
                         p_current_Norm = SurfNorms[StepCnt*3:StepCnt*3+3]
+                        p_current_Orientation = ca.reshape(SurfOriens[StepCnt*9:StepCnt*9+9],3,3).T
 
                     else: #Like Step 2, 3, 4 .....
                         #For Intial Double Support, previous step is StepNum - 2, current step is StepNum - 1
@@ -4411,10 +4583,12 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                         p_previous = ca.vertcat(px[StepCnt-2],py[StepCnt-2],pz[StepCnt-2])
                         p_previous_TangentX = SurfTangentsX[(StepCnt-1)*3:(StepCnt-1)*3+3];   p_previous_TangentY = SurfTangentsY[(StepCnt-1)*3:(StepCnt-1)*3+3]
                         p_previous_Norm = SurfNorms[(StepCnt-1)*3:(StepCnt-1)*3+3]
+                        p_previous_Orientation = ca.reshape(SurfOriens[(StepCnt-1)*9:(StepCnt-1)*9+9],3,3).T
 
                         p_current = ca.vertcat(px[StepCnt-1],py[StepCnt-1],pz[StepCnt-1])
                         p_current_TangentX = SurfTangentsX[StepCnt*3:StepCnt*3+3];   p_current_TangentY = SurfTangentsY[StepCnt*3:StepCnt*3+3]
                         p_current_Norm = SurfNorms[StepCnt*3:StepCnt*3+3]
+                        p_current_Orientation = ca.reshape(SurfOriens[StepCnt*9:StepCnt*9+9],3,3).T
 
                     #Give Constraint according to even and odd steps
                     if StepCnt%2 == 0: #Even Numbers of Footsteps
@@ -4424,13 +4598,23 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                         #(same as the double support phase of the first step)->Left foot Moved (p_current), Right Foot stay stationary p_previous)
                         SwingLegFlag = ParaLeftSwingFlag #Indicator of which leg is swinging
                         #CoM in the Left (p_current)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                     ContactFrameOrientation = p_current_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #CoM in the Right (p_previous)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                     ContactFrameOrientation = p_previous_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Left p_current foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_current_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Right p_previous foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_previous_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #Angular Dynamics (Ponton)
                         if k<N_K-1: #double check the knot number is valid
                             #------------------------------
@@ -4466,13 +4650,23 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                         #(same as the double support phase of the first step) -> Right Moved (p_current), Left stationary (p_previous)
                         SwingLegFlag = ParaRightSwingFlag #Indicator of which leg is swinging
                         #CoM in the Left (p_previous)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                     ContactFrameOrientation = p_previous_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #CoM in the Right (p_current)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                     ContactFrameOrientation = p_current_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Left p_previous foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_previous_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Right p_current foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_current_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #Angular Dynamics (Ponton)
                         if k<N_K-1: #double check the knot number is valid
                             #------------------------------
@@ -4509,13 +4703,23 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                         #(same as the double support phase of the first step) -> Right Moved (p_current), Left Stay Fixed (p_previous)
                         SwingLegFlag = ParaLeftSwingFlag #Indicator of which leg is swinging
                         #CoM in the Left (p_previous)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                     ContactFrameOrientation = p_previous_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #CoM in the Right (p_current)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                     ContactFrameOrientation = p_current_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Left p_previous foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_previous_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Right p_current foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_current_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #Angular Dynamics (Ponton)
                         if k<N_K-1: #double check the knot number is valid
                             #------------------------------
@@ -4551,13 +4755,23 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                         #(same as the double support phase of the first step) -> Left Moved (p_current), Right stationary (p_previous)
                         SwingLegFlag = ParaRightSwingFlag #Indicator of which leg is swinging
                         #CoM in the Left (p_current)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_current, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                     ContactFrameOrientation = p_current_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #CoM in the Right (p_previous)
-                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                     CoM_k = CoM_k, P = p_previous, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                     ContactFrameOrientation = p_previous_Orientation,
+                                                     g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Left p_current foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_current, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_current_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #   CoM Height Constraint (Right p_previous foot)
-                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                        g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_previous, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                               ContactFrameOrientation = p_previous_Orientation,
+                                                               g = g, glb = glb, gub = gub)
                         #Angular Dynamics (Ponton)
                         if k<N_K-1: #double check the knot number is valid
                             #------------------------------
@@ -4596,12 +4810,14 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                     p_stance_TangentX = SurfTangentsX[0:3]
                     p_stance_TangentY = SurfTangentsY[0:3]
                     p_stance_Norm = SurfNorms[0:3]
+                    p_stance_Orientation = ca.reshape(SurfOriens[0:9],3,3).T
 
                 else: #For other Steps, indexed as 1,2,3,4
                     p_stance = ca.vertcat(px[StepCnt-1],py[StepCnt-1],pz[StepCnt-1])
                     p_stance_TangentX = SurfTangentsX[StepCnt*3:StepCnt*3+3]
                     p_stance_TangentY = SurfTangentsY[StepCnt*3:StepCnt*3+3]
                     p_stance_Norm = SurfNorms[StepCnt*3:StepCnt*3+3]
+                    p_stance_Orientation = ca.reshape(SurfOriens[StepCnt*9:StepCnt*9+9],3,3).T
 
                 #Give Constraint according to even and odd steps
                 if StepCnt%2 == 0: #Even Number of Steps
@@ -4612,10 +4828,16 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                     #Left foot is the stance foot
 
                     #Kinematics Constraint
+                    #Kinematics Constraint
                     #CoM in the Left (p_stance)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM Height Constraint (Left p_stance foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stance_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -4648,9 +4870,15 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
 
                     #Kinematics Constraint
                     #CoM in the Right (p_stance)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM Height Constraint (Right p_stance foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
+
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -4684,9 +4912,14 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
 
                     #Kinematics Constraint
                     #CoM in the Right (p_stance)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_stance foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stance_Orientation,
+                                                           g = g, glb = glb, gub = gub)
 
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
@@ -4720,10 +4953,14 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
 
                     #Kinematics Constraint
                     #CoM in the Left (p_stance)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stance, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_stance_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Left p_stance foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stance, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stance_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -4757,11 +4994,13 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                     p_stationary_TangentX = SurfTangentsX[0:3]
                     p_stationary_TangentY = SurfTangentsY[0:3]
                     p_stationary_Norm = SurfNorms[0:3]
+                    p_stationary_Orientation = ca.reshape(SurfOriens[0:9],3,3).T
 
                     p_land = ca.vertcat(px[StepCnt],py[StepCnt],pz[StepCnt])
                     p_land_TangentX = SurfTangentsX[(StepCnt+1)*3:(StepCnt+1)*3+3]
                     p_land_TangentY = SurfTangentsY[(StepCnt+1)*3:(StepCnt+1)*3+3]
                     p_land_Norm = SurfNorms[(StepCnt+1)*3:(StepCnt+1)*3+3]
+                    p_land_Orientation = ca.reshape(SurfOriens[(StepCnt+1)*9:(StepCnt+1)*9+9],3,3).T
             
                 else: #For other steps, indexed as 1,2,3,4
                     #In the Double Support Phase, the p_stationary is the foot is the un-moved foot during StepNum (in second level), \
@@ -4772,11 +5011,13 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
                     p_stationary_TangentX = SurfTangentsX[StepCnt*3:StepCnt*3+3]
                     p_stationary_TangentY = SurfTangentsY[StepCnt*3:StepCnt*3+3]
                     p_stationary_Norm = SurfNorms[StepCnt*3:StepCnt*3+3]
+                    p_stationary_Orientation = ca.reshape(SurfOriens[StepCnt*9:StepCnt*9+9],3,3).T
 
                     p_land = ca.vertcat(px[StepCnt],py[StepCnt],pz[StepCnt])
                     p_land_TangentX = SurfTangentsX[(StepCnt+1)*3:(StepCnt+1)*3+3]
                     p_land_TangentY = SurfTangentsY[(StepCnt+1)*3:(StepCnt+1)*3+3]
                     p_land_Norm = SurfNorms[(StepCnt+1)*3:(StepCnt+1)*3+3]
+                    p_land_Orientation = ca.reshape(SurfOriens[(StepCnt+1)*9:(StepCnt+1)*9+9],3,3).T
 
                 #Give Constraint according to even and odd steps
                 if StepCnt%2 == 0: #Even Number of Steps
@@ -4789,15 +5030,24 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
 
                     #Kinemactics Constraint
                     #CoM in the Left (p_stationary)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_stationary_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in the Right (p_land)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_land_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     
                     #   CoM Height Constraint (Left p_stationary foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stationary_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_land foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_land_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -4836,15 +5086,24 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
 
                     #Kinemactics Constraint
                     #CoM in the Left (p_land)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_land_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in the Right (p_stationary)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_stationary_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     
                     #   CoM Height Constraint (Left p_land foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_land_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_stationary foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stationary_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -4884,14 +5143,23 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
 
                     #Kinemactics Constraint
                     #CoM in the Left (p_land)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_land_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in the Right (p_stationary)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_stationary_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Left p_land foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_land_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_stationary foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stationary_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -4930,14 +5198,23 @@ def Ponton_SinglePoint(m = 95.0, Nk_Local = 7, Nsteps = 1, ParameterList = None,
 
                     #Kinematics Constraint
                     #CoM in the Left (p_stationary)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_stationary, K_polytope = K_CoM_Left, k_polytope = k_CoM_Left, 
+                                                 ContactFrameOrientation = p_stationary_Orientation,
+                                                 g = g, glb = glb, gub = gub)
                     #CoM in the Right (p_land)
-                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_Kinematics(SwingLegIndicator = SwingLegFlag, 
+                                                 CoM_k = CoM_k, P = p_land, K_polytope = K_CoM_Right, k_polytope = k_CoM_Right, 
+                                                 ContactFrameOrientation = p_land_Orientation, 
+                                                 g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Left p_stationary foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_stationary, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_stationary_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #   CoM Height Constraint (Right p_land foot)
-                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, g = g, glb = glb, gub = gub)
-
+                    g, glb, gub = CoM_to_Foot_Height_Limit(SwingLegIndicator = SwingLegFlag, CoM_k = CoM_k, P = p_land, h_min = CoM_z_to_Foot_min, h_max = CoM_z_to_Foot_max, 
+                                                           ContactFrameOrientation = p_land_Orientation,
+                                                           g = g, glb = glb, gub = gub)
                     #Angular Dynamics (Ponton)
                     if k<N_K-1: #double check the knot number is valid
                         #------------------------------
@@ -5295,9 +5572,9 @@ def ocp_solver_build(FirstLevel = None, SecondLevel = None, TotalNumSteps = None
         if SecondLevel == "NLP_SecondLevel": #Number of Step = Total Number of Step - 1 as the first step is included in the first level
             var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = NLP_SecondLevel(ParameterList = ParaList, Nsteps = TotalNumSteps-1, Nk_Local = N_knots_local, m = robot_mass, PhaseDuration_Limits = PhaseDurationLimits, miu = miu)
         elif SecondLevel == "Ponton_FourPoints":
-            var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = Ponton_FourPoints(ParameterList = ParaList, Nsteps = TotalNumSteps-1, Nk_Local = N_knots_local, m = robot_mass, PhaseDuration_Limits = PhaseDurationLimits)
+            var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = Ponton_FourPoints(ParameterList = ParaList, Nsteps = TotalNumSteps-1, Nk_Local = N_knots_local, m = robot_mass, miu = miu)
         elif SecondLevel == "Ponton_SinglePoint":
-            var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = Ponton_SinglePoint(ParameterList = ParaList, Nsteps = TotalNumSteps-1, Nk_Local = N_knots_local, m = robot_mass, PhaseDuration_Limits = PhaseDurationLimits)
+            var_lv2, var_lb_lv2, var_ub_lv2, J_lv2, g_lv2, glb_lv2, gub_lv2, var_idx_lv2 = Ponton_SinglePoint(ParameterList = ParaList, Nsteps = TotalNumSteps-1, Nk_Local = N_knots_local, m = robot_mass, miu = miu)
         else:
             raise Exception("Unknown Second Level Name")
     #-----------
