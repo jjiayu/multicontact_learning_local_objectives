@@ -19,8 +19,8 @@ def drawSurface(Surface=None, ax=None):
 
     return ax
 
-
-def drawFootPatch(P=None, P_TangentX=None, P_TangentY=None, line_color=None, LineWidth=2, LineType = 'solid', footlength = 0.2, footwidth = 0.1, ax=None):
+#foot lengh and with becomes 0.18 and 0.08
+def drawFootPatch(P=None, P_TangentX=None, P_TangentY=None, line_color=None, LineWidth=2, LineType = 'solid', footlength = 0.18, footwidth = 0.08, ax=None):
     # Foot Vertex Location Assignment
     # P3----------------P1
     # |                  |

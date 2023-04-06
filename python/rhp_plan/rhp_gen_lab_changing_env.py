@@ -50,7 +50,9 @@ ExternalParameters = {"WorkingDirectory": None,
                       "ForceLimitLarge": 300,
                       "TerrainMoveToOdom": "Yes",
                       "Changing_Env_Flag": "Yes",
-                      "TerrainChangeCyleIndex": 1
+                      "TerrainChangeCyleIndex": 3,
+                      #comment the key then we dont re costumoze the terrain
+                      #"Re_Customizing_Terrain_Height": [0.0, 0.0, 0.0, 0.0, 0.041, 0.041, 0.041, 0.041]   #[0.0, 0.0, 0.0, 0.0, 0.041, 0.041, 0.041, 0.041]
                       }
 
 #   Update External Parameters
@@ -446,15 +448,31 @@ else:
                                             y_center = y_center,
                                             x_offset = x_offset)
         elif ExternalParameters["Changing_Env_Flag"] == "Yes":
+
+            #Recostumizing the terrain height is required (used for data geneartion)
+            if "Re_Customizing_Terrain_Height" in ExternalParameters.keys(): 
+                print("Re Cutomized the Terrain with a different height list: ")
+                print("Old: ", LoadTerrainModel["TerrainSettings"]["customized_terrain_height_list"])
+                LoadTerrainModel["TerrainSettings"]["customized_terrain_height_list"] = ExternalParameters["Re_Customizing_Terrain_Height"]
+                print("New: ", LoadTerrainModel["TerrainSettings"]["customized_terrain_height_list"])
+            else: 
+                print("Do Not Re Cutomized the Terrain with a different height list: ")
+                print(LoadTerrainModel["TerrainSettings"]["customized_terrain_height_list"])
+            
+            print(" ")
+
             #Make copys of terrian setting
             TerrainSettings_before_change = copy.deepcopy(LoadTerrainModel["TerrainSettings"])
             TerrainSettings_after_change  = copy.deepcopy(LoadTerrainModel["TerrainSettings"])
             #Intial terrian 
             TerrainSettings_before_change["customized_terrain_pattern"] = TerrainSettings_before_change["customized_terrain_pattern"][0:ExternalParameters["TerrainChangeCyleIndex"]+1]
+            TerrainSettings_before_change["customized_terrain_height_list"] = TerrainSettings_before_change["customized_terrain_height_list"][0:ExternalParameters["TerrainChangeCyleIndex"]+1]
             TerrainSettings = TerrainSettings_before_change
 
             TerrainInfo_before_change = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
                                             customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
+                                            customized_terrain_height_flag = TerrainSettings["customized_terrain_height_flag"],
+                                            customized_terrain_height_list = TerrainSettings["customized_terrain_height_list"],
                                             fixed_inclination = TerrainSettings["fixed_inclination"], 
                                             backward_motion=TerrainSettings["backward_motion"],
                                             lab_blocks = TerrainSettings["lab_blocks"],
@@ -489,6 +507,8 @@ else:
 
             TerrainInfo_after_change = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
                                             customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
+                                            customized_terrain_height_flag = TerrainSettings["customized_terrain_height_flag"],
+                                            customized_terrain_height_list = TerrainSettings["customized_terrain_height_list"],
                                             fixed_inclination = TerrainSettings["fixed_inclination"], 
                                             backward_motion=TerrainSettings["backward_motion"],
                                             lab_blocks = TerrainSettings["lab_blocks"],

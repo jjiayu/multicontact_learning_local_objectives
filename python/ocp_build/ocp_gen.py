@@ -57,7 +57,7 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     Ldotub = Ldot_bound
     # CoM z heights limit in the world frame
     z_lowest = 0.85#-5.0
-    z_highest = 0.88#5.0
+    z_highest = 1.0#5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65
     CoM_z_to_Foot_max = 0.88  # 0.75
@@ -1148,7 +1148,7 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
     Ldotub = Ldot_bound
     # Lowest Z
     z_lowest = 0.85#-5.0
-    z_highest = 0.88#5.0
+    z_highest = 1.0#5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65 #0.6
     CoM_z_to_Foot_max = 0.88  # 0.75

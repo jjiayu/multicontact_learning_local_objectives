@@ -414,6 +414,8 @@ else:
     if ExternalParameters["TerrainMoveToOdom"] == "Yes":
         TerrainInfo = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
                                         customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
+                                        customized_terrain_height_flag = TerrainSettings["customized_terrain_height_flag"],
+                                        customized_terrain_height_list = TerrainSettings["customized_terrain_height_list"],
                                         fixed_inclination = TerrainSettings["fixed_inclination"], 
                                         backward_motion=TerrainSettings["backward_motion"],
                                         lab_blocks = TerrainSettings["lab_blocks"],

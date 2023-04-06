@@ -193,8 +193,8 @@ def Stay_on_Surf(P=None, P_TangentX=None, P_TangentY=None, ineq_K=None, ineq_k=N
 # |                  |
 # P4----------------P2
 
-
-def Angular_Momentum_Rate_DoubleSupport(SwingLegIndicator=None, Ldot_k=None, CoM_k=None, PL=None, PL_TangentX=None, PL_TangentY=None, PR=None, PR_TangentX=None, PR_TangentY=None, FL1_k=None, FL2_k=None, FL3_k=None, FL4_k=None, FR1_k=None, FR2_k=None, FR3_k=None, FR4_k=None, footlength = 0.2, footwidth = 0.1, g=None, glb=None, gub=None):
+#foot lengh and with becomes 0.18 and 0.08
+def Angular_Momentum_Rate_DoubleSupport(SwingLegIndicator=None, Ldot_k=None, CoM_k=None, PL=None, PL_TangentX=None, PL_TangentY=None, PR=None, PR_TangentX=None, PR_TangentY=None, FL1_k=None, FL2_k=None, FL3_k=None, FL4_k=None, FR1_k=None, FR2_k=None, FR3_k=None, FR4_k=None, footlength = 0.18, footwidth = 0.08, g=None, glb=None, gub=None):
     if SwingLegIndicator == None:
         g.append(Ldot_k - (ca.cross((PL + footlength/2.0*PL_TangentX + footwidth/2.0*PL_TangentY - CoM_k), FL1_k) +
                            ca.cross((PL + footlength/2.0*PL_TangentX - footwidth/2.0*PL_TangentY - CoM_k), FL2_k) +
@@ -224,8 +224,8 @@ def Angular_Momentum_Rate_DoubleSupport(SwingLegIndicator=None, Ldot_k=None, CoM
 # Angular Momentum Rate Constraint for Single Support Phase
 #   Equation Checked
 
-
-def Angular_Momentum_Rate_Swing(SwingLegIndicator=None, Ldot_k=None, P=None, P_TangentX=None, P_TangentY=None, CoM_k=None, F1_k=None, F2_k=None, F3_k=None, F4_k=None, footlength = 0.2, footwidth = 0.1, g=None, glb=None, gub=None):
+#foot lengh and with becomes 0.18 and 0.08
+def Angular_Momentum_Rate_Swing(SwingLegIndicator=None, Ldot_k=None, P=None, P_TangentX=None, P_TangentY=None, CoM_k=None, F1_k=None, F2_k=None, F3_k=None, F4_k=None, footlength = 0.18, footwidth = 0.08, g=None, glb=None, gub=None):
 
     if SwingLegIndicator == None:
 

@@ -28,7 +28,6 @@ if logging == True:
 #Make Terrain Setting
 
 doormat_height = 0.043 #0.05
-front_bar_switch = False
 
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
                    "twosteps_on_patch": False,
@@ -55,28 +54,16 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    #"customized_terrain_pattern": ["X_negative",  "X_positive",    "X_negative",   "X_positive"], #mixed
                    
                    #Up and down hill
-                   #"customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive"], #mixed
-
-                   #Stairs
-                   "customized_terrain_pattern": ["flat",  "flat",    "flat",   "flat"], #mixed
-
-
+                   "customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive"], #mixed
                    #---------
                    #backword motions
                    #almost flat
                    #"customized_terrain_pattern": ["Y_positive",  "DiagY_positive",    "Y_negative",   "DiagX_negative",   "DiagX_positive",   "Y_positive",   "Y_negative",   "Y_negative", "Y_positive",   "Y_positive"], #mixed
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi],
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi],#None,#0.0/180*np.pi, #radius, None means random inclination
-                   
-                   #----------
-                   #Terrain height vector
-                   "customized_terrain_height_flag": True,
-                   "customized_terrain_height_list": [0.0, 0.0, 0.0, 0.0, 0.041, 0.041, 0.041, 0.041],
-                   #"customized_terrain_height_list": [0.0, 0.0, 0.041, 0.041, 0.041, 0.041],
-                   
                    "fixed_inclination":10/180*np.pi,
                    "lab_blocks": True, #make sure this is true to have the same patches as the lab env
-                   "lab_block_z_shift": 0.0,#0.006 + 0.018, #measured do not change, bottom + surface height
+                   "lab_block_z_shift": 0.006 + 0.018, #measured do not change, bottom + surface height
                    "inner_blocks": False, "inner_block_length": 0.27,
                    "random_init_surf_size": False,
                    "random_surfsize_flag": False,
@@ -96,7 +83,7 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    "large_slope_Z_shifts": [],#[np.random.uniform(-0.25,0.25)],
                    "y_center_offset": 0.0,
                    "x_offset": 0.0,
-                   "constant_block_z_shift_flag": False, #True for doormat case
+                   "constant_block_z_shift_flag": True,
                    "constant_block_z_shift_value": -doormat_height,
                     }
 
@@ -108,8 +95,6 @@ else:
 # Generate terrain model (for python)
 terrain_model = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSettings["terrain_type"],  
                                       customized_terrain_pattern = TerrainSettings["customized_terrain_pattern"],
-                                      customized_terrain_height_flag = TerrainSettings["customized_terrain_height_flag"],
-                                      customized_terrain_height_list = TerrainSettings["customized_terrain_height_list"],
                                       fixed_inclination = TerrainSettings["fixed_inclination"], 
                                       backward_motion=TerrainSettings["backward_motion"],
                                       lab_blocks = TerrainSettings["lab_blocks"],
@@ -193,18 +178,17 @@ with open(world_file_path, 'x') as f:
     f.write('    </include>\n')
     f.write('\n')
 
-    if front_bar_switch == True:
-        # Write the front bar
-        f.write('    <!-- Place the front bar -->\n')
-        f.write('    <include>\n')
-        f.write('      <name>font_bar</name>\n')
-        f.write('      <static>'+ str(1) +'</static>\n')
-        init_surf_border_x = terrain_model["AllPatchesVertices"][0][0][0]-0.01
-        init_surf_border_y = terrain_model["AllPatchesVertices"][0][2][1]
-        f.write('      <uri>model://front_bar</uri>\n')
-        f.write('      <pose> ' + str(init_surf_border_x) + " " + str(init_surf_border_y) + " " + str(-doormat_height) + ' 0.0 0.0 ' + str(0.0) + '</pose>\n')
-        f.write('    </include>\n')
-        f.write('\n')
+    # Write the front bar
+    f.write('    <!-- Place the front bar -->\n')
+    f.write('    <include>\n')
+    f.write('      <name>font_bar</name>\n')
+    f.write('      <static>'+ str(1) +'</static>\n')
+    init_surf_border_x = terrain_model["AllPatchesVertices"][0][0][0]-0.01
+    init_surf_border_y = terrain_model["AllPatchesVertices"][0][2][1]
+    f.write('      <uri>model://front_bar</uri>\n')
+    f.write('      <pose> ' + str(init_surf_border_x) + " " + str(init_surf_border_y) + " " + str(-doormat_height) + ' 0.0 0.0 ' + str(0.0) + '</pose>\n')
+    f.write('    </include>\n')
+    f.write('\n')
 
 # # construct the gazebo world file, append terrain models
 with open(world_file_path, 'a') as f:
@@ -257,44 +241,6 @@ with open(world_file_path, 'a') as f:
             f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(cur_patch_min_z - TerrainSettings["lab_block_z_shift"]) + ' 0.0 0.0 ' + str(yaw_rot_angle) + '</pose>\n')
             f.write('    </include>\n')
             f.write('\n')
-        
-        if temp_type == "flat": #if the terrain type is flat
-            terrain_height_temp = temp_surf[0][2]
-
-            if terrain_height_temp > 0: #only add block when we have height larger than 0
-                f.write('    <!-- Place a (flat) Block -->\n')
-                f.write('      <model name='+'\"block_' + str(surf_idx) + '\">\n')
-                #get terrain height
-                f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(0 + terrain_height_temp/2.0 - TerrainSettings["lab_block_z_shift"]) + ' 0.0 0.0 0.0' + '</pose>\n')
-                f.write('      <static>'+ str(1) +'</static>\n')
-                f.write('      <link name='+ '\"block_' + str(surf_idx) + '\">\n')
-                f.write('      <inertial>\n')
-                f.write('      <mass>1.0</mass>\n')
-                f.write('      <inertia>\n')
-                f.write('        <ixx>1.0</ixx>\n')
-                f.write('        <ixy>0.0</ixy>\n')
-                f.write('        <ixz>0.0</ixz>\n')
-                f.write('        <iyy>1.0</iyy>\n')
-                f.write('        <iyz>0.0</iyz>\n')
-                f.write('        <izz>1.0</izz>\n')
-                f.write('        </inertia>\n')
-                f.write('        </inertial>\n')
-                f.write('        <collision name=\"collision\">\n')
-                f.write('        <geometry>\n')
-                f.write('          <box>\n')
-                f.write('          <size>' + str(TerrainSettings["Projected_Length"]) + ' ' + str(TerrainSettings["Projected_Width"]) + ' ' + str(terrain_height_temp) + '</size>\n')
-                f.write('          </box>\n')
-                f.write('        </geometry>\n')
-                f.write('        </collision>\n')
-                f.write('        <visual name=\"visual\">\n')
-                f.write('        <geometry>\n')
-                f.write('          <box>\n')
-                f.write('          <size>' + str(TerrainSettings["Projected_Length"]) + ' ' + str(TerrainSettings["Projected_Width"]) + ' ' + str(terrain_height_temp) + '</size>\n')
-                f.write('          </box>\n')
-                f.write('        </geometry>\n')
-                f.write('        </visual>\n')
-                f.write('      </link>\n')
-                f.write('      </model>\n')
 
 #Closing the world file
 with open(world_file_path, 'a') as f:

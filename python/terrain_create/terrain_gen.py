@@ -13,6 +13,8 @@ import copy
 def terrain_model_gen_lab_inner_blocks(terrain_name=None,
                       backward_motion = False,
                       customized_terrain_pattern = [],
+                      customized_terrain_height_flag = False,
+                      customized_terrain_height_list = [],
                       Proj_Length=0.6, Proj_Width=0.6,
                       fixed_inclination=0.0,
                       lab_blocks = False, lab_block_z_shift = 0.0,
@@ -81,9 +83,9 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
     if randomInitSurfSize == False:
         
         if backward_motion == True: #simulator footstep initialization is negative, put it a bit further for backward motion
-            InitContactSurf_x_max = 0.11 + 0.02 + x_offset #0.11 the half foot size 0.02 the front bar
+            InitContactSurf_x_max = 0.11 + 0.0 + x_offset #0.11 the half foot size, 0.02 the front bar, offset is the x position of footsteps
         elif backward_motion == False: #for forward motion is ok
-            InitContactSurf_x_max = 0.11 + 0.02 + x_offset #0.16 + x_offset
+            InitContactSurf_x_max = 0.11 + 0.0 + x_offset #0.16 + x_offset
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:
@@ -424,6 +426,32 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
                     cur_surf[1,2] = cur_surf[1,2] + Constant_Block_Z_Shift_Value
                     cur_surf[2,2] = cur_surf[2,2] + Constant_Block_Z_Shift_Value
                     cur_surf[3,2] = cur_surf[3,2] + Constant_Block_Z_Shift_Value
+
+                #Rebuild the contact patch array
+                AllPatches[surfNum] = cur_surf
+                ContactSurfsVertice[surfNum-2] = cur_surf
+    
+    #------------------------------------------------
+    # Shift the terrain with costumized elevation change
+    if customized_terrain_height_flag == True: #shift the surfaces if we use lab blocks
+
+        for surfNum in range(2, TotalNumSurfs): #loop over all the contact surfaces
+            
+            if surfNum < len(customized_terrain_height_list) + 2:
+
+                print("Shift the terrain height with customized terrain height ", customized_terrain_height_list[surfNum-2])
+
+                # if terrain_pattern[surfNum-2] in ["X_positive", "X_negative", "Y_positive", "Y_negative", "DiagX_positive", "DiagX_negative", "DiagY_positive", "DiagY_negative"]: #only shift the stepping stone blocks
+                    #get curren patch
+                cur_surf = AllPatches[surfNum]
+                    
+                # min_z_vertice = np.min([cur_surf[0,2], cur_surf[1,2], cur_surf[2,2], cur_surf[3,2]]) #get the lowest z vertice for all the blocks
+
+                #lift all the points to have z >= 0 (min z = 0)
+                cur_surf[0,2] = cur_surf[0,2] + customized_terrain_height_list[surfNum-2]
+                cur_surf[1,2] = cur_surf[1,2] + customized_terrain_height_list[surfNum-2]
+                cur_surf[2,2] = cur_surf[2,2] + customized_terrain_height_list[surfNum-2]
+                cur_surf[3,2] = cur_surf[3,2] + customized_terrain_height_list[surfNum-2]
 
                 #Rebuild the contact patch array
                 AllPatches[surfNum] = cur_surf
