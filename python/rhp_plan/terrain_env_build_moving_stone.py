@@ -27,10 +27,8 @@ if logging == True:
 #For terrain generation
 #Make Terrain Setting
 
-doormat_height = 0.041 #0.05
-front_bar_switch = True#True
-
-patch_height = 0.025
+doormat_height = 0.043 #0.05
+front_bar_switch = False
 
 TerrainSettings = {"terrain_type": "customized",#make sure we set customized terrain
                    "twosteps_on_patch": False,
@@ -59,53 +57,9 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    #Up and down hill
                    #"customized_terrain_pattern": ["Y_negative",  "Y_negative",    "Y_positive",   "Y_positive"], #mixed
 
-                #    #v-shape
-                #    "customized_terrain_pattern": ["X_positive",  "X_negative",    
-                #                                   "X_positive",  "X_negative", 
-                #                                   "X_positive",  "X_negative", 
-                #                                   "X_positive",  "X_negative", 
-                #                                   "X_positive",  "X_negative",
-                #                                   "flat",        "flat"], #mixed
+                   #Stairs
+                   "customized_terrain_pattern": ["flat",  "flat",    "flat",   "flat"], #mixed
 
-
-                #    #up-down hills
-                #    "customized_terrain_pattern": ["Y_negative",  "Y_negative",    
-                #                                   "Y_positive",  "Y_positive", 
-                #                                   "Y_negative",  "Y_negative",
-                #                                   "Y_positive",  "Y_positive", 
-                #                                    "flat",        "flat",
-                #                                    "flat",        "flat",], #mixed
-                #    #stairs
-                #    "customized_terrain_pattern": ["flat",  "flat",    
-                #                                   "flat",  "flat",
-                #                                   "flat",  "flat",
-                #                                   "flat",  "flat", 
-
-                #                                   "flat",  "flat",
-                #                                   "flat",  "flat",], #mixed
-
-                   #uneven terrain
-
-                   "customized_terrain_pattern": ["DiagX_positive",  "DiagY_positive",
-                                                  "DiagY_negative",  "DiagX_negative", 
-                                                  "Y_positive",  "Y_positive",
-                                                  "Y_negative",  "Y_negative",
-                                                  "DiagX_positive",  "DiagY_positive",
-                                                  "DiagY_negative",  "DiagX_negative", 
-                                                  "Y_positive",  "Y_positive",
-                                                  "Y_negative",  "Y_negative",
-                                                  "flat",  "flat",
-                                                  "flat",  "flat",], #mixed
-
-                #    #uneven terrain changing
-                #    "customized_terrain_pattern": ["Y_negative",  "Y_negative",
-                #                                   "Y_positive",  "Y_positive", 
-                #                                   "flat",  "flat",
-                #                                   "flat",  "flat",
-                #                                   "Y_negative",  "Y_negative",
-                #                                   "Y_positive",  "Y_positive", 
-                #                                   "flat",  "flat",
-                #                                   "flat",  "flat",], #mixed
 
                    #---------
                    #backword motions
@@ -115,31 +69,15 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    #"fixed_inclination":          [10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 10.0/180*np.pi, 15.0/180*np.pi, 10.0/180*np.pi],#None,#0.0/180*np.pi, #radius, None means random inclination
                    
                    #----------
-                #    #Terrain height vector
+                   #Terrain height vector
                    "customized_terrain_height_flag": True,
-                   "customized_terrain_height_list": [0.0, 0.0, 
-                                                      0.0, 0.0,
-                                                      0.0, 0.0,
-                                                      0.0, 0.0,
-                                                      0.0, 0.0,
-                                                      0.0, 0.0,
-                                                      0.0, 0.0,
-                                                      0.0, 0.0,
-                                                      0.0, 0.0,
-                                                      0.0, 0.0,],
-                   #Stairs
-                #    "customized_terrain_height_flag": True,
-                #    "customized_terrain_height_list": [0.0, 0.0, 
-                #                                       0.0, 0.0,
-                #                                       0.041, 0.041, 
-                #                                       0.041, 0.041],
+                   "customized_terrain_height_list": [0.0, 0.0, 0.0, 0.0, 0.041, 0.041, 0.041, 0.041],
+                   #"customized_terrain_height_list": [0.0, 0.0, 0.041, 0.041, 0.041, 0.041],
                    
                    "fixed_inclination":10/180*np.pi,
                    "lab_blocks": True, #make sure this is true to have the same patches as the lab env
-                   "lab_block_z_shift": 0.006 + 0.018, #measured do not change, bottom + surface height
+                   "lab_block_z_shift": 0.0,#0.006 + 0.018, #measured do not change, bottom + surface height
                    "inner_blocks": False, "inner_block_length": 0.27,
-                   "gap_index": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],#[8,9,10,11], #the patch that has a gap
-                   "gap_dist": 0.015, # the gap dist
                    "random_init_surf_size": False,
                    "random_surfsize_flag": False,
                    "random_Horizontal_Move": False,
@@ -158,7 +96,7 @@ TerrainSettings = {"terrain_type": "customized",#make sure we set customized ter
                    "large_slope_Z_shifts": [],#[np.random.uniform(-0.25,0.25)],
                    "y_center_offset": 0.0,
                    "x_offset": 0.0,
-                   "constant_block_z_shift_flag": True, #True for doormat case
+                   "constant_block_z_shift_flag": False, #True for doormat case
                    "constant_block_z_shift_value": -doormat_height,
                     }
 
@@ -173,8 +111,6 @@ terrain_model = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSett
                                       customized_terrain_height_flag = TerrainSettings["customized_terrain_height_flag"],
                                       customized_terrain_height_list = TerrainSettings["customized_terrain_height_list"],
                                       fixed_inclination = TerrainSettings["fixed_inclination"], 
-                                      gap_index = TerrainSettings["gap_index"], #gap in particular patches
-                                      gap_dist = TerrainSettings["gap_dist"],#gap in particular patches
                                       backward_motion=TerrainSettings["backward_motion"],
                                       lab_blocks = TerrainSettings["lab_blocks"],
                                       lab_block_z_shift = TerrainSettings["lab_block_z_shift"],
@@ -190,7 +126,7 @@ terrain_model = terrain_model_gen_lab_inner_blocks(terrain_name    = TerrainSett
                                       x_gap = TerrainSettings["Gap_along_x"],
                                       Proj_Length = TerrainSettings["Projected_Length"], Proj_Width = TerrainSettings["Projected_Width"],
                                       NumSteps = TerrainSettings["num_of_steps"], 
-                                      NumLookAhead = 15,#Put NumLookAhead = 20 to give infinitely long terrains
+                                      NumLookAhead = 10,#Put NumLookAhead = 20 to give infinitely long terrains
                                       large_slope_flag = TerrainSettings["large_slope_flag"], 
                                       large_slope_index = TerrainSettings["large_slope_index"], large_slope_directions = TerrainSettings["large_slope_directions"], 
                                       large_slope_inclinations = TerrainSettings["large_slope_inclinations"],
@@ -329,7 +265,7 @@ with open(world_file_path, 'a') as f:
                 f.write('    <!-- Place a (flat) Block -->\n')
                 f.write('      <model name='+'\"block_' + str(surf_idx) + '\">\n')
                 #get terrain height
-                f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(0 + terrain_height_temp/2.0) + ' 0.0 0.0 0.0' + '</pose>\n')
+                f.write('      <pose> ' + str(temp_center_x) + " " + str(temp_center_y) + " " + str(0 + terrain_height_temp/2.0 - TerrainSettings["lab_block_z_shift"]) + ' 0.0 0.0 0.0' + '</pose>\n')
                 f.write('      <static>'+ str(1) +'</static>\n')
                 f.write('      <link name='+ '\"block_' + str(surf_idx) + '\">\n')
                 f.write('      <inertial>\n')

@@ -42,7 +42,7 @@ ExternalParameters = {"WorkingDirectory": None,
                       "ML_ModelPath": None, #"/home/jiayu/Desktop/MLP_DataSet/2stepsVsOthers/ML_Models/NN_Model_Valid",
                       "DataSetPath": None, #"/home/jiayu/Desktop/MLP_DataSet/Rubbles/DataSet", #None,
                       "NumLookAhead": 4,
-                      "NumofRounds":6,
+                      "NumofRounds":12,
                       "LargeSlopeAngle": 0,
                       "NoisyLocalObj": "No",
                       "NoiseLevel":0.0, #Noise Level in meters,
@@ -51,7 +51,9 @@ ExternalParameters = {"WorkingDirectory": None,
                       "ForceLimitSmall": 300,
                       "ForceLimitLarge": 300,
                       "Changing_Env_Flag": "Yes",
-                      "TerrainChangeCyleIndex": 1 #the last cycle before the terrain changes
+                      "TerrainChangeCyleIndex": 1, #the last cycle before the terrain changes
+                      "InitialGuessFilePath": None,
+                      "xdot_lb_for_roudn1": 0.018,
                       }
 
 #   Update External Parameters
@@ -636,8 +638,17 @@ DecisionVarsShape = DecisionVars_lb_small_force.shape
 #   Generate Random Seed from scratch
 np.random.seed()
 vars_init = DecisionVars_lb_small_force + np.multiply(np.random.rand(DecisionVarsShape[0],).flatten(),(DecisionVars_ub_small_force - DecisionVars_lb_small_force))#   Fixed Value Initial Guess
-#   Build an initial seed container; except round/step 0 and 1, container[0] for used when calling the current solver, afterwards container[1] move to container[0] current opt result become container[1]
-DecisionVars_init_list = [vars_init, vars_init]
+
+if ExternalParameters["InitialGuessFilePath"] == None:
+    #   Build an initial seed container with random seeds; except round/step 0 and 1, container[0] for used when calling the current solver, afterwards container[1] move to container[0] current opt result become container[1]
+    print("generate random initial guess for the 0 and 1 round")
+    DecisionVars_init_list = [vars_init, vars_init]
+elif ExternalParameters["InitialGuessFilePath"] != None:
+    print("load initial guess from file for the fist two steps")
+    #load initial guess file
+    with open(ExternalParameters["InitialGuessFilePath"], 'rb') as init_guess_f:
+        initialguess_file = pickle.load(init_guess_f)
+    DecisionVars_init_list = [initialguess_file["SingleOptResultSavings"][0]["opt_res"],initialguess_file["SingleOptResultSavings"][1]["opt_res"]]
 
 #Define x_opt before use, a small array, if the first round/step (round 0) enquiries, will then report error
 x_opt = np.array([1])
@@ -913,7 +924,14 @@ for roundNum in range(Nrounds):
     #first two steps we use small force
     if roundNum == 0 or roundNum == 1:
         solver = solver_small_force
-        res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_small_force, ubx = DecisionVars_ub_small_force, lbg = glb_small_force, ubg = gub_small_force)
+        
+        if roundNum == 1:
+            #Modify the xdot lower bound (first step, to bias the local minima to the good ones), make a new lower bound vector
+            DecisionVars_lb_small_force_modified_for_round1 = copy.deepcopy(DecisionVars_lb_small_force)
+            DecisionVars_lb_small_force_modified_for_round1[var_index_small_force["Level1_Var_Index"]["xdot"][0]:var_index_small_force["Level1_Var_Index"]["xdot"][1]+1] = np.array([[0.0]*(2*N_knots_per_phase)+[ExternalParameters["xdot_lb_for_roudn1"]]*(N_knots_per_phase+1)])
+            res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_small_force_modified_for_round1, ubx = DecisionVars_ub_small_force, lbg = glb_small_force, ubg = gub_small_force)
+        else: 
+            res = solver(x0=DecisionVars_init_list[0], p = ParaList, lbx = DecisionVars_lb_small_force, ubx = DecisionVars_ub_small_force, lbg = glb_small_force, ubg = gub_small_force)
     #afterwards, we use large force
     else:
         solver = solver_large_force
@@ -934,7 +952,10 @@ for roundNum in range(Nrounds):
     #   Except the 0 and 1 round/step, Everytime we use DecisionVar_init_list[0] as the initial seed,
     #   And everytime we compute the result, DecisionVar_init_list[0] = DecisionVar_init_list[1]. DecisionVar_init_list[1] = new_opt_result
         if roundNum == 0: #The first round
-            DecisionVars_init_list = [x_opt, x_opt]
+            if ExternalParameters["InitConditionFilePath"] == None:
+                DecisionVars_init_list = [x_opt, x_opt]
+            elif ExternalParameters["InitConditionFilePath"] != None:
+                DecisionVars_init_list = [DecisionVars_init_list[1],x_opt]
         elif roundNum > 1:
             DecisionVars_init_list[0] = DecisionVars_init_list[1]
             DecisionVars_init_list[1] = x_opt

@@ -607,6 +607,7 @@ viz.DisplayResults(TerrainModel = TerrainInfo, SingleOptResult = None, AllOptRes
 #  Set Initial Condition (here for the first step) 
 #-------------------------------------------
 #A dict to contain InitConfig
+#A dict to contain InitConfig
 InitConfig = {}
 #Set initial configuration type
 #init_config_type = "null"#   Init Config type, NULL Conditon for now (NOTE: may need to replace with some function to auto get these from past results)
@@ -619,20 +620,6 @@ InitConfig["PLx_init"], InitConfig["PLy_init"],InitConfig["PLz_init"],    \
 InitConfig["PRx_init"], InitConfig["PRy_init"],InitConfig["PRz_init"]\
 = getInitCondition_FirstStep(InitConditionType = ExternalParameters["InitConditionType"], 
                              InitConditionFilePath = ExternalParameters["InitConditionFilePath"])
-
-#Update the InitConfig base the current readings from the robot state (In Map Frame)
-InitConfig["x_init"] = msg_com.actual_com_pos_x_map #msg_com.data[0]
-InitConfig["y_init"] = msg_com.actual_com_pos_y_map #msg_com.data[1]
-InitConfig["z_init"] = msg_com.actual_com_pos_z_map #msg_com.data[2]
-
-InitConfig["PLx_init"] = msg_foot.actual_lf_pos_x_map #msg_foot.data[0]
-InitConfig["PLy_init"] = msg_foot.actual_lf_pos_y_map #msg_foot.data[1]
-InitConfig["PLz_init"] = msg_foot.actual_lf_pos_z_map #msg_foot.data[2]
-
-InitConfig["PRx_init"] = msg_foot.actual_rf_pos_x_map #msg_foot.data[6]
-InitConfig["PRy_init"] = msg_foot.actual_rf_pos_y_map #msg_foot.data[7]
-InitConfig["PRz_init"] = msg_foot.actual_rf_pos_z_map #msg_foot.data[8]
-
 #Get Init Contact Surfaces (here for the first step) and Orientation from the terrain info
 InitConfig["LeftInitSurf"]  = TerrainInfo["InitLeftSurfVertice"]
 InitConfig["RightInitSurf"] = TerrainInfo["InitRightSurfVertice"]

@@ -29,6 +29,8 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
                       Constant_Block_Z_Shift_Value = 0.0,
                       gap_between_patches = False,
                       x_gap = 0.0,
+                      gap_index = [],
+                      gap_dist = 0.0,
                       NumSteps=None, NumLookAhead=None,
                       large_slope_flag=False, large_slope_index=[],
                       large_slope_directions=[], large_slope_inclinations=[],
@@ -83,9 +85,12 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
     if randomInitSurfSize == False:
         
         if backward_motion == True: #simulator footstep initialization is negative, put it a bit further for backward motion
-            InitContactSurf_x_max = 0.11 + 0.0 + x_offset #0.11 the half foot size, 0.02 the front bar, offset is the x position of footsteps
+            InitContactSurf_x_max = 0.11 + 0.02 + 0.02 + x_offset #0.11 the half foot size, 0.02 the front bar, offset is the x position of footsteps, another 0.02 for the gap between robot the front bar
         elif backward_motion == False: #for forward motion is ok
-            InitContactSurf_x_max = 0.11 + 0.0 + x_offset #0.16 + x_offset
+            #for uneven terrain case
+            InitContactSurf_x_max = 0.11 + 0.02 + x_offset #0.16 + x_offset 0.02 is the gap between the robot and the terrain
+            #for stair case
+            # InitContactSurf_x_max = 0.11 + x_offset #0.16 + x_offset 0.02 is the gap between the robot and the terrain
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:
@@ -209,6 +214,10 @@ def terrain_model_gen_lab_inner_blocks(terrain_name=None,
         if gap_between_patches == True:
             if surfNum > 2: #we give gap starting from the 4th patch (right column)
                 ref_x = ref_x + x_gap
+
+        #put gap at particular column
+        if (surfNum - 2) in gap_index:
+             ref_x = ref_x + gap_dist
 
         # Build an initial flat surface
         surf_temp = flat_patch_gen(PatchColumn=SurfContactLeft, ref_x=ref_x,
@@ -641,7 +650,7 @@ def terrain_model_gen_lab(terrain_name=None,
     # ---------------
     # Generate Initial Patches (Currently Define as flat patches)
     if randomInitSurfSize == False:
-        InitContactSurf_x_max = 0.15 + x_offset
+        InitContactSurf_x_max = 0.15 + x_offset #0.15, 0.02 as door mat
     elif randomInitSurfSize == True:
         InitContactSurf_x_max = np.random.uniform(0.115, 0.215) + x_offset
     else:
