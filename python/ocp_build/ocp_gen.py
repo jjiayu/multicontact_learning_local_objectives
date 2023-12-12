@@ -60,7 +60,7 @@ def NLP_SingleStep(m=100.0, Nk_Local=7, AngularDynamics=True, ParameterList=None
     z_highest = 1.0#5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65
-    CoM_z_to_Foot_max = 0.88  # 0.75
+    CoM_z_to_Foot_max = 0.89  # 0.75
     # Terrain Model
     # Flat Terrain
     #TerrainNorm = [0,0,1]
@@ -1151,7 +1151,7 @@ def NLP_SecondLevel(m=100.0, Nk_Local=7, Nsteps=1, AngularDynamics=True, Paramet
     z_highest = 1.0#5.0
     # CoM Height with respect to Footstep Location (in the local stance frame, think about standstill pose)
     CoM_z_to_Foot_min = 0.8  # 0.65 #0.6
-    CoM_z_to_Foot_max = 0.88  # 0.75
+    CoM_z_to_Foot_max = 0.89  # 0.75
     #   Terrain Model
     #       Flat Terrain
     #TerrainNorm = [0,0,1]
@@ -7190,6 +7190,13 @@ def ocp_solver_build(FirstLevel=None, SecondLevel=None, TotalNumSteps=None, Loca
 
     # Collect all Constraints
     g = ca.vertcat(*g_lv1, *g_lv2, *gLocalobj, *gConnect)
+    print(g[295])
+    # print("7!!")
+    # print(g[7])
+    # print("8!!")
+    # print(g[8])
+    # print("9!!")
+    # print(g[9])
     # print(g[6270])
 
     # Collect all Constraints lower and bounds
